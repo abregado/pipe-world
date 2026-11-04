@@ -13,6 +13,7 @@ namespace PipeWorld.Landscape
         public Material[] terrainMaterials;
         public Material scatterMaterial;
         public Material grassMaterial;
+        public Material flameMaterial;
 
         public WorldShape Shape { get; private set; }
 
@@ -50,7 +51,7 @@ namespace PipeWorld.Landscape
                 culling.Register(CreateObject(name, entry.Value.ToMesh(name), new[] { grassMaterial }, false, ShadowCastingMode.Off), 95f, 60f, 0f);
             }
 
-            TorchBuilder.BuildAll(transform, Shape, library, scatterMaterial, seed + 4);
+            TorchBuilder.BuildAll(transform, Shape, library, scatterMaterial, flameMaterial, terrainMaterials, seed + 4);
 
             foreach (var mesa in Shape.Mesas)
                 Debug.Log($"[DemoWorld] mesa at ({mesa.center.x:F0}, {mesa.center.y:F0}) radius {mesa.radius:F1} ground {Shape.Height(mesa.center.x, mesa.center.y):F1}");

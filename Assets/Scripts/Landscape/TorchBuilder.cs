@@ -1,3 +1,4 @@
+using PipeWorld.World;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -10,62 +11,228 @@ namespace PipeWorld.Landscape
 
         static readonly Color32 Wood = new Color32(94, 66, 46, 0);
         static readonly Color32 Iron = new Color32(54, 54, 60, 0);
-        static readonly Color32 Flame = new Color32(255, 150, 50, 0);
+        static readonly Color32 White = new Color32(255, 255, 255, 0);
 
-        public static void BuildAll(Transform parent, WorldShape shape, ShapeLibrary library, Material material, int seed)
+        struct Spec
+        {
+            public float scale;
+            public Color lightColor;
+            public Color32 flameColor;
+            public float intensity;
+            public float range;
+            public float glow;
+            public float warmLut;
+            public float gradeRadiusScale;
+            public float shadowDistance;
+        }
+
+        static Spec Torch() => new Spec
+        {
+            scale = 1f,
+            lightColor = new Color(1f, 0.62f, 0.3f),
+            flameColor = new Color32(255, 150, 50, 0),
+            intensity = 6f,
+            range = 24f,
+            glow = 0.10f,
+            warmLut = 1f,
+            gradeRadiusScale = 1f,
+            shadowDistance = 90f,
+        };
+
+        // Beacons are lit in the colour of the biome they stand in: warm on tundra and rock, cold cyan on ice.
+        static Spec Beacon(Biome biome)
+        {
+            var spec = new Spec
+            {
+                scale = 5f,
+                intensity = 70f,
+                range = 110f,
+                glow = 0.14f,
+                gradeRadiusScale = 0.5f,
+                shadowDistance = 220f,
+            };
+            switch (biome)
+            {
+                case Biome.Ice:
+                    spec.lightColor = new Color(0.35f, 0.8f, 1f);
+                    spec.flameColor = new Color32(110, 210, 255, 0);
+                    spec.warmLut = 0f;
+                    break;
+                case Biome.Rock:
+                    spec.lightColor = new Color(1f, 0.42f, 0.2f);
+                    spec.flameColor = new Color32(255, 105, 40, 0);
+                    spec.warmLut = 1f;
+                    break;
+                default:
+                    spec.lightColor = new Color(1f, 0.62f, 0.3f);
+                    spec.flameColor = new Color32(255, 150, 50, 0);
+                    spec.warmLut = 1f;
+                    break;
+            }
+            return spec;
+        }
+
+        public static void BuildAll(Transform parent, WorldShape shape, ShapeLibrary library, Material material, Material flameMaterial, Material[] terrainMaterials, int seed)
         {
             var rng = new System.Random(seed);
+            var context = new Context { parent = parent, shape = shape, library = library, material = material, flameMaterial = flameMaterial, terrainMaterials = terrainMaterials };
 
-            // Two beside the spawn point cast real shadows; the rest are unshadowed.
-            Build(parent, shape, library, material, rng, new Vector2(4.5f, 6f), true);
-            Build(parent, shape, library, material, rng, new Vector2(-5f, 8f), true);
+            Build(context, rng, new Vector2(4.5f, 6f), Torch(), 2);
+            Build(context, rng, new Vector2(-5f, 8f), Torch(), 2);
 
             const int ringCount = 8;
             for (var i = 0; i < ringCount; i++)
             {
                 var angle = (i + (float)rng.NextDouble() * 0.6f) / ringCount * Mathf.PI * 2f;
                 var radius = Mathf.Lerp(12f, 25f, (float)rng.NextDouble());
-                Build(parent, shape, library, material, rng, new Vector2(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius), false);
+                Build(context, rng, new Vector2(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius), Torch(), 2);
+            }
+
+            BuildBeacons(context, rng);
+            BuildCaveTorches(context, rng);
+        }
+
+        sealed class Context
+        {
+            public Transform parent;
+            public WorldShape shape;
+            public ShapeLibrary library;
+            public Material material;
+            public Material flameMaterial;
+            public Material[] terrainMaterials;
+        }
+
+        // One beacon on the start floor, then two on opposite sides of every terrace.
+        static void BuildBeacons(Context c, System.Random rng)
+        {
+            BuildBeacon(c, rng, new Vector2(-14f, 35f));
+
+            for (var k = 1; k < c.shape.Rings.Length; k++)
+            {
+                var inner = c.shape.Rings[k - 1].radius + 30f;
+                var outer = c.shape.Rings[k].radius - 30f;
+                var firstAngle = (float)rng.NextDouble() * Mathf.PI * 2f;
+                for (var side = 0; side < 2; side++)
+                {
+                    for (var attempt = 0; attempt < 40; attempt++)
+                    {
+                        var angle = firstAngle + side * Mathf.PI + (float)(rng.NextDouble() - 0.5) * 0.6f;
+                        var radius = Mathf.Lerp(inner, outer, (float)rng.NextDouble());
+                        var x = Mathf.Cos(angle) * radius;
+                        var z = Mathf.Sin(angle) * radius;
+                        if (!c.shape.IsClear(x, z, 12f) || c.shape.WallDistance(x, z) < 25f)
+                            continue;
+
+                        BuildBeacon(c, rng, new Vector2(x, z));
+                        break;
+                    }
+                }
             }
         }
 
-        static void Build(Transform parent, WorldShape shape, ShapeLibrary library, Material material, System.Random rng, Vector2 xz, bool shadows)
+        static void BuildBeacon(Context c, System.Random rng, Vector2 xz)
         {
-            var ground = shape.Height(xz.x, xz.y);
-            var root = new GameObject("Torch");
-            root.transform.SetParent(parent, false);
+            Build(c, rng, xz, Beacon(c.shape.BiomeAt(xz.x, xz.y)), 2);
+        }
+
+        // Each cave gets one torch near its back wall, centred, with no rocks: the cave walls cast the shadows.
+        static void BuildCaveTorches(Context c, System.Random rng)
+        {
+            foreach (var cave in c.shape.Caves)
+            {
+                var ring = c.shape.Rings[cave.ring];
+                var theta = cave.thetaDeg * Mathf.Deg2Rad;
+                var backFace = c.shape.RingRadiusBase(ring, theta) + cave.depth - 5.5f;
+                var radius = backFace - 1.8f;
+                Build(c, rng, new Vector2(Mathf.Cos(theta) * radius, Mathf.Sin(theta) * radius), Torch(), 0);
+            }
+        }
+
+        static void Build(Context c, System.Random rng, Vector2 xz, Spec spec, int rockCount)
+        {
+            var s = spec.scale;
+            var ground = c.shape.Height(xz.x, xz.y);
+            var root = new GameObject(s > 1f ? "Beacon" : "Torch");
+            root.transform.SetParent(c.parent, false);
             root.transform.position = new Vector3(xz.x, ground, xz.y);
 
             var body = new MeshBuilder();
-            body.Append(library.FlatBlock(rng), Matrix4x4.TRS(new Vector3(0f, -0.1f, 0f), Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.18f, PostHeight + 0.1f, 0.18f)), Wood);
-            body.Append(library.FlatBlock(rng), Matrix4x4.TRS(new Vector3(0f, PostHeight - 0.1f, 0f), Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.5f, 0.28f, 0.5f)), Iron);
-            AddRenderer(root.transform, "Body", body.ToMesh("Torch Body"), material, ShadowCastingMode.On);
+            body.Append(c.library.FlatBlock(rng), Matrix4x4.TRS(new Vector3(0f, -0.1f * s, 0f), Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.18f * s, (PostHeight + 0.1f) * s, 0.18f * s)), Wood);
+            body.Append(c.library.FlatBlock(rng), Matrix4x4.TRS(new Vector3(0f, (PostHeight - 0.1f) * s, 0f), Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.5f * s, 0.28f * s, 0.5f * s)), Iron);
+            AddRenderer(root.transform, "Body", body.ToMesh("Torch Body"), c.material, ShadowCastingMode.On);
 
             var flameBuilder = new MeshBuilder();
-            flameBuilder.Append(Glowing(library.Crystal(rng)), Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.3f, 0.7f, 0.3f)), Flame);
-            var flame = AddRenderer(root.transform, "Flame", flameBuilder.ToMesh("Torch Flame"), material, ShadowCastingMode.Off);
-            flame.transform.localPosition = new Vector3(0f, PostHeight + 0.05f, 0f);
+            flameBuilder.Append(Glowing(c.library.Crystal(rng)), Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.3f * s, 0.7f * s, 0.3f * s)), spec.flameColor);
+            var flame = AddRenderer(root.transform, "Flame", flameBuilder.ToMesh("Torch Flame"), c.flameMaterial, ShadowCastingMode.Off);
+            flame.transform.localPosition = new Vector3(0f, (PostHeight + 0.05f) * s, 0f);
 
             var capsule = root.AddComponent<CapsuleCollider>();
-            capsule.radius = 0.22f;
-            capsule.height = PostHeight + 0.2f;
-            capsule.center = new Vector3(0f, (PostHeight + 0.2f) * 0.5f, 0f);
+            capsule.radius = 0.22f * s;
+            capsule.height = (PostHeight + 0.2f) * s;
+            capsule.center = new Vector3(0f, capsule.height * 0.5f, 0f);
 
             var lightObject = new GameObject("Light");
             lightObject.transform.SetParent(root.transform, false);
-            lightObject.transform.localPosition = new Vector3(0f, LightHeight, 0f);
+            lightObject.transform.localPosition = new Vector3(0f, LightHeight * s, 0f);
             var light = lightObject.AddComponent<Light>();
             light.type = LightType.Point;
-            light.color = new Color(1f, 0.62f, 0.3f);
-            light.intensity = 6f;
-            light.range = 24f;
-            light.shadows = shadows ? LightShadows.Soft : LightShadows.None;
-            light.shadowStrength = 0.9f;
+            light.color = spec.lightColor;
+            light.intensity = spec.intensity;
+            light.range = spec.range;
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.95f;
+
+            var grade = lightObject.AddComponent<GradeLight>();
+            grade.source = light;
+            grade.tint = spec.lightColor;
+            grade.warmLut = spec.warmLut;
+            grade.glow = spec.glow;
+            grade.radiusScale = spec.gradeRadiusScale;
 
             var flicker = root.AddComponent<TorchFlicker>();
             flicker.torchLight = light;
             flicker.flame = flame.transform;
             flicker.seed = (float)rng.NextDouble() * 100f;
+            flicker.baseIntensity = spec.intensity;
+            flicker.baseRange = spec.range;
+            flicker.shadowDistance = spec.shadowDistance;
+
+            AddShadowRocks(c, root.transform, rng, xz, ground, spec, rockCount);
+        }
+
+        // Large rocks beside the light, in the biome's terrain material, so the light has something to cast shadows from.
+        static void AddShadowRocks(Context c, Transform parent, System.Random rng, Vector2 xz, float ground, Spec spec, int count)
+        {
+            var biome = c.shape.BiomeAt(xz.x, xz.y);
+            var sizeScale = spec.scale > 1f ? 2.4f : 1f;
+
+            for (var i = 0; i < count; i++)
+            {
+                var angle = (float)rng.NextDouble() * Mathf.PI * 2f;
+                var distance = Mathf.Lerp(2.4f, 3.8f, (float)rng.NextDouble()) * spec.scale;
+                var x = xz.x + Mathf.Cos(angle) * distance;
+                var z = xz.y + Mathf.Sin(angle) * distance;
+                var width = Mathf.Lerp(1.6f, 2.6f, (float)rng.NextDouble()) * sizeScale;
+                var height = Mathf.Lerp(1.6f, 2.8f, (float)rng.NextDouble()) * sizeScale;
+                var y = c.shape.Height(x, z) - height * 0.3f;
+
+                var go = new GameObject("Shadow Rock");
+                go.transform.SetParent(parent, true);
+                go.transform.SetPositionAndRotation(new Vector3(x, y, z),
+                    Quaternion.Euler(Mathf.Lerp(-10f, 10f, (float)rng.NextDouble()), Random(rng), Mathf.Lerp(-10f, 10f, (float)rng.NextDouble())));
+                go.transform.localScale = new Vector3(width, height, width * Mathf.Lerp(0.8f, 1.2f, (float)rng.NextDouble()));
+
+                var builder = new MeshBuilder();
+                builder.Append(c.library.Rock(rng), Matrix4x4.identity, White);
+                var mesh = builder.ToMesh("Shadow Rock");
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = go.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = c.terrainMaterials[(int)biome];
+                renderer.shadowCastingMode = ShadowCastingMode.On;
+                var collider = go.AddComponent<MeshCollider>();
+                collider.sharedMesh = mesh;
+                collider.convex = true;
+            }
         }
 
         static float Random(System.Random rng) => (float)rng.NextDouble() * 360f;
@@ -98,6 +265,8 @@ namespace PipeWorld.Landscape
         public float seed;
         public float baseIntensity = 6f;
         public float baseRange = 24f;
+        // Point-light shadows cost six depth passes each, so only lights near the camera cast them.
+        public float shadowDistance = 90f;
 
         void Update()
         {
@@ -108,6 +277,13 @@ namespace PipeWorld.Landscape
             torchLight.intensity = baseIntensity * flutter;
             torchLight.range = baseRange * (0.94f + 0.06f * flutter);
             flame.localScale = new Vector3(0.9f + 0.2f * fast, 0.8f + 0.5f * slow, 0.9f + 0.2f * (1f - fast));
+
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                var near = (cam.transform.position - transform.position).sqrMagnitude < shadowDistance * shadowDistance;
+                torchLight.shadows = near ? LightShadows.Soft : LightShadows.None;
+            }
         }
     }
 }

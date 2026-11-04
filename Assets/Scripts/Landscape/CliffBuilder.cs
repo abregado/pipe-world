@@ -48,6 +48,15 @@ namespace PipeWorld.Landscape
                 var cos = Mathf.Cos(theta);
                 var sin = Mathf.Sin(theta);
                 var yaw = 90f - theta * Mathf.Rad2Deg;
+                var step = Range(rng, 5f, 7f) / radius;
+
+                // Beside a cave the wall is built by PlaceCave; only the back wall, which sits inside the recess, comes from here.
+                var inCaveZone = InCaveZone(shape, ring, theta, out var insideRecess);
+                if (inCaveZone && !insideRecess)
+                {
+                    theta += step;
+                    continue;
+                }
 
                 if (gap < 0.5f)
                 {
@@ -56,7 +65,7 @@ namespace PipeWorld.Landscape
                     var position = new Vector3(cos * rc, bottom, sin * rc);
                     Add(shape, builders, library.FlatBlock(rng), position, Quaternion.Euler(0f, yaw + Range(rng, -22f, 22f), 0f), scale);
 
-                    if (gap < 0.05f)
+                    if (gap < 0.05f && !inCaveZone)
                     {
                         if (rng.NextDouble() < 0.55)
                             PlaceFootBoulder(shape, library, builders, rng, ring, theta, radius, yaw);
@@ -64,8 +73,68 @@ namespace PipeWorld.Landscape
                     }
                 }
 
-                theta += Range(rng, 5f, 7f) / radius;
+                theta += step;
             }
+
+            foreach (var cave in shape.Caves)
+                if (cave.ring == ring.index)
+                    PlaceCave(shape, library, builders, rng, ring, cave);
+        }
+
+        // The zone is the recess plus the 9 m either side where PlaceCave puts its pillars.
+        static bool InCaveZone(WorldShape shape, Ring ring, float theta, out bool insideRecess)
+        {
+            insideRecess = false;
+            foreach (var cave in shape.Caves)
+            {
+                if (cave.ring != ring.index)
+                    continue;
+                var offset = Mathf.Abs(shape.CaveOffset(cave, ring, theta));
+                if (offset < cave.halfWidth + 9f)
+                {
+                    insideRecess = offset <= cave.halfWidth;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Two side pillars, a back wall and a roof block over the recess. The terrain floor already runs through it,
+        // because the heightfield's wall was pushed outward by the same radius function.
+        static void PlaceCave(WorldShape shape, ShapeLibrary library, MeshBuilder[] builders, System.Random rng, Ring ring, Cave cave)
+        {
+            var lowBase = ring.baseHeight;
+            var top = lowBase + ring.step + TopLift;
+            var bottom = lowBase - Embed;
+            var ceiling = lowBase + cave.height;
+
+            var theta = cave.thetaDeg * Mathf.Deg2Rad;
+            var radial = new Vector2(Mathf.Cos(theta), Mathf.Sin(theta));
+            var tangent = new Vector2(-radial.y, radial.x);
+            var yaw = 90f - cave.thetaDeg;
+
+            var wallRadius = shape.RingRadiusBase(ring, theta);
+            var faceRadius = wallRadius - 5.5f;
+            var backRadius = wallRadius + cave.depth + 3.5f;
+            var middle = (faceRadius + backRadius) * 0.5f;
+            var span = backRadius - faceRadius;
+
+            const float pillarWidth = 9f;
+            for (var side = -1; side <= 1; side += 2)
+            {
+                var offset = side * (cave.halfWidth + 0.5f + pillarWidth * 0.5f);
+                var center = radial * middle + tangent * offset;
+                Add(shape, builders, library.FlatBlock(rng), new Vector3(center.x, bottom, center.y),
+                    Quaternion.Euler(0f, yaw + Range(rng, -3f, 3f), 0f), new Vector3(pillarWidth, top - bottom, span));
+            }
+
+            var roofCenter = radial * middle;
+            Add(shape, builders, library.FlatBlock(rng), new Vector3(roofCenter.x, ceiling, roofCenter.y),
+                Quaternion.Euler(0f, yaw, 0f), new Vector3(2f * (cave.halfWidth + 1.5f), top - ceiling, span));
+
+            var backCenter = radial * (wallRadius + cave.depth - 1f);
+            Add(shape, builders, library.FlatBlock(rng), new Vector3(backCenter.x, bottom, backCenter.y),
+                Quaternion.Euler(0f, yaw, 0f), new Vector3(2f * cave.halfWidth + 8f, top - bottom, 10f));
         }
 
         static void PlaceLedges(WorldShape shape, ShapeLibrary library, MeshBuilder[] builders, System.Random rng, Ring ring, float theta, float wallRadius, float yaw)

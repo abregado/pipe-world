@@ -25,9 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _FadeEnd: 500
-    - _FadeStart: 120
-    - _Strength: 0.35
+    - _FadeEnd: 250
+    - _FadeStart: 40
+    - _Strength: 0.28
     - _Thickness: 1
     - _Threshold: 0.05
     m_Colors:

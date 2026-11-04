@@ -35,8 +35,8 @@ Material:
     m_Floats:
     - _AccentStrength: 0.12
     - _BlockedDarken: 0.9
-    - _DetailFadeEnd: 520
-    - _DetailFadeStart: 150
+    - _DetailFadeEnd: 380
+    - _DetailFadeStart: 100
     - _EdgeSoftness: 0.03
     - _SideScale: 10
     - _TopScale: 14

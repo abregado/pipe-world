@@ -57,9 +57,10 @@ Shader "PipeWorld/Scatter"
             {
                 float3 n = normalize(input.normalWS);
                 half3 albedo = SRGBToLinear(input.color.rgb) * _Tint.rgb;
-                half3 lit = PW_Shade(albedo, n, input.positionWS, input.positionCS);
-                lit += albedo * _GlowTint.rgb * (input.color.a * _EmissionStrength);
-                return half4(PW_ApplyFog(lit, input.positionWS), 1);
+                half3 lit = PW_ApplyFog(PW_Shade(albedo, n, input.positionWS, input.positionCS), input.positionWS);
+                // Glow is added after fog so it stays visible at any distance.
+                half3 glow = albedo * _GlowTint.rgb * (input.color.a * _EmissionStrength);
+                return half4(lit + glow, 1);
             }
             ENDHLSL
         }

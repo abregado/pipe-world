@@ -1,29 +1,61 @@
 # Real-Time Lights
 
-How point lights work in the visual set-up: the torches around the start area, and what the custom shaders and the URP asset need for additional lights to take effect. Read this before adding any light besides the sun.
+How point lights work in the visual set-up: the torches and beacons, the colour grade they apply to their surroundings, and what the custom shaders and the URP asset need for additional lights to take effect. Read this before adding any light besides the sun.
 
 ---
 
-## Torches
+## Torches and Beacons
 
-[TorchBuilder.cs](../Assets/Scripts/Landscape/TorchBuilder.cs) (`BuildAll`, line 15) places ten torches, called from `DemoWorld`:
+[TorchBuilder.cs](../Assets/Scripts/Landscape/TorchBuilder.cs) (`BuildAll`, line 74) builds every torch from one `Spec` (size, colours, light settings), called from `DemoWorld`.
 
-| Group | Count | Placement | Shadows |
-|---|---|---|---|
-| Beside the spawn | 2 | (4.5, 6) and (-5, 8) | Soft |
-| Ring | 8 | Evenly spaced angles with jitter, radius 12 to 25 m | None |
+| Kind | Count | Placement | Size | Light |
+|---|---|---|---|---|
+| Torch, shadowed | 2 | (4.5, 6) and (-5, 8) | 1x | Warm, intensity 6, range 24 m, soft shadows |
+| Torch | 8 | Evenly spaced angles with jitter, radius 12 to 25 m | 1x | Same, no shadows |
+| Beacon | 11 | One on the start floor at (-14, 35), then two on opposite sides of each of the five terraces | 5x (9.5 m post) | Intensity 70, range 110 m, no shadows |
 
-A torch is a root object with a capsule collider and three children: `Body` (wooden post and an iron brazier from the flat-block template), `Flame` (a crystal template with every triangle's glow alpha at 255), and `Light`, a point light 2.35 m up.
+Beacon positions are random per terrace, kept 12 m from flat areas and 25 m from walls ([BuildBeacons](../Assets/Scripts/Landscape/TorchBuilder.cs), line 94). **A beacon takes its colour from the biome it stands in** ([Beacon](../Assets/Scripts/Landscape/TorchBuilder.cs), line 42):
 
-| Light setting | Value |
-|---|---|
-| Colour | (1.0, 0.62, 0.3) |
-| Intensity | 6 |
-| Range | 24 m |
+| Biome | Light and flame | Grade |
+|---|---|---|
+| Tundra | Warm orange | Warm LUT plus tint |
+| Rock | Red-orange | Warm LUT plus tint |
+| Ice | Cyan | Tint only |
 
-[TorchFlicker](../Assets/Scripts/Landscape/TorchBuilder.cs) (line 94) varies intensity and range with two Perlin noise rates and scales the flame mesh each frame. The torches use the [Scatter shader](terrain-shader.md#scatter-shader) material, so the flame glows through the vertex-alpha mask.
+A torch is a root object with a capsule collider and three children: `Body` (wooden post and an iron brazier from the flat-block template), `Flame` (a crystal template with every triangle's glow alpha at 255), and `Light`, the point light plus its `GradeLight`. [TorchFlicker](../Assets/Scripts/Landscape/TorchBuilder.cs) varies intensity and range with two Perlin noise rates and scales the flame mesh each frame.
+
+The flame uses its own material, `Flame.mat`: the Scatter shader with a white glow tint and an emission strength of 3, so the flame glows in its own vertex colour and bloom picks it up. Everything else uses the normal scatter material.
 
 Point-light shadows render six faces each, so only the two torches beside the spawn cast them.
+
+---
+
+## Light Grade
+
+[LightGrade.shader](../Assets/Shaders/LightGrade.shader) is a full-screen pass, a `FullScreenPassRendererFeature` named `LightGrade` on `PC_Renderer`, that runs **after** post-processing. It replaces the volume's Color Lookup and does two jobs per pixel:
+
+1. **Global night grade.** The pixel is blended toward its night-LUT value by `_PW_NightFactor`.
+2. **Local light grade.** The pixel's world position is rebuilt from the depth buffer. Each nearby `GradeLight` contributes a smoothstep falloff over its radius. The pixel blends from the night grade toward a lit version of its ungraded colour: a warm-LUT lookup (by the lights' `warmLut` amount) multiplied by the lights' tint. A small additive glow of the tint colour is added on top.
+
+Sky pixels are never light-graded. Lit strength is 20% by day and 80% at full night.
+
+**The grade is computed on visible pixels, so terrain hides a light's effect behind it.** From far away a lit area still shows as a coloured patch, because the added glow survives the dark [distance fog](visibility-and-depth.md#fog).
+
+The LUTs are 32x32x32 strips sampled in gamma space (the pass converts linear to sRGB before the lookup and back after). [LightGrade.shader:60](../Assets/Shaders/LightGrade.shader) is the fragment function.
+
+| Piece | Role |
+|---|---|
+| [GradeLight.cs](../Assets/Scripts/World/GradeLight.cs) | Component on a light: `tint`, `strength`, `warmLut` (0 tint only, 1 warm LUT), `glow`, and a radius that is the light's range times `radiusScale` |
+| [LightGradeSystem.cs](../Assets/Scripts/World/LightGradeSystem.cs) | Each `LateUpdate`, uploads the 32 `GradeLight`s nearest the camera as shader arrays; `globalStrength` scales all of them |
+| `NightLUT.png`, `WarmLUT.png` | Generated by `NightGrade` and `WarmGrade` in [WorldSetup.cs](../Assets/Editor/WorldSetup.cs) (lines 171 and 183) |
+
+Torches grade within their full range (radius scale 1, glow 0.10). Beacons grade within half their range (radius scale 0.5, so about 55 m) with glow 0.14; the larger value made the whole crater floor orange.
+
+The debug menu's **Light grade** slider edits `globalStrength` ([debug-menu.md](debug-menu.md)).
+
+### Ordering against the debug menu
+
+The Dear ImGui render feature draws at `AfterRenderingPostProcessing + 10`, after the grade pass, so the debug window is never graded.
 
 ---
 
@@ -47,4 +79,4 @@ All three shaders that light surfaces (terrain, scatter, grass) call `PW_Shade`.
 
 ## Adding a Light
 
-Create a `Light` of type Point in code, as `TorchBuilder` does, and set `shadows` only if the light needs them. No shader or asset change is needed: any point or spot light within range of a surface lights it.
+Create a `Light` of type Point in code, as `TorchBuilder` does. No shader or asset change is needed: any point or spot light within range of a surface lights it. Add a `GradeLight` on the same object, with `source` pointing at the light, if its surroundings should also be colour-graded.

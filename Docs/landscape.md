@@ -16,7 +16,7 @@ How the demo world is generated: a heightfield terrain mesh for slow undulation,
 | Scatter | [ScatterBuilder.cs](../Assets/Scripts/Landscape/ScatterBuilder.cs) | Meshes per biome per 96 m tile, no collider |
 | Shapes | [ShapeTemplates.cs](../Assets/Scripts/Landscape/ShapeTemplates.cs) | Procedural low-poly templates |
 | Grass | [GrassBuilder.cs](../Assets/Scripts/Landscape/GrassBuilder.cs) | Tundra grass tiles, no collider |
-| Torches | [TorchBuilder.cs](../Assets/Scripts/Landscape/TorchBuilder.cs) | Ten torches with point lights |
+| Torches | [TorchBuilder.cs](../Assets/Scripts/Landscape/TorchBuilder.cs) | Ten torches and eleven large beacons, each with a point light |
 
 **Terrain, cliffs and scatter all use flat shading.** [MeshBuilder.cs](../Assets/Scripts/Landscape/MeshBuilder.cs) gives every triangle its own three vertices and face normal, which is what produces the faceted low-poly look and what the [terrain shader](terrain-shader.md) reads to decide walkability.
 
@@ -106,7 +106,7 @@ Vertex colour carries per-clump colour in RGB and a glow mask in alpha (the [Sca
 
 ## Grass and Torches
 
-Dense tundra grass is generated separately from scatter; see [grass.md](grass.md). Ten torches with point lights stand around the start area; see [realtime-lights.md](realtime-lights.md). Both are built by `DemoWorld.Awake` after scatter.
+Dense tundra grass is generated separately from scatter; see [grass.md](grass.md). Ten torches stand around the start area and eleven large beacons across the terraces, each with a point light; see [realtime-lights.md](realtime-lights.md). Both are built by `DemoWorld.Awake` after scatter.
 
 ---
 

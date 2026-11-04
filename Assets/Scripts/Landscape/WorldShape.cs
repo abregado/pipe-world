@@ -43,6 +43,25 @@ namespace PipeWorld.Landscape
         }
     }
 
+    // A recess in a ring wall: the wall radius is pushed outward by depth across 2 * halfWidth metres of arc.
+    public readonly struct Cave
+    {
+        public readonly int ring;
+        public readonly float thetaDeg;
+        public readonly float halfWidth;
+        public readonly float depth;
+        public readonly float height;
+
+        public Cave(int ring, float thetaDeg, float halfWidth, float depth, float height)
+        {
+            this.ring = ring;
+            this.thetaDeg = thetaDeg;
+            this.halfWidth = halfWidth;
+            this.depth = depth;
+            this.height = height;
+        }
+    }
+
     public sealed class WorldShape
     {
         public const float HalfSize = 430f;
@@ -57,6 +76,7 @@ namespace PipeWorld.Landscape
         public readonly Ring[] Rings;
         public readonly List<Pad> Pads = new List<Pad>();
         public readonly List<Mesa> Mesas = new List<Mesa>();
+        public readonly List<Cave> Caves = new List<Cave>();
 
         readonly float noiseX;
         readonly float noiseZ;
@@ -85,6 +105,9 @@ namespace PipeWorld.Landscape
                 height += RingSteps[i];
             }
 
+            // On the outer wall, behind where the "inside outer wall" respawn stands.
+            Caves.Add(new Cave(Rings.Length - 1, 225f, 5.5f, 8f, 4.2f));
+
             Pads.Add(new Pad(Vector2.zero, 28f, 22f));
             for (var k = 1; k < Rings.Length; k++)
                 PlaceTerraceFeatures(rng, k);
@@ -98,10 +121,27 @@ namespace PipeWorld.Landscape
             return t * t * (3f - 2f * t);
         }
 
-        public float RingRadius(Ring ring, float theta)
+        // The wall radius without any cave recess.
+        public float RingRadiusBase(Ring ring, float theta)
         {
             var wobble = Mathf.PerlinNoise(ring.wobbleSeed + Mathf.Cos(theta) * 1.5f + 10f, Mathf.Sin(theta) * 1.5f + 10f);
             return ring.radius + (wobble - 0.5f) * 10f;
+        }
+
+        // Terrain height, wall distance and block placement all read this radius, so a cave shifts them together.
+        public float RingRadius(Ring ring, float theta)
+        {
+            var radius = RingRadiusBase(ring, theta);
+            foreach (var cave in Caves)
+                if (cave.ring == ring.index)
+                    radius += cave.depth * (1f - Smooth(cave.halfWidth, cave.halfWidth + 1.5f, Mathf.Abs(CaveOffset(cave, ring, theta))));
+            return radius;
+        }
+
+        // Signed distance in metres along the wall from the cave's axis.
+        public float CaveOffset(Cave cave, Ring ring, float theta)
+        {
+            return Mathf.DeltaAngle(cave.thetaDeg, theta * Mathf.Rad2Deg) * Mathf.Deg2Rad * ring.radius;
         }
 
         public float GapMask(Ring ring, float theta)

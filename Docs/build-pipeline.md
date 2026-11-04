@@ -31,7 +31,7 @@ Unity's output goes to `Builds/build.log`. The script prints only compile errors
 | Entry point | Role |
 |---|---|
 | [BuildScript.cs](../Assets/Editor/BuildScript.cs) `BuildWindows` | Builds every enabled scene in Build Settings as a Development, Windows x64, Mono player. Exits with code 1 if the build fails. |
-| [WorldSetup.cs:24](../Assets/Editor/WorldSetup.cs) `Run` | Regenerates the URP asset settings, night LUT, volume profile, skybox material, terrain textures and materials, scatter material, and the `World` scene. |
+| [WorldSetup.cs:24](../Assets/Editor/WorldSetup.cs) `Run` | Regenerates the URP asset settings, night and warm LUTs, volume profile, skybox material, renderer features (edge highlight, light grade, Dear ImGui), terrain textures and materials, scatter, grass and flame materials, and the `World` scene. |
 
 Development builds write the console log to `%USERPROFILE%\AppData\LocalLow\DefaultCompany\pipe-world\Player.log`.
 

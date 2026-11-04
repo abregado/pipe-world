@@ -16,6 +16,7 @@ namespace PipeWorld.Tools
         public DayNightCycle cycle;
         public PlayerController player;
         public DemoWorld world;
+        public LightGradeSystem gradeSystem;
 
         bool visible;
 
@@ -92,11 +93,21 @@ namespace PipeWorld.Tools
             if (ImGui.Button("Midnight")) cycle.timeOfDay = 0f;
 
             ImGui.Checkbox("Pause time", ref cycle.paused);
+            ImGui.SliderFloat("Ambient scale", ref cycle.ambientScale, 0f, 1.5f, "%.2f");
             ImGui.SliderFloat("Day length (s)", ref cycle.dayLengthSeconds, 30f, 1800f, "%.0f");
 
-            ImGui.SeparatorText("Fog end");
-            ImGui.SliderFloat("Day (m)", ref cycle.dayFogEnd, 300f, 3000f, "%.0f");
-            ImGui.SliderFloat("Night (m)", ref cycle.nightFogEnd, 100f, 1500f, "%.0f");
+            ImGui.SeparatorText("Fog start / end (m)");
+            ImGui.SliderFloat("Day start", ref cycle.dayFogStart, 0f, 600f, "%.0f");
+            ImGui.SliderFloat("Day end", ref cycle.dayFogEnd, 300f, 3000f, "%.0f");
+            ImGui.SliderFloat("Night start", ref cycle.nightFogStart, 0f, 300f, "%.0f");
+            ImGui.SliderFloat("Night end", ref cycle.nightFogEnd, 100f, 1500f, "%.0f");
+
+            if (gradeSystem != null)
+            {
+                ImGui.SeparatorText("Light grade");
+                ImGui.SliderFloat("Strength", ref gradeSystem.globalStrength, 0f, 2f, "%.2f");
+                ImGui.Checkbox("Shadows block grade", ref gradeSystem.shadowedGrade);
+            }
         }
 
         void DrawRespawn()

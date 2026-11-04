@@ -22,22 +22,34 @@ Those are the scatter defaults. Each tile is registered with its own three dista
 
 ## Fog
 
-[DayNightCycle.cs:144](../Assets/Scripts/World/DayNightCycle.cs) writes two shader globals every frame, `_PW_FogColor` and `_PW_FogParams`. [PW_ApplyFog](../Assets/Shaders/PipeWorldLighting.hlsl) (line 20) blends a surface toward the fog colour between a start and end distance with a smoothstep. The terrain and scatter shaders both call it last. The skybox shader does not, because its horizon colour is the fog colour.
+[DayNightCycle.cs:144](../Assets/Scripts/World/DayNightCycle.cs) writes the shader globals `_PW_FogColor`, `_PW_FogParams` and `_PW_NightFactor` every frame. [PW_ApplyFog](../Assets/Shaders/PipeWorldLighting.hlsl) (line 20) blends a surface toward the fog colour between a start and end distance with a smoothstep, reaching full strength at the end. The terrain, scatter and grass shaders all call it after lighting.
 
 | Setting | Day | Night |
 |---|---|---|
-| `dayFogStart` / `nightFogStart` | 350 m | 110 m |
-| `dayFogEnd` / `nightFogEnd` | 1800 m | 750 m |
+| `dayFogStart` / `nightFogStart` | 120 m | 30 m |
+| `dayFogEnd` / `nightFogEnd` | 1000 m | 420 m |
+| `dayFogDarken` / `nightFogDarken` | 0.62 | 0.5 |
 
-Start and end blend by `NightFactor`. Fog colour is the `skyHorizon` gradient at the current time, so distant terrain fades into the sky instead of a different colour. **The maximum fog strength is 0.9, not 1, so the far crater walls keep a faint silhouette against the sky at night; at full strength they merge into one flat band.**
+Start, end and darkening blend by `NightFactor`.
 
-Fog uses a linear colour (`skyHorizon.Evaluate(t).linear`), matching the sky shader's colour after conversion.
+**The fog colour is deliberately darker than the sky horizon.** It is the `skyHorizon` gradient mixed 20% toward `skyZenith`, multiplied by the darken value. Distant terrain converges on that one dark colour, and the sky at the horizon is lighter, so the terrain reads as a silhouette against the sky and its detail is gone at range. The skybox shader itself does not apply fog.
+
+The colour is converted with `.linear` to match the sky shader's colour after conversion.
+
+### Light through fog
+
+Fog flattens terrain colour but not light. Two things stay visible at range:
+
+- Glowing vertices ([Scatter.shader](../Assets/Shaders/Scatter.shader)) are added **after** fog, so flames and crystal tips are never swallowed by it.
+- The [LightGrade pass](realtime-lights.md#light-grade) tints and adds a glow around lights after fog, on whatever colour the pixel ended up as.
+
+Terrain still hides a distant light: the grade is applied per visible pixel, so a light behind a ridge colours nothing you can see.
 
 ---
 
 ## Texture Fade
 
-The terrain shader fades its textures to each texture's average colour between `_DetailFadeStart` (150 m) and `_DetailFadeEnd` (520 m), so far terrain is flat shaded while keeping the top/side contrast that marks walkable surfaces. See [terrain-shader.md](terrain-shader.md#texture-fade). Both distances are material properties set in [WorldSetup.cs](../Assets/Editor/WorldSetup.cs).
+The terrain shader fades its textures to each texture's average colour between `_DetailFadeStart` (100 m) and `_DetailFadeEnd` (380 m), so far terrain is flat shaded while keeping the top/side contrast that marks walkable surfaces. See [terrain-shader.md](terrain-shader.md#texture-fade). Both distances are material properties set in [WorldSetup.cs](../Assets/Editor/WorldSetup.cs).
 
 ---
 
@@ -49,10 +61,10 @@ The pass samples depth at the pixel and its four neighbours, `_Thickness` pixels
 
 | Property | Default | Meaning |
 |---|---|---|
-| `_Strength` | 0.35 | Brightness added on an edge |
+| `_Strength` | 0.28 | Brightness added on an edge |
 | `_Threshold` | 0.05 | Relative curvature where edges begin |
 | `_Thickness` | 1 | Neighbour offset in pixels |
-| `_FadeStart`, `_FadeEnd` | 120, 500 m | Edges fade out with eye depth (line 61) |
+| `_FadeStart`, `_FadeEnd` | 40, 250 m | Edges fade out with eye depth (line 61), so distant terrain shows no outlines |
 | `_EdgeColor` | warm white | Mixed 35% toward the fog colour so edges follow the time of day |
 
 Lines are added to the colour, not blended. **Anything that writes depth gets outlined, including grass and torches.**

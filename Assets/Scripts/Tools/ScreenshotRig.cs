@@ -11,6 +11,9 @@ namespace PipeWorld.Tools
 {
     public class ScreenshotRig : MonoBehaviour
     {
+        // URP's own Lit material, used by -shotLitTest to check shadows independently of the custom shaders.
+        public Material litTestMaterial;
+
         IEnumerator Start()
         {
             var args = Environment.GetCommandLineArgs();
@@ -24,6 +27,63 @@ namespace PipeWorld.Tools
                 cycle.timeOfDay = Float(timeArg);
                 cycle.paused = true;
             }
+
+            var rangeArg = Arg(args, "-shotShadowRange");
+            if (rangeArg != null)
+                foreach (var flicker in FindObjectsByType<PipeWorld.Landscape.TorchFlicker>())
+                    flicker.shadowDistance = Float(rangeArg);
+
+            var disableFeature = Arg(args, "-shotDisableFeature");
+            if (disableFeature != null)
+                SetRendererFeaturesActive(disableFeature, false);
+
+            if (Array.IndexOf(args, "-shotLightTest") >= 0 && litTestMaterial != null)
+            {
+                // A from-scratch point light and cube over a plain URP Lit plane, far from the torches.
+                var centre = new Vector3(32f, 0.06f, 0f);
+                var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                ground.transform.position = centre;
+                ground.transform.localScale = new Vector3(2f, 1f, 2f);
+                ground.GetComponent<Renderer>().sharedMaterial = litTestMaterial;
+                var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                cube.transform.position = centre + new Vector3(0f, 1.5f, 0f);
+                cube.transform.localScale = new Vector3(2f, 3f, 2f);
+                cube.GetComponent<Renderer>().sharedMaterial = litTestMaterial;
+                var lamp = new GameObject("Test Lamp").AddComponent<Light>();
+                lamp.transform.position = centre + new Vector3(-4f, 4f, -3f);
+                lamp.type = LightType.Point;
+                lamp.range = 30f;
+                lamp.intensity = 40f;
+                lamp.shadows = LightShadows.Hard;
+            }
+
+            if (Array.IndexOf(args, "-shotHardShadows") >= 0)
+                foreach (var flicker in FindObjectsByType<PipeWorld.Landscape.TorchFlicker>())
+                {
+                    flicker.enabled = false;
+                    flicker.torchLight.shadows = LightShadows.Hard;
+                }
+
+            if (Array.IndexOf(args, "-shotLitTest") >= 0 && litTestMaterial != null)
+            {
+                var plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                plane.transform.position = new Vector3(4.5f, 0.08f, 6f);
+                plane.transform.localScale = new Vector3(3f, 1f, 3f);
+                plane.GetComponent<Renderer>().sharedMaterial = litTestMaterial;
+                Destroy(plane.GetComponent<Collider>());
+            }
+
+            if (Array.IndexOf(args, "-shotLightsOnly") >= 0)
+                Shader.SetGlobalFloat("_PW_DebugLights", 1f);
+
+            var ambientArg = Arg(args, "-shotAmbient");
+            if (cycle != null && ambientArg != null)
+                cycle.ambientScale = Float(ambientArg);
+
+            var gradeArg = Arg(args, "-shotGrade");
+            var gradeSystem = FindAnyObjectByType<LightGradeSystem>();
+            if (gradeSystem != null && gradeArg != null)
+                gradeSystem.globalStrength = Float(gradeArg);
 
             var keysArg = Arg(args, "-shotKeys");
             Keyboard rigKeyboard = null;
@@ -110,6 +170,23 @@ namespace PipeWorld.Tools
             yield return null;
             yield return null;
             Application.Quit();
+        }
+
+        // The renderer list is not public API, so it is read by reflection. "all" targets every feature.
+        static void SetRendererFeaturesActive(string featureName, bool active)
+        {
+            var pipeline = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
+            var field = pipeline.GetType().GetField("m_RendererDataList", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (!(field?.GetValue(pipeline) is UnityEngine.Rendering.Universal.ScriptableRendererData[] rendererDataList))
+                return;
+
+            foreach (var data in rendererDataList)
+            foreach (var feature in data.rendererFeatures)
+                if (featureName == "all" || feature.name == featureName)
+                {
+                    feature.SetActive(active);
+                    Debug.Log($"[ShotRig] feature {feature.name} active = {active}");
+                }
         }
 
         static string Arg(string[] args, string name)

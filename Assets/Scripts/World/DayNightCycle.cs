@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 
 namespace PipeWorld.World
 {
@@ -14,9 +13,9 @@ namespace PipeWorld.World
         static readonly int SunColorId = Shader.PropertyToID("_SunColor");
         static readonly int FogColorId = Shader.PropertyToID("_PW_FogColor");
         static readonly int FogParamsId = Shader.PropertyToID("_PW_FogParams");
+        static readonly int NightFactorId = Shader.PropertyToID("_PW_NightFactor");
 
         public Light sun;
-        public Volume volume;
         public Material skyboxSource;
 
         // 0 = midnight, 0.25 = sunrise, 0.5 = noon, 0.75 = sunset
@@ -56,10 +55,15 @@ namespace PipeWorld.World
         public float nightStart = 0.12f;
         public float nightFull = -0.18f;
 
-        public float dayFogStart = 350f;
-        public float dayFogEnd = 1800f;
-        public float nightFogStart = 110f;
-        public float nightFogEnd = 750f;
+        // Debug multiplier on the flat ambient; lower it to see real-time lights and shadows without the ambient washing them out.
+        public float ambientScale = 1f;
+
+        public float dayFogStart = 120f;
+        public float dayFogEnd = 1000f;
+        public float nightFogStart = 30f;
+        public float nightFogEnd = 420f;
+        public float dayFogDarken = 0.62f;
+        public float nightFogDarken = 0.5f;
 
         public float NightFactor { get; private set; }
         public float FogEnd { get; private set; }
@@ -69,7 +73,6 @@ namespace PipeWorld.World
         public float StartOfNightTime => 1f - StartOfDayTime;
 
         Material skyInstance;
-        ColorLookup lookup;
 
         static Gradient Make(params (float t, Color c)[] stops)
         {
@@ -126,7 +129,7 @@ namespace PipeWorld.World
 
             float t = Mathf.Clamp01(elevation * 0.5f + 0.5f);
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = ambientColor.Evaluate(t);
+            RenderSettings.ambientLight = ambientColor.Evaluate(t) * ambientScale;
 
             if (skyInstance != null)
             {
@@ -141,16 +144,13 @@ namespace PipeWorld.World
                 }
             }
 
+            // Distant terrain converges on a colour darker than the sky horizon, so it reads as a silhouette against it.
             var fogStart = Mathf.Lerp(dayFogStart, nightFogStart, NightFactor);
             FogEnd = Mathf.Lerp(dayFogEnd, nightFogEnd, NightFactor);
-            var fogColor = skyHorizon.Evaluate(t).linear;
-            Shader.SetGlobalVector(FogColorId, new Vector4(fogColor.r, fogColor.g, fogColor.b, 0.9f));
+            var fogColor = (Color.Lerp(skyHorizon.Evaluate(t), skyZenith.Evaluate(t), 0.2f) * Mathf.Lerp(dayFogDarken, nightFogDarken, NightFactor)).linear;
+            Shader.SetGlobalVector(FogColorId, new Vector4(fogColor.r, fogColor.g, fogColor.b, 1f));
             Shader.SetGlobalVector(FogParamsId, new Vector4(fogStart, 1f / Mathf.Max(1f, FogEnd - fogStart), 0f, 0f));
-
-            if (lookup == null && volume != null && volume.sharedProfile != null)
-                volume.sharedProfile.TryGet(out lookup);
-            if (lookup != null)
-                lookup.contribution.Override(NightFactor);
+            Shader.SetGlobalFloat(NightFactorId, NightFactor);
         }
     }
 }

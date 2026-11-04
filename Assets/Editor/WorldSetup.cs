@@ -16,6 +16,7 @@ namespace PipeWorld.EditorTools
     {
         const string RpAssetPath = "Assets/Settings/PC_RPAsset.asset";
         const string LutPath = "Assets/Art/LUTs/NightLUT.png";
+        const string WarmLutPath = "Assets/Art/LUTs/WarmLUT.png";
         const string ProfilePath = "Assets/Settings/WorldVolumeProfile.asset";
         const string SkyMatPath = "Assets/Art/Materials/Skybox.mat";
         const string ScenePath = "Assets/Scenes/World.unity";
@@ -26,17 +27,43 @@ namespace PipeWorld.EditorTools
         {
             ConfigureUrpAsset();
             ConfigureSsao();
-            var lut = BuildNightLut();
-            var profile = BuildVolumeProfile(lut);
+            var nightLut = BuildLut(LutPath, NightGrade);
+            var warmLut = BuildLut(WarmLutPath, WarmGrade);
+            var profile = BuildVolumeProfile();
             var sky = BuildSkyMaterial();
             ConfigureEdgeHighlight();
+            ConfigureLightGrade(nightLut, warmLut);
             BuildScene(profile, sky);
             AssetDatabase.SaveAssets();
             Debug.Log("[WorldSetup] Done.");
         }
 
+        // URP strips shader variants for features it cannot find in the build's scenes and assets, and it recomputes the
+        // asset's pre-filter flags from that scan. Lights are created at runtime here, so the scan sees none and strips
+        // the variants with additional-light and shadow keywords; the shaders then silently fall back to one without shadows.
+        static void DisableVariantStripping()
+        {
+            const string path = "Assets/Settings/UniversalRenderPipelineGlobalSettings.asset";
+            var settings = AssetDatabase.LoadMainAssetAtPath(path);
+            var so = new SerializedObject(settings);
+            // The flag exists in several places, including inside the managed-reference settings list, so clear every copy.
+            var iterator = so.GetIterator();
+            while (iterator.Next(true))
+                if (iterator.name == "m_StripUnusedVariants" && iterator.propertyType == SerializedPropertyType.Boolean)
+                    iterator.boolValue = false;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(settings);
+        }
+
         static void ConfigureUrpAsset()
         {
+            DisableVariantStripping();
+            var rendererData = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>("Assets/Settings/PC_Renderer.asset");
+            var rendererSo = new SerializedObject(rendererData);
+            rendererSo.FindProperty("m_RenderingMode").intValue = 2; // Forward+
+            rendererSo.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(rendererData);
+
             var rp = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(RpAssetPath);
             rp.supportsHDR = true;
             rp.msaaSampleCount = 4;
@@ -51,6 +78,7 @@ namespace PipeWorld.EditorTools
             rp.maxAdditionalLightsCount = 8;
             so = new SerializedObject(rp);
             so.FindProperty("m_AdditionalLightsRenderingMode").intValue = 2;
+            so.FindProperty("m_AdditionalLightsShadowmapResolution").intValue = 4096;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(rp);
         }
@@ -81,11 +109,11 @@ namespace PipeWorld.EditorTools
             Directory.CreateDirectory("Assets/Art/Materials");
             var material = LoadOrCreateMaterial("Assets/Art/Materials/EdgeHighlight.mat", "PipeWorld/EdgeHighlight");
             material.SetColor("_EdgeColor", new Color(1f, 0.96f, 0.88f));
-            material.SetFloat("_Strength", 0.35f);
+            material.SetFloat("_Strength", 0.28f);
             material.SetFloat("_Threshold", 0.05f);
             material.SetFloat("_Thickness", 1f);
-            material.SetFloat("_FadeStart", 120f);
-            material.SetFloat("_FadeEnd", 500f);
+            material.SetFloat("_FadeStart", 40f);
+            material.SetFloat("_FadeEnd", 250f);
             EditorUtility.SetDirty(material);
 
             var feature = EnsureRendererFeature<FullScreenPassRendererFeature>("EdgeHighlight");
@@ -104,7 +132,7 @@ namespace PipeWorld.EditorTools
             const string rendererPath = "Assets/Settings/PC_Renderer.asset";
             var data = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(rendererPath);
             foreach (var asset in AssetDatabase.LoadAllAssetsAtPath(rendererPath))
-                if (asset is T existing)
+                if (asset is T existing && existing.name == featureName)
                     return existing;
 
             var feature = ScriptableObject.CreateInstance<T>();
@@ -133,6 +161,9 @@ namespace PipeWorld.EditorTools
         {
             const string packageResources = "Packages/com.psydack.uimgui/Resources/";
             var feature = EnsureRendererFeature<global::UImGui.Renderer.RenderImGui>("Dear ImGui");
+            // Drawn just after the LightGrade pass so the debug window is never colour-graded.
+            feature.RenderPassEvent = RenderPassEvent.AfterRenderingPostProcessing + 10;
+            EditorUtility.SetDirty(feature);
 
             var go = new GameObject("Dear ImGui");
             var imGui = go.AddComponent<global::UImGui.UImGui>();
@@ -161,32 +192,50 @@ namespace PipeWorld.EditorTools
             return created;
         }
 
-        static Texture2D BuildNightLut()
+        // Dusky plum shadows, amber highlights: the global night grade.
+        static Color NightGrade(Color c)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(LutPath));
-            var tex = new Texture2D(LutSize * LutSize, LutSize, TextureFormat.RGBA32, false, true);
             var shadowTint = new Color(0.55f, 0.28f, 0.50f);
             var highlightTint = new Color(1.00f, 0.66f, 0.34f);
+            float l = c.r * 0.2126f + c.g * 0.7152f + c.b * 0.0722f;
+            var desat = Color.Lerp(new Color(l, l, l), c, 0.5f);
+            var tint = Color.Lerp(shadowTint, highlightTint, Mathf.SmoothStep(0f, 1f, l));
+            var o = new Color(desat.r * tint.r, desat.g * tint.g, desat.b * tint.b);
+            return Color.Lerp(desat, o * 1.7f, 0.85f) * 0.85f;
+        }
+
+        // Applied near warm lights in place of the night grade: richer, brighter, and amber throughout.
+        static Color WarmGrade(Color c)
+        {
+            var shadowTint = new Color(0.96f, 0.72f, 0.56f);
+            var highlightTint = new Color(1.00f, 0.90f, 0.70f);
+            float l = c.r * 0.2126f + c.g * 0.7152f + c.b * 0.0722f;
+            var saturated = Color.Lerp(new Color(l, l, l), c, 1.2f);
+            var tint = Color.Lerp(shadowTint, highlightTint, Mathf.SmoothStep(0f, 1f, l));
+            return new Color(saturated.r * tint.r, saturated.g * tint.g, saturated.b * tint.b) * 1.12f;
+        }
+
+        static Texture2D BuildLut(string path, System.Func<Color, Color> grade)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var tex = new Texture2D(LutSize * LutSize, LutSize, TextureFormat.RGBA32, false, true);
             for (int b = 0; b < LutSize; b++)
             for (int g = 0; g < LutSize; g++)
             for (int r = 0; r < LutSize; r++)
             {
-                var c = new Color(r / (LutSize - 1f), g / (LutSize - 1f), b / (LutSize - 1f));
-                float l = c.r * 0.2126f + c.g * 0.7152f + c.b * 0.0722f;
-                var grey = new Color(l, l, l);
-                var desat = Color.Lerp(grey, c, 0.5f);
-                var tint = Color.Lerp(shadowTint, highlightTint, Mathf.SmoothStep(0f, 1f, l));
-                var o = new Color(desat.r * tint.r, desat.g * tint.g, desat.b * tint.b);
-                o = Color.Lerp(desat, o * 1.7f, 0.85f) * 0.85f;
+                var o = grade(new Color(r / (LutSize - 1f), g / (LutSize - 1f), b / (LutSize - 1f)));
+                o.r = Mathf.Clamp01(o.r);
+                o.g = Mathf.Clamp01(o.g);
+                o.b = Mathf.Clamp01(o.b);
                 o.a = 1f;
                 tex.SetPixel(b * LutSize + r, g, o);
             }
             tex.Apply();
-            File.WriteAllBytes(LutPath, tex.EncodeToPNG());
+            File.WriteAllBytes(path, tex.EncodeToPNG());
             Object.DestroyImmediate(tex);
-            AssetDatabase.ImportAsset(LutPath);
+            AssetDatabase.ImportAsset(path);
 
-            var imp = (TextureImporter)AssetImporter.GetAtPath(LutPath);
+            var imp = (TextureImporter)AssetImporter.GetAtPath(path);
             imp.textureType = TextureImporterType.Default;
             imp.sRGBTexture = false;
             imp.mipmapEnabled = false;
@@ -195,10 +244,30 @@ namespace PipeWorld.EditorTools
             imp.textureCompression = TextureImporterCompression.Uncompressed;
             imp.npotScale = TextureImporterNPOTScale.None;
             imp.SaveAndReimport();
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(LutPath);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        static VolumeProfile BuildVolumeProfile(Texture2D lut)
+        // Replaces the volume's Color Lookup: the pass owns the night grade so lights can override it locally.
+        static void ConfigureLightGrade(Texture2D nightLut, Texture2D warmLut)
+        {
+            Directory.CreateDirectory("Assets/Art/Materials");
+            var material = LoadOrCreateMaterial("Assets/Art/Materials/LightGrade.mat", "PipeWorld/LightGrade");
+            material.SetTexture("_NightLut", nightLut);
+            material.SetTexture("_WarmLut", warmLut);
+            material.SetFloat("_LightGradeStrength", 1f);
+            EditorUtility.SetDirty(material);
+
+            var feature = EnsureRendererFeature<FullScreenPassRendererFeature>("LightGrade");
+            feature.passMaterial = material;
+            feature.passIndex = 0;
+            feature.injectionPoint = FullScreenPassRendererFeature.InjectionPoint.AfterRenderingPostProcessing;
+            feature.fetchColorBuffer = true;
+            feature.requirements = ScriptableRenderPassInput.Depth;
+            EditorUtility.SetDirty(feature);
+            AssetDatabase.SaveAssets();
+        }
+
+        static VolumeProfile BuildVolumeProfile()
         {
             AssetDatabase.DeleteAsset(ProfilePath);
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
@@ -230,10 +299,6 @@ namespace PipeWorld.EditorTools
             dof.gaussianStart.Override(400f);
             dof.gaussianEnd.Override(1500f);
             dof.gaussianMaxRadius.Override(1f);
-
-            var look = profile.Add<ColorLookup>(true);
-            look.texture.Override(lut);
-            look.contribution.Override(0f);
 
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
             EditorUtility.SetDirty(profile);
@@ -280,8 +345,8 @@ namespace PipeWorld.EditorTools
                 mat.SetFloat("_SideScale", 10f);
                 mat.SetFloat("_WalkableCos", Walkable.MinNormalY);
                 mat.SetFloat("_BlockedDarken", 0.9f);
-                mat.SetFloat("_DetailFadeStart", 150f);
-                mat.SetFloat("_DetailFadeEnd", 520f);
+                mat.SetFloat("_DetailFadeStart", 100f);
+                mat.SetFloat("_DetailFadeEnd", 380f);
                 EditorUtility.SetDirty(mat);
                 materials[i] = mat;
             }
@@ -338,7 +403,11 @@ namespace PipeWorld.EditorTools
             camData.renderPostProcessing = true;
             camData.requiresDepthTexture = true;
 
-            new GameObject("Screenshot Rig").AddComponent<ScreenshotRig>();
+            var rig = new GameObject("Screenshot Rig").AddComponent<ScreenshotRig>();
+            var litTest = LoadOrCreateMaterial("Assets/Art/Materials/LitTest.mat", "Universal Render Pipeline/Lit");
+            litTest.SetColor("_BaseColor", new Color(0.75f, 0.75f, 0.75f));
+            EditorUtility.SetDirty(litTest);
+            rig.litTestMaterial = litTest;
             AddDearImGui(cam);
 
             var sunGo = new GameObject("Sun");
@@ -355,7 +424,6 @@ namespace PipeWorld.EditorTools
             var cycleGo = new GameObject("Day Night Cycle");
             var cycle = cycleGo.AddComponent<DayNightCycle>();
             cycle.sun = sun;
-            cycle.volume = vol;
             cycle.skyboxSource = sky;
 
             var world = new GameObject("Demo World").AddComponent<DemoWorld>();
@@ -364,10 +432,19 @@ namespace PipeWorld.EditorTools
             world.grassMaterial = LoadOrCreateMaterial("Assets/Art/Materials/Grass.mat", "PipeWorld/Grass");
             EditorUtility.SetDirty(world.grassMaterial);
 
+            // Same shader as the scatter, but glowing in the flame's own colour and much brighter.
+            world.flameMaterial = LoadOrCreateMaterial("Assets/Art/Materials/Flame.mat", "PipeWorld/Scatter");
+            world.flameMaterial.SetColor("_GlowTint", Color.white);
+            world.flameMaterial.SetFloat("_EmissionStrength", 3f);
+            EditorUtility.SetDirty(world.flameMaterial);
+
+            var gradeSystem = new GameObject("Light Grade").AddComponent<LightGradeSystem>();
+
             var menu = new GameObject("Debug Menu").AddComponent<DebugMenu>();
             menu.cycle = cycle;
             menu.player = player;
             menu.world = world;
+            menu.gradeSystem = gradeSystem;
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
             RenderSettings.skybox = sky;

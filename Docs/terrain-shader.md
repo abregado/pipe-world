@@ -78,4 +78,4 @@ Both shaders light through [PipeWorldLighting.hlsl](../Assets/Shaders/PipeWorldL
 
 ## Scatter Shader
 
-[Scatter.shader](../Assets/Shaders/Scatter.shader) shades the clutter meshes. Colour comes from the vertex colour RGB (authored in sRGB, converted to linear in the shader). The vertex alpha is a glow mask: `lit += albedo * _GlowTint * alpha * _EmissionStrength`. Only the crystal tips write a non-zero alpha.
+[Scatter.shader](../Assets/Shaders/Scatter.shader) shades the clutter meshes. Colour comes from the vertex colour RGB (authored in sRGB, converted to linear in the shader). The vertex alpha is a glow mask: `lit += albedo * _GlowTint * alpha * _EmissionStrength`. Only the crystal tips and torch flames write a non-zero alpha. **The glow is added after fog**, so glowing vertices stay visible at any distance; see [visibility-and-depth.md](visibility-and-depth.md#light-through-fog).

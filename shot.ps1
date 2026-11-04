@@ -19,6 +19,15 @@ param(
     [int]$Height = 720,
     [string]$Respawn,
     [string]$Click,
+    [double]$Grade = -1,
+    [double]$Ambient = -1,
+    [double]$ShadowRange = -1,
+    [switch]$LightsOnly,
+    [switch]$LitTest,
+    [switch]$HardShadows,
+    [switch]$LightTest,
+    [string]$GraphicsApi,
+    [string]$DisableFeature,
     [switch]$Menu,
     [switch]$Build,
     [switch]$Setup
@@ -44,8 +53,17 @@ $gameArgs = @("-screen-fullscreen", "0", "-screen-width", $Width, "-screen-heigh
 if ($Time -ge 0) { $gameArgs += @("-shotTime", $Time.ToString([Globalization.CultureInfo]::InvariantCulture)) }
 if ($Pos) { $gameArgs += @("-shotPos", $Pos) }
 if ($Look) { $gameArgs += @("-shotLook", $Look) }
+if ($Ambient -ge 0) { $gameArgs += @("-shotAmbient", $Ambient.ToString([Globalization.CultureInfo]::InvariantCulture)) }
+if ($Grade -ge 0) { $gameArgs += @("-shotGrade", $Grade.ToString([Globalization.CultureInfo]::InvariantCulture)) }
 if ($Click) { $gameArgs += @("-shotClick", $Click) }
 if ($Respawn) { $gameArgs += @("-shotRespawn", $Respawn) }
+if ($ShadowRange -ge 0) { $gameArgs += @("-shotShadowRange", $ShadowRange.ToString([Globalization.CultureInfo]::InvariantCulture)) }
+if ($DisableFeature) { $gameArgs += @("-shotDisableFeature", $DisableFeature) }
+if ($GraphicsApi) { $gameArgs += "-force-$GraphicsApi" }
+if ($LightTest) { $gameArgs += "-shotLightTest" }
+if ($HardShadows) { $gameArgs += "-shotHardShadows" }
+if ($LitTest) { $gameArgs += "-shotLitTest" }
+if ($LightsOnly) { $gameArgs += "-shotLightsOnly" }
 if ($Menu) { $gameArgs += "-shotMenu" }
 if ($Keys) { $gameArgs += @("-shotKeys", $Keys) }
 if ($Hold -gt 0) { $gameArgs += @("-shotHold", $Hold.ToString([Globalization.CultureInfo]::InvariantCulture)) }

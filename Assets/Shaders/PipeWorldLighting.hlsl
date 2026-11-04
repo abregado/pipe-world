@@ -7,6 +7,8 @@
 // Set globally by DayNightCycle. xyz = linear fog colour, w = strength. Params: x = start distance, y = 1 / (end - start).
 float4 _PW_FogColor;
 float4 _PW_FogParams;
+// When above 0.5, PW_Shade returns only the additional-light contribution: a mask of where torches reach and where shadows block them.
+float _PW_DebugLights;
 
 half3 PW_AdditionalDiffuse(Light light, float3 normalWS)
 {
@@ -19,6 +21,7 @@ half3 PW_Shade(half3 albedo, float3 normalWS, float3 positionWS, float4 position
     Light mainLight = GetMainLight(shadowCoord);
     half3 ambient = SampleSH(normalWS);
     half3 diffuse = mainLight.color * (saturate(dot(normalWS, mainLight.direction)) * mainLight.shadowAttenuation);
+    half3 additional = 0;
 
 #if defined(_ADDITIONAL_LIGHTS)
     InputData inputData = (InputData)0;
@@ -38,17 +41,19 @@ half3 PW_Shade(half3 albedo, float3 normalWS, float3 positionWS, float4 position
     {
         CLUSTER_LIGHT_LOOP_SUBTRACTIVE_LIGHT_CHECK
         Light dirLight = GetAdditionalLight(dirIndex, inputData, shadowMask, aoFactor);
-        diffuse += PW_AdditionalDiffuse(dirLight, normalWS);
+        additional += PW_AdditionalDiffuse(dirLight, normalWS);
     }
 #endif
 
     LIGHT_LOOP_BEGIN(pixelLightCount)
         Light light = GetAdditionalLight(lightIndex, inputData, shadowMask, aoFactor);
-        diffuse += PW_AdditionalDiffuse(light, normalWS);
+        additional += PW_AdditionalDiffuse(light, normalWS);
     LIGHT_LOOP_END
 #endif
 
-    return albedo * (ambient + diffuse);
+    if (_PW_DebugLights > 0.5)
+        return additional;
+    return albedo * (ambient + diffuse + additional);
 }
 
 half3 PW_ApplyFog(half3 color, float3 positionWS)
