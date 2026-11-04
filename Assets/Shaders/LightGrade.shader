@@ -38,6 +38,9 @@ Shader "PipeWorld/LightGrade"
             TEXTURE2D(_NightLut);
             TEXTURE2D(_WarmLut);
             float _LightGradeStrength;
+            float _PW_DebugLights;
+            // 1 when each torch's grade is masked by the light the pixel actually received (alpha of the colour buffer).
+            float _PW_GradeUseLightMask;
 
             #define LUT_SIZE 32.0
 
@@ -57,41 +60,13 @@ Shader "PipeWorld/LightGrade"
                 return SRGBToLinear(lerp(a, b, t));
             }
 
-            // Screen-space shadow: march from the pixel toward the light and test each sample against the depth buffer.
-            // A sample counts as blocked when the visible surface is slightly in front of it, which means the ray has passed
-            // behind geometry. Only occluders that are on screen can block, and thin ones can slip between samples.
-            #define SHADOW_STEPS 12
-
-            float LightVisibility(float3 world, float3 lightPos, float2 pixel)
-            {
-                float jitter = frac(52.9829189 * frac(dot(pixel, float2(0.06711056, 0.00583715)))) * 0.5;
-                float3 start = world + normalize(lightPos - world) * 0.2;
-                float blocked = 0.0;
-
-                [loop] for (int s = 0; s < SHADOW_STEPS; s++)
-                {
-                    float3 p = lerp(start, lightPos, ((float)s + jitter) / SHADOW_STEPS * 0.96);
-                    float2 suv = ComputeNormalizedDeviceCoordinates(p, UNITY_MATRIX_VP);
-                    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0)
-                        continue;
-
-                    float sceneEye = LinearEyeDepth(SampleSceneDepth(suv), _ZBufferParams);
-                    float sampleEye = -mul(UNITY_MATRIX_V, float4(p, 1.0)).z;
-                    float behind = sampleEye - sceneEye;
-                    float bias = 0.1 + 0.004 * sampleEye;
-                    float thickness = 1.2 + 0.02 * sampleEye;
-
-                    // Soft on both ends so shadow edges fade across a few samples instead of stippling.
-                    float hit = smoothstep(bias, bias * 3.0, behind) * (1.0 - smoothstep(thickness * 0.6, thickness, behind));
-                    blocked = max(blocked, hit);
-                }
-                return 1.0 - blocked;
-            }
-
             half4 frag(Varyings input) : SV_Target
             {
                 float2 uv = input.texcoord;
-                half3 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb;
+                half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                half3 color = source.rgb;
+                // The lighting shaders write how much shadowed point light each pixel received; see PW_LightMask.
+                half received = _PW_GradeUseLightMask > 0.5 ? source.a : 1.0;
 
                 float depth = SampleSceneDepth(uv);
 #if UNITY_REVERSED_Z
@@ -107,6 +82,10 @@ Shader "PipeWorld/LightGrade"
                 {
                     float3 world = ComputeWorldSpacePosition(uv, depth, UNITY_MATRIX_I_VP);
 
+                    // Debug view 3: the light mask the grade is using, as grey.
+                    if (_PW_DebugLights > 2.5)
+                        return half4(received.xxx, 1);
+
                     float mask = 0.0;
                     float3 tint = 0.0;
                     float warm = 0.0;
@@ -117,8 +96,6 @@ Shader "PipeWorld/LightGrade"
                         float4 pos = _PW_GradeLightPos[i];
                         float falloff = saturate(1.0 - distance(world, pos.xyz) / max(pos.w, 0.001));
                         falloff = falloff * falloff * (3.0 - 2.0 * falloff);
-                        if (falloff > 0.01 && _PW_GradeLightParams[i].z > 0.5)
-                            falloff *= LightVisibility(world, pos.xyz, input.positionCS.xy);
                         float weight = falloff * _PW_GradeLightTint[i].a;
                         mask += weight;
                         tint += _PW_GradeLightTint[i].rgb * weight;
@@ -126,7 +103,8 @@ Shader "PipeWorld/LightGrade"
                         glow += _PW_GradeLightParams[i].y * weight;
                     }
 
-                    float influence = saturate(mask) * saturate(_LightGradeStrength);
+                    // Shadowed pixels keep the night grade: the lights' falloff is multiplied by the light that reached them.
+                    float influence = saturate(mask) * received * saturate(_LightGradeStrength);
                     if (influence > 0.0001)
                     {
                         float inv = 1.0 / max(mask, 1e-4);

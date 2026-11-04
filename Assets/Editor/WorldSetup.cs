@@ -38,26 +38,8 @@ namespace PipeWorld.EditorTools
             Debug.Log("[WorldSetup] Done.");
         }
 
-        // URP strips shader variants for features it cannot find in the build's scenes and assets, and it recomputes the
-        // asset's pre-filter flags from that scan. Lights are created at runtime here, so the scan sees none and strips
-        // the variants with additional-light and shadow keywords; the shaders then silently fall back to one without shadows.
-        static void DisableVariantStripping()
-        {
-            const string path = "Assets/Settings/UniversalRenderPipelineGlobalSettings.asset";
-            var settings = AssetDatabase.LoadMainAssetAtPath(path);
-            var so = new SerializedObject(settings);
-            // The flag exists in several places, including inside the managed-reference settings list, so clear every copy.
-            var iterator = so.GetIterator();
-            while (iterator.Next(true))
-                if (iterator.name == "m_StripUnusedVariants" && iterator.propertyType == SerializedPropertyType.Boolean)
-                    iterator.boolValue = false;
-            so.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(settings);
-        }
-
         static void ConfigureUrpAsset()
         {
-            DisableVariantStripping();
             var rendererData = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>("Assets/Settings/PC_Renderer.asset");
             var rendererSo = new SerializedObject(rendererData);
             rendererSo.FindProperty("m_RenderingMode").intValue = 2; // Forward+
@@ -66,9 +48,13 @@ namespace PipeWorld.EditorTools
 
             var rp = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(RpAssetPath);
             rp.supportsHDR = true;
+            // 64-bit is RGBA16F: the default B10G11R11 has no alpha, and alpha carries the light mask to the LightGrade pass.
+            rp.hdrColorBufferPrecision = HDRColorBufferPrecision._64Bits;
             rp.msaaSampleCount = 4;
             var so = new SerializedObject(rp);
             so.FindProperty("m_SoftShadowsSupported").boolValue = true;
+            // LightGrade runs after post-processing; without alpha processing the post pass overwrites the light mask with 1.
+            so.FindProperty("m_AllowPostProcessAlphaOutput").boolValue = true;
             so.ApplyModifiedPropertiesWithoutUndo();
             rp.shadowDistance = 220f;
             rp.shadowCascadeCount = 4;
@@ -77,7 +63,8 @@ namespace PipeWorld.EditorTools
             rp.shadowNormalBias = 1f;
             rp.maxAdditionalLightsCount = 8;
             so = new SerializedObject(rp);
-            so.FindProperty("m_AdditionalLightsRenderingMode").intValue = 2;
+            // The enum is PerPixel = 1, PerVertex = 2. Per-vertex disables additional-light shadows even under Forward+.
+            so.FindProperty("m_AdditionalLightsRenderingMode").intValue = (int)LightRenderingMode.PerPixel;
             so.FindProperty("m_AdditionalLightsShadowmapResolution").intValue = 4096;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(rp);

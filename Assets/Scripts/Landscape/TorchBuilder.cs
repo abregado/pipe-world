@@ -31,11 +31,12 @@ namespace PipeWorld.Landscape
             scale = 1f,
             lightColor = new Color(1f, 0.62f, 0.3f),
             flameColor = new Color32(255, 150, 50, 0),
-            intensity = 6f,
-            range = 24f,
-            glow = 0.10f,
+            // A short range keeps each torch's pool to itself: overlapping pools fill in each other's shadows.
+            intensity = 9f,
+            range = 12f,
+            glow = 0.07f,
             warmLut = 1f,
-            gradeRadiusScale = 1f,
+            gradeRadiusScale = 1.25f,
             shadowDistance = 90f,
         };
 
@@ -46,9 +47,9 @@ namespace PipeWorld.Landscape
             {
                 scale = 5f,
                 intensity = 70f,
-                range = 110f,
+                range = 60f,
                 glow = 0.14f,
-                gradeRadiusScale = 0.5f,
+                gradeRadiusScale = 0.9f,
                 shadowDistance = 220f,
             };
             switch (biome)
@@ -158,8 +159,11 @@ namespace PipeWorld.Landscape
 
             var body = new MeshBuilder();
             body.Append(c.library.FlatBlock(rng), Matrix4x4.TRS(new Vector3(0f, -0.1f * s, 0f), Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.18f * s, (PostHeight + 0.1f) * s, 0.18f * s)), Wood);
-            body.Append(c.library.FlatBlock(rng), Matrix4x4.TRS(new Vector3(0f, (PostHeight - 0.1f) * s, 0f), Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.5f * s, 0.28f * s, 0.5f * s)), Iron);
             AddRenderer(root.transform, "Body", body.ToMesh("Torch Body"), c.material, ShadowCastingMode.On);
+            // The brazier sits just below the light, so as a caster it would throw a dark disc metres wide around its own torch.
+            var brazier = new MeshBuilder();
+            brazier.Append(c.library.FlatBlock(rng), Matrix4x4.TRS(new Vector3(0f, (PostHeight - 0.1f) * s, 0f), Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.5f * s, 0.28f * s, 0.5f * s)), Iron);
+            AddRenderer(root.transform, "Brazier", brazier.ToMesh("Torch Brazier"), c.material, ShadowCastingMode.Off);
 
             var flameBuilder = new MeshBuilder();
             flameBuilder.Append(Glowing(c.library.Crystal(rng)), Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, Random(rng), 0f), new Vector3(0.3f * s, 0.7f * s, 0.3f * s)), spec.flameColor);
@@ -267,6 +271,13 @@ namespace PipeWorld.Landscape
         public float baseRange = 24f;
         // Point-light shadows cost six depth passes each, so only lights near the camera cast them.
         public float shadowDistance = 90f;
+        public LightShadows shadowType = LightShadows.Soft;
+        // By day the torches would otherwise light the ground about as much as the low sun, and fill in its shadows.
+        [Range(0f, 1f)] public float dayIntensity = 0.2f;
+
+        DayNightCycle cycle;
+
+        void Start() => cycle = FindAnyObjectByType<DayNightCycle>();
 
         void Update()
         {
@@ -274,7 +285,8 @@ namespace PipeWorld.Landscape
             var fast = Mathf.PerlinNoise(Time.time * 9f + seed, seed + 31f);
             var flutter = 0.8f + 0.3f * slow + 0.15f * fast;
 
-            torchLight.intensity = baseIntensity * flutter;
+            var daylight = cycle != null ? Mathf.Lerp(dayIntensity, 1f, cycle.NightFactor) : 1f;
+            torchLight.intensity = baseIntensity * flutter * daylight;
             torchLight.range = baseRange * (0.94f + 0.06f * flutter);
             flame.localScale = new Vector3(0.9f + 0.2f * fast, 0.8f + 0.5f * slow, 0.9f + 0.2f * (1f - fast));
 
@@ -282,7 +294,7 @@ namespace PipeWorld.Landscape
             if (cam != null)
             {
                 var near = (cam.transform.position - transform.position).sqrMagnitude < shadowDistance * shadowDistance;
-                torchLight.shadows = near ? LightShadows.Soft : LightShadows.None;
+                torchLight.shadows = near ? shadowType : LightShadows.None;
             }
         }
     }

@@ -41,7 +41,9 @@ Shader "PipeWorld/EdgeHighlight"
             half4 frag(Varyings input) : SV_Target
             {
                 float2 uv = input.texcoord;
-                half3 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb;
+                // Alpha carries the light mask from the lighting shaders through to the LightGrade pass.
+                half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                half3 color = source.rgb;
 
                 float2 texel = _Thickness / _ScreenParams.xy;
                 float d0 = SampleSceneDepth(uv);
@@ -61,7 +63,7 @@ Shader "PipeWorld/EdgeHighlight"
                 float fade = 1.0 - smoothstep(_FadeStart, _FadeEnd, eyeDepth);
 
                 half3 tint = lerp(_EdgeColor.rgb, _PW_FogColor.rgb * 1.6, 0.35);
-                return half4(color + tint * (edge * fade * _Strength), 1);
+                return half4(color + tint * (edge * fade * _Strength), source.a);
             }
             ENDHLSL
         }

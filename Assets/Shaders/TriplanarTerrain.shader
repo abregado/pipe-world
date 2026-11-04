@@ -101,7 +101,8 @@ Shader "PipeWorld/TriplanarTerrain"
                 float detailFade = smoothstep(_DetailFadeStart, _DetailFadeEnd, distance(p, _WorldSpaceCameraPos));
                 albedo = lerp(albedo, flatAlbedo, detailFade);
 
-                return half4(PW_ApplyFog(PW_Shade(albedo, n, p, input.positionCS), p), 1);
+                half4 lit = PW_ShadeMasked(albedo, n, p, input.positionCS);
+                return half4(PW_ApplyFog(lit.rgb, p), lit.a);
             }
             ENDHLSL
         }

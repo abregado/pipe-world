@@ -6,7 +6,7 @@ How the world is lit, post-processed and recoloured over the day. Read this befo
 
 ## Design
 
-The only light that is always present is a soft-shadow directional `Sun`; the torches add point lights near the start (see [realtime-lights.md](realtime-lights.md)). Everything else is lit by high, flat ambient colour, so unlit sides never go dark. At night the sun is switched off and a colour grade recolours the scene toward plum and amber. **The night palette is deliberately not blue.**
+The only light that is always present is a soft-shadow directional `Sun`; the torches add point lights near the start (see [realtime-lights.md](realtime-lights.md)). Everything else is lit by flat ambient colour, so unlit sides never go fully dark. At night the sun is switched off and a colour grade recolours the scene toward plum and amber. **The night palette is deliberately not blue.**
 
 | Piece | Where |
 |---|---|
@@ -20,7 +20,11 @@ The only light that is always present is a soft-shadow directional `Sun`; the to
 
 ## URP Asset
 
-`PC_RPAsset` is configured for one main shadow-casting light: HDR on, 4x MSAA, soft shadows, 4 cascades, a 4096 main-light shadow map, 220 m shadow distance. Additional lights render per pixel with a limit of 8 per object, and additional-light shadows use the asset's 2048 atlas.
+`PC_RPAsset` is configured for one main shadow-casting light: HDR on (64-bit, for the [light mask](realtime-lights.md#light-grade) in alpha), alpha processing on, 4x MSAA, soft shadows, 4 cascades, a 4096 main-light shadow map, 220 m shadow distance. Additional lights render per pixel with a limit of 8 per object, and additional-light shadows use the asset's 4096 atlas ([realtime-lights.md](realtime-lights.md#what-additional-lights-need)).
+
+**Ambient is kept well below the sun so sun shadows read.** By day the ambient is about 0.4 (linear) and the sun peaks at 1.4, adding about 0.4 on flat ground in the morning. A morning shadow is about half the brightness of the sunlit ground beside it before post-processing. The snowy albedo pushes lit ground into the tonemapper's shoulder, so on screen the difference is smaller. At the old values (ambient about 0.7, sun 1.1) it was under 10%. Night ambient is about 0.2, so torch pools stand out against it. `.\shot.ps1 -DebugView 2` shows the sun's shadow attenuation directly, and `-Ambient` scales the ambient for comparison ([screenshots.md](screenshots.md)).
+
+The `ambientColor` gradient and `maxSunIntensity` are serialized in `World.unity`, so changing the code defaults alone does nothing until `-Setup` rebuilds the scene.
 
 ---
 

@@ -24,7 +24,8 @@ namespace PipeWorld.World
         public bool paused;
 
         public float sunHeading = 30f;
-        public float maxSunIntensity = 1.1f;
+        // Ambient is kept well under the sun so sun shadows read; see Docs/lighting-and-day-night.md.
+        public float maxSunIntensity = 1.4f;
         public Gradient sunColor = Make(
             (0.00f, new Color(1.00f, 0.55f, 0.35f)),
             (0.25f, new Color(1.00f, 0.80f, 0.65f)),
@@ -32,11 +33,11 @@ namespace PipeWorld.World
 
         // Gradients below are sampled by sun elevation remapped to 0..1: 0 = midnight, 0.5 = horizon, 1 = noon.
         public Gradient ambientColor = Make(
-            (0.00f, new Color(0.80f, 0.64f, 0.74f)),
-            (0.40f, new Color(0.80f, 0.64f, 0.74f)),
-            (0.55f, new Color(0.78f, 0.80f, 0.88f)),
-            (0.65f, new Color(0.80f, 0.88f, 0.96f)),
-            (1.00f, new Color(0.85f, 0.92f, 1.00f)));
+            (0.00f, new Color(0.48f, 0.38f, 0.44f)),
+            (0.40f, new Color(0.48f, 0.38f, 0.44f)),
+            (0.55f, new Color(0.62f, 0.64f, 0.70f)),
+            (0.65f, new Color(0.64f, 0.70f, 0.77f)),
+            (1.00f, new Color(0.68f, 0.74f, 0.80f)));
 
         public Gradient skyZenith = Make(
             (0.00f, new Color(0.14f, 0.08f, 0.20f)),

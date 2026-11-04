@@ -76,8 +76,8 @@ Shader "PipeWorld/Grass"
                 float3 n = normalize(input.normalWS) * IS_FRONT_VFACE(face, 1.0, -1.0);
                 n = normalize(lerp(n, float3(0, 1, 0), 0.65));
                 half3 albedo = SRGBToLinear(input.color.rgb) * _Tint.rgb;
-                half3 lit = PW_Shade(albedo, n, input.positionWS, input.positionCS);
-                return half4(PW_ApplyFog(lit, input.positionWS), 1);
+                half4 lit = PW_ShadeMasked(albedo, n, input.positionWS, input.positionCS);
+                return half4(PW_ApplyFog(lit.rgb, input.positionWS), lit.a);
             }
             ENDHLSL
         }

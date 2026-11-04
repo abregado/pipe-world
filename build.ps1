@@ -22,7 +22,7 @@ $unity = "C:\Program Files\Unity\Hub\Editor\$version\Editor\Unity.exe"
 if (-not (Test-Path $unity)) { throw "Unity $version not found at $unity" }
 
 $open = Get-CimInstance Win32_Process -Filter "Name='Unity.exe'" |
-    Where-Object { $_.CommandLine -notmatch "-batchmode" }
+    Where-Object { $_.CommandLine -notmatch "-batchmode" -and $_.CommandLine -match [regex]::Escape($project) }
 if ($open) { throw "A Unity editor is open (PID $($open.ProcessId)). Close it first; Unity can't build a project that's open." }
 
 New-Item -ItemType Directory -Force "$project\Builds" | Out-Null

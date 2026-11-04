@@ -11,9 +11,10 @@ namespace PipeWorld.World
         static readonly int TintId = Shader.PropertyToID("_PW_GradeLightTint");
         static readonly int ParamsId = Shader.PropertyToID("_PW_GradeLightParams");
         static readonly int CountId = Shader.PropertyToID("_PW_GradeLightCount");
+        static readonly int UseLightMaskId = Shader.PropertyToID("_PW_GradeUseLightMask");
 
         public float globalStrength = 1f;
-        // Fades a light's grade where the depth buffer shows something between the pixel and the light.
+        // Masks each light's grade by the shadowed point light the pixel received, so shadows keep the night grade.
         public bool shadowedGrade = true;
 
         readonly Vector4[] positions = new Vector4[MaxLights];
@@ -45,14 +46,14 @@ namespace PipeWorld.World
                 var p = light.transform.position;
                 positions[i] = new Vector4(p.x, p.y, p.z, light.Radius);
                 tints[i] = new Vector4(light.tint.r, light.tint.g, light.tint.b, light.strength * globalStrength);
-                var castsShadows = shadowedGrade && light.source != null && light.source.shadows != LightShadows.None;
-                parameters[i] = new Vector4(light.warmLut, light.glow, castsShadows ? 1f : 0f, 0f);
+                parameters[i] = new Vector4(light.warmLut, light.glow, 0f, 0f);
             }
 
             Shader.SetGlobalVectorArray(PositionId, positions);
             Shader.SetGlobalVectorArray(TintId, tints);
             Shader.SetGlobalVectorArray(ParamsId, parameters);
             Shader.SetGlobalFloat(CountId, chosen.Count);
+            Shader.SetGlobalFloat(UseLightMaskId, shadowedGrade ? 1f : 0f);
         }
 
         float SqrDistance(GradeLight light) => (light.transform.position - cameraPosition).sqrMagnitude;

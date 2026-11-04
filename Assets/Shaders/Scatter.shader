@@ -57,10 +57,12 @@ Shader "PipeWorld/Scatter"
             {
                 float3 n = normalize(input.normalWS);
                 half3 albedo = SRGBToLinear(input.color.rgb) * _Tint.rgb;
-                half3 lit = PW_ApplyFog(PW_Shade(albedo, n, input.positionWS, input.positionCS), input.positionWS);
+                half4 shaded = PW_ShadeMasked(albedo, n, input.positionWS, input.positionCS);
+                half3 lit = PW_ApplyFog(shaded.rgb, input.positionWS);
                 // Glow is added after fog so it stays visible at any distance.
                 half3 glow = albedo * _GlowTint.rgb * (input.color.a * _EmissionStrength);
-                return half4(lit + glow, 1);
+                // Glowing surfaces (flames, crystals) count as lit, so the grade does not dim them.
+                return half4(lit + glow, max(shaded.a, input.color.a));
             }
             ENDHLSL
         }

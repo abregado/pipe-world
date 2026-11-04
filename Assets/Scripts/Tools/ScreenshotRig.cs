@@ -49,6 +49,19 @@ namespace PipeWorld.Tools
                 cube.transform.position = centre + new Vector3(0f, 1.5f, 0f);
                 cube.transform.localScale = new Vector3(2f, 3f, 2f);
                 cube.GetComponent<Renderer>().sharedMaterial = litTestMaterial;
+                // One cube per custom material beside the Lit one, so a missing shadow can be pinned to a caster shader.
+                var world = FindAnyObjectByType<PipeWorld.Landscape.DemoWorld>();
+                if (world != null)
+                {
+                    var scatterCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    scatterCube.transform.position = centre + new Vector3(0f, 1.5f, 5f);
+                    scatterCube.transform.localScale = new Vector3(2f, 3f, 2f);
+                    scatterCube.GetComponent<Renderer>().sharedMaterial = world.scatterMaterial;
+                    var terrainCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    terrainCube.transform.position = centre + new Vector3(0f, 1.5f, -5f);
+                    terrainCube.transform.localScale = new Vector3(2f, 3f, 2f);
+                    terrainCube.GetComponent<Renderer>().sharedMaterial = world.terrainMaterials[0];
+                }
                 var lamp = new GameObject("Test Lamp").AddComponent<Light>();
                 lamp.transform.position = centre + new Vector3(-4f, 4f, -3f);
                 lamp.type = LightType.Point;
@@ -57,12 +70,14 @@ namespace PipeWorld.Tools
                 lamp.shadows = LightShadows.Hard;
             }
 
+            var lightScaleArg = Arg(args, "-shotLightScale");
+            if (lightScaleArg != null)
+                foreach (var flicker in FindObjectsByType<PipeWorld.Landscape.TorchFlicker>())
+                    flicker.baseIntensity *= Float(lightScaleArg);
+
             if (Array.IndexOf(args, "-shotHardShadows") >= 0)
                 foreach (var flicker in FindObjectsByType<PipeWorld.Landscape.TorchFlicker>())
-                {
-                    flicker.enabled = false;
-                    flicker.torchLight.shadows = LightShadows.Hard;
-                }
+                    flicker.shadowType = LightShadows.Hard;
 
             if (Array.IndexOf(args, "-shotLitTest") >= 0 && litTestMaterial != null)
             {
@@ -75,6 +90,9 @@ namespace PipeWorld.Tools
 
             if (Array.IndexOf(args, "-shotLightsOnly") >= 0)
                 Shader.SetGlobalFloat("_PW_DebugLights", 1f);
+            var debugViewArg = Arg(args, "-shotDebugView");
+            if (debugViewArg != null)
+                Shader.SetGlobalFloat("_PW_DebugLights", Float(debugViewArg));
 
             var ambientArg = Arg(args, "-shotAmbient");
             if (cycle != null && ambientArg != null)
@@ -84,6 +102,8 @@ namespace PipeWorld.Tools
             var gradeSystem = FindAnyObjectByType<LightGradeSystem>();
             if (gradeSystem != null && gradeArg != null)
                 gradeSystem.globalStrength = Float(gradeArg);
+            if (gradeSystem != null && Array.IndexOf(args, "-shotNoShadowedGrade") >= 0)
+                gradeSystem.shadowedGrade = false;
 
             var keysArg = Arg(args, "-shotKeys");
             Keyboard rigKeyboard = null;
@@ -166,6 +186,8 @@ namespace PipeWorld.Tools
             }
 
             yield return new WaitForEndOfFrame();
+            if (Array.IndexOf(args, "-shotProbe") >= 0)
+                LogShadowState();
             ScreenCapture.CaptureScreenshot(path);
             yield return null;
             yield return null;
@@ -173,6 +195,31 @@ namespace PipeWorld.Tools
         }
 
         // The renderer list is not public API, so it is read by reflection. "all" targets every feature.
+        // Logs the global shadow state URP left after the last frame, to tell missing shadow maps from unused ones.
+        static void LogShadowState()
+        {
+            foreach (var name in new[] { "_MAIN_LIGHT_SHADOWS", "_MAIN_LIGHT_SHADOWS_CASCADE", "_ADDITIONAL_LIGHT_SHADOWS", "_SHADOWS_SOFT", "_SHADOWS_SOFT_HIGH", "_CLUSTER_LIGHT_LOOP", "_ADDITIONAL_LIGHTS" })
+                Debug.Log($"[ShotRig] keyword {name} {Shader.IsKeywordEnabled(name)}");
+            foreach (var name in new[] { "_MainLightShadowmapTexture", "_AdditionalLightsShadowmapTexture" })
+            {
+                var tex = Shader.GetGlobalTexture(name);
+                Debug.Log($"[ShotRig] {name} {(tex != null ? $"{tex.name} {tex.width}x{tex.height}" : "null")}");
+            }
+            var shadowParams = Shader.GetGlobalVectorArray("_AdditionalShadowParams");
+            if (shadowParams != null)
+                for (var i = 0; i < Mathf.Min(shadowParams.Length, 24); i++)
+                    Debug.Log($"[ShotRig] _AdditionalShadowParams[{i}] {shadowParams[i]}");
+            else
+                Debug.Log("[ShotRig] _AdditionalShadowParams null");
+            if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset rp)
+                Debug.Log($"[ShotRig] pipeline {rp.name} hdr {rp.supportsHDR} precision {rp.hdrColorBufferPrecision} msaa {rp.msaaSampleCount}, camera hdr {Camera.main?.allowHDR}");
+            var lights = FindObjectsByType<Light>();
+            var shadowed = 0;
+            foreach (var l in lights)
+                if (l.enabled && l.type != LightType.Directional && l.shadows != LightShadows.None) shadowed++;
+            Debug.Log($"[ShotRig] lights {lights.Length}, enabled punctual with shadows {shadowed}");
+        }
+
         static void SetRendererFeaturesActive(string featureName, bool active)
         {
             var pipeline = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;

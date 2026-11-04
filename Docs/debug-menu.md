@@ -18,6 +18,7 @@ Press **F1** (or the backquote key), or click the window's close button, to togg
 | Time options | Pause, day length (30 to 1800 s) |
 | Fog start / end | Day and night fog start and end sliders |
 | Light grade | Global strength of the [light grade](realtime-lights.md#light-grade) |
+| Shadows block grade | Whether the light grade is masked by the shadowed point light each pixel received, so torch shadows keep the night grade (`LightGradeSystem.shadowedGrade`) |
 | Respawn | Centre of crater, Inside outer wall |
 
 Start of day and start of night use [DayNightCycle.StartOfDayTime](../Assets/Scripts/World/DayNightCycle.cs) and `StartOfNightTime`: the times at which sun elevation crosses `nightStart`, the point where the night grade begins to fade in.

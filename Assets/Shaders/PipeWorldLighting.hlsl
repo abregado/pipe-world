@@ -7,7 +7,8 @@
 // Set globally by DayNightCycle. xyz = linear fog colour, w = strength. Params: x = start distance, y = 1 / (end - start).
 float4 _PW_FogColor;
 float4 _PW_FogParams;
-// When above 0.5, PW_Shade returns only the additional-light contribution: a mask of where torches reach and where shadows block them.
+// Debug view for PW_Shade. 1: only the additional-light contribution, a mask of where torches reach and where shadows block them.
+// 2: the sun's shadow attenuation (red) and the shadow-map coordinate (green, blue). 3: LightGrade shows the light mask.
 float _PW_DebugLights;
 
 half3 PW_AdditionalDiffuse(Light light, float3 normalWS)
@@ -15,7 +16,15 @@ half3 PW_AdditionalDiffuse(Light light, float3 normalWS)
     return light.color * (light.distanceAttenuation * light.shadowAttenuation * saturate(dot(normalWS, light.direction)));
 }
 
-half3 PW_Shade(half3 albedo, float3 normalWS, float3 positionWS, float4 positionCS)
+// How much shadowed point light reached the pixel, 0..1. Written to the colour buffer's alpha, where the LightGrade pass
+// reads it as the mask for each torch's warm grade, so the grade follows the real shadows.
+half PW_LightMask(half3 additional)
+{
+    return saturate(dot(additional, half3(0.3, 0.59, 0.11)) * 4.0);
+}
+
+// rgb: lit colour. a: PW_LightMask.
+half4 PW_ShadeMasked(half3 albedo, float3 normalWS, float3 positionWS, float4 positionCS)
 {
     float4 shadowCoord = TransformWorldToShadowCoord(positionWS);
     Light mainLight = GetMainLight(shadowCoord);
@@ -51,9 +60,19 @@ half3 PW_Shade(half3 albedo, float3 normalWS, float3 positionWS, float4 position
     LIGHT_LOOP_END
 #endif
 
+    half mask = PW_LightMask(additional);
+    if (_PW_DebugLights > 2.5)
+        return half4(albedo * (ambient + diffuse + additional), mask);
+    if (_PW_DebugLights > 1.5)
+        return half4(mainLight.shadowAttenuation, frac(shadowCoord.xy * 8.0), mask);
     if (_PW_DebugLights > 0.5)
-        return additional;
-    return albedo * (ambient + diffuse + additional);
+        return half4(additional, mask);
+    return half4(albedo * (ambient + diffuse + additional), mask);
+}
+
+half3 PW_Shade(half3 albedo, float3 normalWS, float3 positionWS, float4 positionCS)
+{
+    return PW_ShadeMasked(albedo, normalWS, positionWS, positionCS).rgb;
 }
 
 half3 PW_ApplyFog(half3 color, float3 positionWS)

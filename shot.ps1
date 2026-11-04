@@ -22,8 +22,12 @@ param(
     [double]$Grade = -1,
     [double]$Ambient = -1,
     [double]$ShadowRange = -1,
+    [double]$LightScale = -1,
     [switch]$LightsOnly,
+    [switch]$Probe,
+    [int]$DebugView = 0,
     [switch]$LitTest,
+    [switch]$NoShadowedGrade,
     [switch]$HardShadows,
     [switch]$LightTest,
     [string]$GraphicsApi,
@@ -58,12 +62,16 @@ if ($Grade -ge 0) { $gameArgs += @("-shotGrade", $Grade.ToString([Globalization.
 if ($Click) { $gameArgs += @("-shotClick", $Click) }
 if ($Respawn) { $gameArgs += @("-shotRespawn", $Respawn) }
 if ($ShadowRange -ge 0) { $gameArgs += @("-shotShadowRange", $ShadowRange.ToString([Globalization.CultureInfo]::InvariantCulture)) }
+if ($LightScale -ge 0) { $gameArgs += @("-shotLightScale", $LightScale.ToString([Globalization.CultureInfo]::InvariantCulture)) }
 if ($DisableFeature) { $gameArgs += @("-shotDisableFeature", $DisableFeature) }
 if ($GraphicsApi) { $gameArgs += "-force-$GraphicsApi" }
 if ($LightTest) { $gameArgs += "-shotLightTest" }
 if ($HardShadows) { $gameArgs += "-shotHardShadows" }
+if ($NoShadowedGrade) { $gameArgs += "-shotNoShadowedGrade" }
 if ($LitTest) { $gameArgs += "-shotLitTest" }
 if ($LightsOnly) { $gameArgs += "-shotLightsOnly" }
+if ($Probe) { $gameArgs += "-shotProbe" }
+if ($DebugView -gt 0) { $gameArgs += @("-shotDebugView", $DebugView) }
 if ($Menu) { $gameArgs += "-shotMenu" }
 if ($Keys) { $gameArgs += @("-shotKeys", $Keys) }
 if ($Hold -gt 0) { $gameArgs += @("-shotHold", $Hold.ToString([Globalization.CultureInfo]::InvariantCulture)) }

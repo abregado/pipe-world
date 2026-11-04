@@ -22,6 +22,25 @@ How to capture a frame from the built game, and drive the player with virtual ke
 | `-Click` | `x,y` in screen pixels, origin bottom-left: injects a left click there after the warm-up frames, to drive the menu. |
 | `-Build`, `-Setup` | Run [build.ps1](../build.ps1) (with `-Setup` for `-Setup`) first. |
 
+Lighting test options:
+
+| Parameter | Meaning |
+|---|---|
+| `-Ambient` | Multiplies the flat ambient (`DayNightCycle.ambientScale`), so real-time lights and shadows show without the ambient washing them out. |
+| `-Grade` | Sets the [light grade](realtime-lights.md#light-grade)'s global strength; 0 disables it. |
+| `-ShadowRange` | Overrides every torch's and beacon's shadow distance, in metres. |
+| `-HardShadows` | Switches torch shadows to hard (`TorchFlicker.shadowType`). |
+| `-LightScale` | Multiplies every torch's and beacon's intensity; 0 turns their light off. |
+| `-NoShadowedGrade` | Turns off the light grade's shadow mask (`LightGradeSystem.shadowedGrade`). |
+| `-LightsOnly` | Custom shaders output only the additional-light contribution (`_PW_DebugLights` 1). |
+| `-DebugView 2` | Custom shaders output the sun's shadow attenuation in red (0 in shadow) and the shadow-map coordinate in green and blue. Post-processing still runs, so read it for shape, not exact values. |
+| `-DebugView 3` | The light grade pass outputs its light mask (the colour buffer's alpha) in grey: white where torch light reaches, black in torch shadow. |
+| `-LitTest` | Lays a URP Lit plane over the spawn torches. |
+| `-LightTest` | At (32, 0, 0): a Lit plane, a Lit cube with a Scatter-material cube 5 m north and a Terrain-material cube 5 m south, and a hard-shadowed test point light. Separates caster and receiver problems by shader. |
+| `-Probe` | Logs the global shadow keywords, shadow-map textures, `_AdditionalShadowParams` per light, and the number of shadowed lights to `Player.log` just before the capture. |
+| `-DisableFeature` | Deactivates the named renderer feature on `PC_Renderer` (for example `LightGrade`). |
+| `-GraphicsApi` | Adds `-force-<api>` to the player's command line (for example `d3d11`). |
+
 ```powershell
 .\shot.ps1 -Time 0.5 -Pos "0,0.05,0" -Look "0,8" -Out Builds\Shots\noon.png
 .\shot.ps1 -Pos "0,0.05,0" -Keys "W,LeftShift" -Hold 2

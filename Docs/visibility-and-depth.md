@@ -22,7 +22,7 @@ Those are the scatter defaults. Each tile is registered with its own three dista
 
 ## Fog
 
-[DayNightCycle.cs:144](../Assets/Scripts/World/DayNightCycle.cs) writes the shader globals `_PW_FogColor`, `_PW_FogParams` and `_PW_NightFactor` every frame. [PW_ApplyFog](../Assets/Shaders/PipeWorldLighting.hlsl) (line 20) blends a surface toward the fog colour between a start and end distance with a smoothstep, reaching full strength at the end. The terrain, scatter and grass shaders all call it after lighting.
+[DayNightCycle.cs:152](../Assets/Scripts/World/DayNightCycle.cs) writes the shader globals `_PW_FogColor`, `_PW_FogParams` and `_PW_NightFactor` every frame. [PW_ApplyFog](../Assets/Shaders/PipeWorldLighting.hlsl) (line 78) blends a surface toward the fog colour between a start and end distance with a smoothstep, reaching full strength at the end. The terrain, scatter and grass shaders all call it after lighting.
 
 | Setting | Day | Night |
 |---|---|---|
