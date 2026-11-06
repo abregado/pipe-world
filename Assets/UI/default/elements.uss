@@ -1,0 +1,14 @@
+/* ── IconElement — shared icon box for items/fluids ─────────────────────── */
+.icon-element {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.icon-element--fallback {
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+}

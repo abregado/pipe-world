@@ -31,7 +31,7 @@ Player          CharacterController (height 1.8, radius 0.4, step offset 0.4) + 
 | Sprint | Left Shift | Left stick press |
 | Crouch (hold) | Left Ctrl or C | East button |
 
-Escape releases the cursor; a left click locks it again ([PlayerController.cs:97](../Assets/Scripts/Player/PlayerController.cs)). Look input is ignored while the cursor is unlocked. The cursor locks on `OnEnable` and unlocks on `OnDisable`.
+The controller does not handle Escape or clicks: menus own the cursor through `SetMenuState`, a reference-counted counter. While the count is above zero the cursor is unlocked, and look, movement, sprint, jump and crouch input are ignored while gravity still applies. The cursor locks on `OnEnable` only when no menu is open, and unlocks on `OnDisable`. The main menu, the escape menu and the [debug menu](debug-menu.md#cursor-and-input) each add one to the count while open; see [ui-and-menus.md](ui-and-menus.md#menus).
 
 ---
 
@@ -76,6 +76,8 @@ Speed is `crouchSpeed` while crouching, otherwise `sprintSpeed` when sprint is h
 | `eyeOffsetFromTop` | 0.2 |
 
 `Teleport` resets the player to standing.
+
+`IsGrounded` and `IsCrouching` feed the player pose that [netcode.md](netcode.md) sends, and `IsWalking` (planar speed above 0.5 m/s) gates tooltip dwell. The `Player` also carries a `PlayerRaycaster` for [interaction-modes.md](interaction-modes.md#the-raycast).
 
 ---
 

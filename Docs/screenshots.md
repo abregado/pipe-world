@@ -20,6 +20,7 @@ How to capture a frame from the built game, and drive the player with virtual ke
 | `-Respawn` | `centre`, `outer` or `edge`: calls the matching [debug menu](debug-menu.md#respawn) respawn and logs the position. |
 | `-Menu` | Opens the debug menu before the capture. |
 | `-Click` | `x,y` in screen pixels, origin bottom-left: injects a left click there after the warm-up frames, to drive the menu. |
+| `-Extra` | Extra arguments passed to the player, such as the [Piper flags](piper-systems.md#command-line-flags): `-Extra '-piperMenu'`. |
 | `-Build`, `-Setup` | Run [build.ps1](../build.ps1) (with `-Setup` for `-Setup`) first. |
 
 Lighting test options:
@@ -40,6 +41,14 @@ Lighting test options:
 | `-Probe` | Logs the global shadow keywords, shadow-map textures, `_AdditionalShadowParams` per light, and the number of shadowed lights to `Player.log` just before the capture. |
 | `-DisableFeature` | Deactivates the named renderer feature on `PC_Renderer` (for example `LightGrade`). |
 | `-GraphicsApi` | Adds `-force-<api>` to the player's command line (for example `d3d11`). |
+
+A screenshot run skips the main menu and captures gameplay. Add `-Extra '-piperMenu'` to capture the main menu instead. A click on a menu button works through `-Click` because the virtual mouse is also what UI Toolkit reads; with the menu showing, the New Game button is at `-Click '75,614'` in a 1280x720 window. Escape opens the escape menu with `-Keys Escape -Hold 1.5`.
+
+To click a prop, stand within 5 m, aim at it and click the screen centre:
+
+```powershell
+.\shot.ps1 -Pos "0,0.05,5.2" -Look "0,2" -Click "640,360"   # toggles the door; see [Piper] apply in Player.log
+```
 
 ```powershell
 .\shot.ps1 -Time 0.5 -Pos "0,0.05,0" -Look "0,8" -Out Builds\Shots\noon.png

@@ -33,6 +33,7 @@ namespace PipeWorld.EditorTools
             var sky = BuildSkyMaterial();
             ConfigureEdgeHighlight();
             ConfigureLightGrade(nightLut, warmLut);
+            PiperSetup.BuildAssets();
             BuildScene(profile, sky);
             AssetDatabase.SaveAssets();
             Debug.Log("[WorldSetup] Done.");
@@ -445,6 +446,8 @@ namespace PipeWorld.EditorTools
             menu.player = player;
             menu.world = world;
             menu.gradeSystem = gradeSystem;
+
+            PiperSetup.AddToScene(player);
 
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
             RenderSettings.skybox = sky;

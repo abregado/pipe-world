@@ -28,9 +28,8 @@ namespace PipeWorld.Tools
                 if (visible == value)
                     return;
                 visible = value;
-                // The controller owns the cursor lock, so disabling it frees the mouse for the menu.
                 if (player != null)
-                    player.enabled = !visible;
+                    player.SetMenuState(visible);
             }
         }
 
@@ -57,6 +56,7 @@ namespace PipeWorld.Tools
                 if (cycle != null)
                     DrawTime();
                 DrawRespawn();
+                PipeWorld.Piper.PiperDebug.Draw();
             }
             ImGui.End();
 

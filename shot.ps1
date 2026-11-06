@@ -32,6 +32,7 @@ param(
     [switch]$LightTest,
     [string]$GraphicsApi,
     [string]$DisableFeature,
+    [string[]]$Extra,
     [switch]$Menu,
     [switch]$Build,
     [switch]$Setup
@@ -76,6 +77,7 @@ if ($Menu) { $gameArgs += "-shotMenu" }
 if ($Keys) { $gameArgs += @("-shotKeys", $Keys) }
 if ($Hold -gt 0) { $gameArgs += @("-shotHold", $Hold.ToString([Globalization.CultureInfo]::InvariantCulture)) }
 if ($Frames -gt 0) { $gameArgs += @("-shotFrames", $Frames) }
+if ($Extra) { $gameArgs += $Extra }
 
 $p = Start-Process -FilePath $exe -ArgumentList $gameArgs -PassThru
 if (-not $p.WaitForExit(60000)) { $p.Kill(); throw "Game did not exit within 60s." }

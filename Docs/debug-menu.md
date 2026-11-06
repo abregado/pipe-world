@@ -20,6 +20,7 @@ Press **F1** (or the backquote key), or click the window's close button, to togg
 | Light grade | Global strength of the [light grade](realtime-lights.md#light-grade) |
 | Shadows block grade | Whether the light grade is masked by the shadowed point light each pixel received, so torch shadows keep the night grade (`LightGradeSystem.shadowedGrade`) |
 | Respawn | Centre of crater, Inside outer wall, Open edge |
+| Piper | See [Piper Section](#piper-section) |
 
 Start of day and start of night use [DayNightCycle.StartOfDayTime](../Assets/Scripts/World/DayNightCycle.cs) and `StartOfNightTime`: the times at which sun elevation crosses `nightStart`, the point where the night grade begins to fade in.
 
@@ -27,11 +28,27 @@ Start of day and start of night use [DayNightCycle.StartOfDayTime](../Assets/Scr
 
 ## Cursor and Input
 
-Opening the menu disables the `PlayerController`, which releases the cursor lock so the menu can be clicked. Closing it re-enables the controller. The `Visible` setter ([DebugMenu.cs:22](../Assets/Scripts/Tools/DebugMenu.cs)) is the only place that does this.
+Opening the menu calls `PlayerController.SetMenuState(true)`, which releases the cursor lock so the menu can be clicked; closing it calls `SetMenuState(false)`. The `Visible` setter ([DebugMenu.cs:22](../Assets/Scripts/Tools/DebugMenu.cs)) is the only place that does this. The counter is shared with the game menus ([ui-and-menus.md](ui-and-menus.md#menus)), so the interaction modes are suspended while the debug menu is open.
 
 **While the menu is open the player does not move or look.** Time keeps advancing unless Pause is ticked.
 
 The window uses `NoSavedSettings` and `AlwaysAutoResize`, so ImGui never stores its position or size.
+
+---
+
+## Piper Section
+
+[PiperDebug.cs](../Assets/Scripts/Piper/Core/PiperDebug.cs) draws the last block of the window. Every control queues an `InputAction`, so it behaves the same alone, hosting or joined.
+
+| Control | Action |
+|---|---|
+| +10 Obtainium, +3 Light Unit | `AdjustInventory` |
+| Place lamp | `PlacePropUsingItem`: spends a Light Unit |
+| Place salvage, door, supply box | `PlaceProp` |
+| Delete targeted prop | `DeleteProp` on the prop under the crosshair |
+| Nudge targeted prop 1 m up | `MovePropData` |
+
+Props are placed 3 m ahead of the player on the ground, at positions rounded to a centimetre so a `PropNetworkIdentifier` still matches after a save. The header line shows the network mode, the tick and the player count.
 
 ---
 

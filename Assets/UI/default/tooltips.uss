@@ -1,0 +1,1310 @@
+TooltipElement,
+PropTooltip,
+RecipeInfoTooltip,
+FluidInfoTooltip,
+ItemInfoTooltip,
+ResearchTooltip,
+UpgradeTooltip,
+PipeTooltip,
+ConnectionPointTooltip,
+WorkshopTooltip,
+DoorTooltip,
+PropRefundInfoTooltip,
+InfoTooltip
+{
+    background-color: var(--color-panel-dark-a97);
+    border-width: 1px;
+    border-color: var(--color-warn-a20);
+    border-left-color: var(--color-warn);
+    border-left-width: 3px;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-top-right-radius: 4px;
+    padding: 0;
+    padding-bottom: 4px;
+    margin-left: 10px;
+    width: var(--tooltip-w);
+    overflow: visible;
+}
+
+TooltipElement Label,
+PropTooltip Label,
+RecipeInfoTooltip Label,
+FluidInfoTooltip Label,
+ItemInfoTooltip Label,
+ResearchTooltip Label,
+UpgradeTooltip Label,
+PipeTooltip Label,
+ConnectionPointTooltip Label,
+WorkshopTooltip Label,
+DoorTooltip Label,
+PropRefundInfoTooltip Label,
+InfoTooltip Label
+{
+    margin: 0;
+    padding: 2px 6px;
+}
+
+.tooltip-heading-row {
+    flex-direction: column;
+    background-color: rgba(72, 44, 12, 0.97);
+    border-bottom-color: var(--color-warn-a40);
+    border-bottom-width: 1px;
+    padding: 4px 6px;
+    overflow: visible;
+}
+
+.tooltip-heading-row .tooltip-subtitle {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.tooltip-heading-row StatusElement {
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    translate: 0 -50%;
+    width: 20px;
+    height: 20px;
+    border-top-left-radius: 10px;
+    border-color: black;
+    border-width: 1px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding: 0;
+}
+
+.tooltip-heading-row StatusElement Label {
+    display: none;
+}
+
+.tooltip-heading-row StatusElement.correct {
+    background-color: var(--color-positive);
+}
+
+.tooltip-heading-row StatusElement.incorrect {
+    background-color: var(--color-negative);
+}
+
+TooltipElement Label#heading,
+PropTooltip Label#heading,
+RecipeInfoTooltip Label#heading,
+FluidInfoTooltip Label#heading,
+ItemInfoTooltip Label#heading,
+ResearchTooltip Label#heading,
+UpgradeTooltip Label#heading,
+PipeTooltip Label#heading,
+ConnectionPointTooltip Label#heading,
+WorkshopTooltip Label#heading,
+DoorTooltip Label#heading,
+PropRefundInfoTooltip Label#heading,
+InfoTooltip Label#heading {
+    color: white;
+    letter-spacing: 1px;
+    padding: 0;
+    flex-grow: 1;
+}
+
+TooltipElement Label#description,
+PropTooltip Label#description,
+RecipeInfoTooltip Label#description,
+FluidInfoTooltip Label#description,
+ItemInfoTooltip Label#description,
+ResearchTooltip Label#description,
+UpgradeTooltip Label#description,
+PipeTooltip Label#description,
+ConnectionPointTooltip Label#description,
+WorkshopTooltip Label#description,
+DoorTooltip Label#description,
+InfoTooltip Label#description {
+    color: var(--color-cream);
+    padding: 3px 6px 4px 6px;
+    white-space: normal;
+}
+
+ConnectionPointStatusElement,
+StatusElement {
+    flex-direction: row;
+    padding: 2px 8px;
+    margin-left: 0px;
+}
+
+ConnectionPointStatusElement Label#direction {
+    display: none;
+}
+
+StatusElement Label#title {
+    flex-grow: 1;
+    flex-shrink: 1;
+    -unity-text-align: middle-left;
+}
+
+ConnectionPointStatusElement .fluid-name-element {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+ConnectionPointStatusElement .fluid-name-element Label#name {
+    -unity-text-align: middle-left;
+}
+
+ConnectionPointStatusElement Label#status,
+StatusElement Label#status {
+    -unity-font-definition: var(--font-semibold);
+    flex-shrink: 0;
+    width: var(--status-w);
+    -unity-text-align: middle-right;
+}
+
+ConnectionPointStatusElement.tooltip-input-item,
+ConnectionPointStatusElement.tooltip-output-item {
+    background-color: var(--color-black-a30);
+}
+
+Label.correct {
+    color: var(--color-positive);
+}
+
+Label.incorrect {
+    color: var(--color-negative);
+}
+
+Label#outputcount {
+    white-space: normal;
+}
+
+/* ── ItemNeedElement — icon + name + status, standardized "you need this item" row ── */
+.item-need {
+    flex-direction: row;
+    align-items: center;
+    padding: 2px 8px;
+}
+
+/* ItemNameElement/FluidNameElement — icon + name, used standalone anywhere and as the
+   icon+name portion of ItemNeedElement below. */
+.item-name-element,
+.fluid-name-element {
+    flex-direction: row;
+    align-items: center;
+}
+
+.item-name-icon,
+.fluid-name-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+}
+
+.item-need .item-name-element {
+    flex-grow: 1;
+}
+
+.item-need Label#name {
+    flex-grow: 1;
+    flex-shrink: 1;
+    -unity-text-align: middle-left;
+    padding: 0;
+    margin: 0;
+}
+
+.item-need Label#status {
+    -unity-font-definition: var(--font-semibold);
+    flex-shrink: 0;
+    -unity-text-align: middle-right;
+    padding: 0;
+    margin: 0 0 0 8px;
+}
+
+.tooltip-omni-note {
+    font-size: var(--fs-small);
+    color: var(--color-white-a45);
+    padding: 0 8px 4px 20px;
+    margin-top: -4px;
+}
+
+.tooltip-section-header {
+    color: rgba(232, 130, 10, 0.75);
+    letter-spacing: 1px;
+    padding: 3px 8px 2px 8px;
+    margin-top: 2px;
+}
+
+.tooltip-rule {
+    height: 1px;
+    background-color: var(--color-warn-a20);
+    margin: 3px 8px;
+}
+
+StatusElement.tooltip_list_item,
+ConnectionPointStatusElement.tooltip_list_item {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+Label#researchname {
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top-width: 1px;
+    border-color: var(--color-warn-a20);
+    color: var(--color-fd8c35);
+}
+
+Label#unlocks {
+    white-space: normal;
+}
+
+/* Base card: override the standard one-sided accent styling entirely */
+WorkshopTooltip {
+    border-width: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    padding-bottom: 8px;
+    font-size: var(--fs-body);
+}
+
+/* State: locked (research not done) */
+WorkshopTooltip.workshop-locked {
+    background-color: rgba(18, 5, 5, 0.97);
+    border-color: rgba(200, 80, 64, 0.6);
+}
+
+WorkshopTooltip.workshop-locked .workshop-heading-row {
+    background-color: var(--color-370f0c-a97);
+    border-bottom-color: rgba(200, 80, 64, 0.35);
+}
+
+WorkshopTooltip.workshop-locked .tooltip-rule {
+    background-color: rgba(200, 80, 64, 0.2);
+}
+
+WorkshopTooltip.workshop-locked .tooltip-section-header {
+    color: rgba(200, 80, 64, 0.75);
+}
+
+/* State: affordable (researched + enough Obtainium) */
+WorkshopTooltip.workshop-affordable {
+    background-color: rgba(5, 18, 11, 0.97);
+    border-color: var(--color-positive-a60);
+}
+
+WorkshopTooltip.workshop-affordable .workshop-heading-row {
+    background-color: rgba(15, 55, 35, 0.97);
+    border-bottom-color: var(--color-positive-a35);
+}
+
+WorkshopTooltip.workshop-affordable .workshop-error-box {
+    display: none;
+}
+
+WorkshopTooltip.workshop-affordable .tooltip-rule {
+    background-color: rgba(126, 200, 160, 0.2);
+}
+
+WorkshopTooltip.workshop-affordable .tooltip-section-header {
+    color: rgba(126, 200, 160, 0.75);
+}
+
+/* State: unaffordable (researched, not enough Obtainium) */
+WorkshopTooltip.workshop-unaffordable {
+    background-color: rgba(18, 14, 3, 0.97);
+    border-color: rgba(212, 168, 67, 0.6);
+}
+
+WorkshopTooltip.workshop-unaffordable .workshop-heading-row {
+    background-color: var(--color-panel-amber-a97);
+    border-bottom-color: rgba(212, 168, 67, 0.35);
+}
+
+WorkshopTooltip.workshop-unaffordable .tooltip-rule {
+    background-color: var(--color-amber-a20);
+}
+
+WorkshopTooltip.workshop-unaffordable .tooltip-section-header {
+    color: var(--color-amber-a75);
+}
+
+/* State: already built (researched, node already placed) */
+WorkshopTooltip.workshop-already-built {
+    background-color: rgba(6, 12, 18, 0.97);
+    border-color: rgba(100, 150, 190, 0.6);
+}
+
+WorkshopTooltip.workshop-already-built .workshop-heading-row {
+    background-color: rgba(14, 35, 52, 0.97);
+    border-bottom-color: rgba(100, 150, 190, 0.35);
+}
+
+WorkshopTooltip.workshop-already-built .tooltip-rule {
+    background-color: rgba(100, 150, 190, 0.2);
+}
+
+WorkshopTooltip.workshop-already-built .tooltip-section-header {
+    color: rgba(100, 150, 190, 0.75);
+}
+
+.workshop-heading-row {
+    flex-direction: row;
+    align-items: center;
+    border-bottom-width: 1px;
+    padding: 5px 8px;
+}
+
+/* Cost row - a normal ItemNeedElement (icon + name + live have/need status), sitting on its own
+   line below the description rather than crammed into the heading. */
+.workshop-cost-need {
+    margin-top: 4px;
+}
+
+/* Error / reason box — always red, full width, no margin, high contrast */
+.workshop-error-box {
+    margin: 0;
+    padding: 5px 10px;
+    /*background-color: rgba(8, 2, 2, 0.96);*/
+    border-top-width: 1px;
+    border-top-color: var(--color-b4372d-a50);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--color-b4372d-a50);
+    border-left-width: 3px;
+    /*border-left-color: var(--color-negative);*/
+    background-color: var(--color-ff6b5b);
+    color: black;
+    white-space: normal;
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-body);
+}
+
+/* Workshop fluid items — static label rows, no connection status */
+.workshop-fluid-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 1px 8px 1px 16px;
+    color: var(--color-cream);
+}
+
+/* ============================================================
+   Research Node tooltip — hacker theme (pink/purple)
+   ============================================================ */
+
+/* Base card — wider than standard to fit the two-column layout */
+ResearchTooltip.research-node-info {
+    border-width: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    font-size: var(--fs-body);
+    min-width: var(--tooltip-w-wide);
+}
+
+/* Locked state: deep, dim purple-black */
+ResearchTooltip.research-node-info.research-node-locked {
+    background-color: rgba(12, 4, 20, 0.97);
+    border-color: rgba(160, 50, 200, 0.55);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .research-heading-row {
+    background-color: rgba(35, 10, 55, 0.97);
+    border-bottom-color: rgba(160, 50, 200, 0.35);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .research-sub-name {
+    color: rgba(185, 110, 215, 0.8);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .tooltip-section-header {
+    color: rgba(160, 50, 200, 0.7);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .research-unlocked-display {
+    display: none;
+}
+
+ResearchTooltip.research-node-info.research-node-locked .tooltip-rule {
+    background-color: rgba(160, 50, 200, 0.2);
+}
+
+ResearchTooltip.research-node-info.research-node-locked ConnectionPointStatusElement {
+    background-color: rgba(70, 15, 100, 0.3);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .research-right {
+    border-left-color: rgba(160, 50, 200, 0.25);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .research-unlock-header {
+    color: rgba(200, 130, 230, 0.9);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .research-unlock-pill {
+    border-color: rgba(160, 50, 200, 0.4);
+    background-color: rgba(160, 50, 200, 0.1);
+    color: rgba(220, 160, 245, 1.0);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .research-unlock-pill--access {
+    border-color: rgba(120, 30, 165, 0.4);
+    background-color: rgba(120, 30, 165, 0.1);
+    color: rgba(200, 140, 230, 1.0);
+}
+
+ResearchTooltip.research-node-info.research-node-locked .research-unlock-empty {
+    color: rgba(160, 50, 200, 0.3);
+}
+
+/* Unlocked state: noticeably lighter, electric purple */
+ResearchTooltip.research-node-info.research-node-unlocked {
+    background-color: var(--color-371250-a95);
+    border-color: var(--color-dc64ff-a85);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-heading-row {
+    background-color: var(--color-5a1e7d-a97);
+    border-bottom-color: var(--color-dc64ff-a50);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-sub-name {
+    color: var(--color-ebb9ff-a95);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .tooltip-section-header {
+    color: rgba(220, 100, 255, 0.8);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-needs-section {
+    display: none;
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-unlocked-display {
+    display: flex;
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .tooltip-rule {
+    background-color: var(--color-dc64ff-a35);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked ConnectionPointStatusElement {
+    background-color: rgba(120, 50, 160, 0.35);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-right {
+    border-left-color: var(--color-dc64ff-a30);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-unlock-header {
+    color: var(--color-ebaaff);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-unlock-pill {
+    border-color: var(--color-dc64ff-a55);
+    background-color: var(--color-dc64ff-a15);
+    color: var(--color-fcdcff);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-unlock-pill--access {
+    border-color: var(--color-b94be6-a55);
+    background-color: var(--color-b94be6-a15);
+    color: var(--color-ebc8ff);
+}
+
+ResearchTooltip.research-node-info.research-node-unlocked .research-unlock-empty {
+    color: var(--color-dc64ff-a30);
+}
+
+/* Single heading row: research name + RESEARCH subtitle */
+.research-heading-row {
+    flex-direction: column;
+    border-bottom-width: 1px;
+    padding: 5px 8px;
+}
+
+.research-heading-row .tooltip-subtitle {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Research name label — colour set per state */
+.research-sub-name {
+    flex-grow: 1;
+    letter-spacing: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Two-column body */
+.research-body {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+/* Left column: description + requirements */
+.research-left {
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding-bottom: 6px;
+}
+
+/* Right column: unlocks list */
+.research-right {
+    flex-shrink: 0;
+    width: 155px;
+    border-left-width: 1px;
+    padding: 6px 8px 8px 8px;
+}
+
+/* Requirements section — collapsed to none when unlocked via state class */
+.research-needs-section {
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+/* Big UNLOCKED pill — hidden by default (locked), shown via state class */
+.research-unlocked-display {
+    display: none;
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-large);
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    border-width: 2px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    border-color: rgba(220, 100, 255, 0.7);
+    background-color: rgba(220, 100, 255, 0.18);
+    color: rgba(245, 200, 255, 1.0);
+    margin: 10px 8px 6px 8px;
+    padding: 8px 12px;
+}
+
+/* "This technology unlocks" heading */
+.research-unlock-header {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-small);
+    letter-spacing: 1px;
+    white-space: normal;
+    margin: 0;
+    padding: 0 0 5px 0;
+}
+
+/* Individual unlock pill */
+.research-unlock-pill {
+    border-width: 1px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    font-size: var(--fs-body);
+    white-space: normal;
+    margin: 0 0 4px 0;
+    padding: 3px 9px;
+}
+
+/* Dash shown when nothing is listed */
+.research-unlock-empty {
+    font-size: var(--fs-body);
+    margin: 2px 0 0 2px;
+    padding: 0;
+}
+
+/* ============================================================
+   Tech info tooltip — pure info card (no propHandle, no locked
+   /unlocked state), used by ResearchNodePlacementTrigger. Reuses
+   the research-* structural classes but needs its own colours
+   since USS type selectors don't match across C# classes.
+   ============================================================ */
+TechInfoTooltip.research-node-info {
+    border-width: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    font-size: var(--fs-body);
+    min-width: var(--tooltip-w);
+    max-width: var(--tooltip-w-max);
+    margin-left: 10px;
+    background-color: var(--color-371250-a95);
+    border-color: var(--color-dc64ff-a85);
+}
+
+TechInfoTooltip.research-node-info .research-heading-row {
+    background-color: var(--color-5a1e7d-a97);
+    border-bottom-color: var(--color-dc64ff-a50);
+}
+
+TechInfoTooltip.research-node-info .research-sub-name {
+    color: var(--color-ebb9ff-a95);
+}
+
+TechInfoTooltip Label#description {
+    color: var(--color-cream);
+    padding: 4px 8px 5px 8px;
+    white-space: normal;
+}
+
+TechInfoTooltip.research-node-info .tooltip-rule {
+    background-color: var(--color-dc64ff-a35);
+}
+
+TechInfoTooltip.research-node-info .research-unlock-header {
+    color: var(--color-ebaaff);
+}
+
+TechInfoTooltip.research-node-info .research-unlock-pill {
+    border-color: var(--color-dc64ff-a55);
+    background-color: var(--color-dc64ff-a15);
+    color: var(--color-fcdcff);
+}
+
+TechInfoTooltip.research-node-info .research-unlock-pill--access {
+    border-color: var(--color-b94be6-a55);
+    background-color: var(--color-b94be6-a15);
+    color: var(--color-ebc8ff);
+}
+
+/* Status pill — Researched / Not Researched, shown at the bottom of the card */
+.research-status-pill {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-body);
+    letter-spacing: 1px;
+    -unity-text-align: middle-center;
+    border-width: 1px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    margin: 4px 8px 8px 8px;
+    padding: 4px 10px;
+}
+
+TechInfoTooltip.research-node-info.tech-info-researched .research-status-pill {
+    border-color: var(--color-positive-a60);
+    background-color: rgba(126, 200, 160, 0.15);
+    color: var(--color-positive);
+}
+
+TechInfoTooltip.research-node-info.tech-info-not-researched .research-status-pill {
+    border-color: rgba(220, 100, 255, 0.4);
+    background-color: rgba(220, 100, 255, 0.08);
+    color: rgba(235, 200, 255, 0.8);
+}
+
+/* ============================================================
+   Upgrade tooltip — amber (locked) / teal (upgraded)
+   ============================================================ */
+UpgradeTooltip.upgrade-info {
+    border-width: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    font-size: var(--fs-body);
+    min-width: var(--tooltip-w);
+}
+
+/* Locked state */
+UpgradeTooltip.upgrade-info.upgrade-locked {
+    background-color: var(--color-120c02-a97);
+    border-color: var(--color-amber-a55);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-locked .upgrade-heading-row {
+    background-color: var(--color-panel-amber-a97);
+    border-bottom-color: var(--color-amber-a20);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-locked .upgrade-main-name {
+    color: rgba(230, 190, 100, 0.85);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-locked .tooltip-section-header {
+    color: var(--color-amber-a75);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-locked .tooltip-rule {
+    background-color: var(--color-amber-a20);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-locked StatusElement,
+UpgradeTooltip.upgrade-info.upgrade-locked ItemNeedElement {
+    background-color: rgba(90, 60, 5, 0.3);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-locked .upgrade-unlocked-display {
+    display: none;
+}
+
+/* Upgraded state */
+UpgradeTooltip.upgrade-info.upgrade-unlocked {
+    background-color: rgba(5, 28, 30, 0.97);
+    border-color: rgba(117, 184, 203, 0.75);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-unlocked .upgrade-heading-row {
+    background-color: rgba(10, 60, 70, 0.97);
+    border-bottom-color: var(--color-accent-a30);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-unlocked .upgrade-main-name {
+    color: rgba(175, 225, 240, 0.95);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-unlocked .tooltip-section-header {
+    color: var(--color-accent-a80);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-unlocked .upgrade-needs-section {
+    display: none;
+}
+
+UpgradeTooltip.upgrade-info.upgrade-unlocked .upgrade-unlocked-display {
+    display: flex;
+}
+
+UpgradeTooltip.upgrade-info.upgrade-unlocked .tooltip-rule {
+    background-color: var(--color-accent-a30);
+}
+
+UpgradeTooltip.upgrade-info.upgrade-unlocked StatusElement,
+UpgradeTooltip.upgrade-info.upgrade-unlocked ItemNeedElement {
+    background-color: rgba(30, 90, 110, 0.35);
+}
+
+/* Heading block: stacks upgrade name over machine subtitle */
+.upgrade-heading-row {
+    flex-direction: column;
+    border-bottom-width: 1px;
+    padding: 5px 8px 6px 8px;
+}
+
+.upgrade-main-name {
+    letter-spacing: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Requirements section — hidden when upgraded */
+.upgrade-needs-section {
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.upgrade-fluid-need-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.upgrade-fluid-need-row StatusElement {
+    flex-grow: 1;
+}
+
+.upgrade-fluid-need-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+}
+
+/* Built-here pills — what this upgrade unlocks building at this workshop */
+.upgrade-built-here-pills {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0 8px 6px 8px;
+}
+
+.upgrade-built-here-pill {
+    border-width: 1px;
+    border-color: var(--color-warn-a40);
+    background-color: rgba(232, 130, 10, 0.12);
+    color: rgba(255, 220, 180, 1.0);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    padding: 2px 10px;
+    margin: 4px 6px 0 0;
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-body);
+    -unity-text-align: middle-center;
+}
+
+/* ResearchRequiredElement — banner under the heading of every research-gated tooltip */
+.research-required {
+    background-color: var(--color-negative);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    margin: 0;
+    padding: 0;
+}
+
+.research-required Label {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-body);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    color: rgba(255, 220, 215, 1.0);
+    margin: 0;
+    padding: 0;
+}
+
+/* UPGRADED pill */
+.upgrade-unlocked-display {
+    display: none;
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-large);
+    letter-spacing: 3px;
+    -unity-text-align: middle-center;
+    border-width: 2px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    border-color: var(--color-accent-a70);
+    background-color: var(--color-accent-a18);
+    color: rgba(200, 240, 250, 1.0);
+    margin: 10px 8px 6px 8px;
+    padding: 8px 12px;
+}
+
+/* ============================================================
+   Slot Crafter recipe detail panel — standalone tooltip, teal accent
+   ============================================================ */
+RecipeInfoTooltip.crafter-recipe-panel {
+    background-color: rgba(3, 15, 28, 0.97);
+    border-width: 1px;
+    border-color: var(--color-accent-a20);
+    border-left-color: var(--color-accent);
+    border-left-width: 3px;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-top-right-radius: 4px;
+    margin-top: 6px;
+    padding-bottom: 6px;
+}
+
+.crafter-recipe-heading-row {
+    flex-direction: column;
+    background-color: rgba(8, 38, 55, 0.97);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--color-accent-a30);
+    padding: 5px 8px;
+}
+
+.crafter-recipe-heading-row Label {
+    color: var(--color-c8eefa);
+    padding: 0;
+    margin: 0;
+}
+
+RecipeInfoTooltip.crafter-recipe-panel .tooltip-rule {
+    background-color: var(--color-accent-a20);
+}
+
+.crafter-recipe-stat {
+    flex-direction: row;
+    padding: 1px 8px;
+}
+
+.crafter-recipe-stat #stat-label {
+    color: var(--color-accent-a65);
+    flex-grow: 1;
+}
+
+.crafter-recipe-stat #stat-value,
+.crafter-recipe-stat-value Label#name {
+    -unity-font-definition: var(--font-semibold);
+    color: var(--color-c8eefa);
+}
+
+.crafter-recipe-stat-value .item-name-icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* ── New tooltip VE classes ─────────────────────────────────────────────── */
+.tooltip-subtitle {
+    font-size: var(--fs-small);
+    letter-spacing: 2px;
+    -unity-font-style: bold;
+    color: var(--color-white-a35);
+    padding: 2px 8px 3px 8px;
+    margin: 0;
+}
+
+/* Top row of ItemInfoTooltip/FluidInfoTooltip: heading box on the left, a larger icon top-right
+   of it. The heading box keeps its own background/border - the icon sits outside it, in the
+   (transparent) top row, so it doesn't get clipped by the heading box's own bounds.
+   align-items: stretch (not center) is what makes the heading box's height match the icon's -
+   the icon has a fixed square size, and stretch expands the heading box (whose own height is
+   otherwise just "auto", sized by its two label lines) to fill the row's full cross-axis size,
+   which is set by the tallest child - the icon. Pure flexbox, no runtime measurement needed. */
+.tooltip-top-row {
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.tooltip-top-row .tooltip-heading-row {
+    flex-grow: 1;
+}
+
+.tooltip-header-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    margin: 4px 6px 4px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--color-warn-a40);
+    border-left-width: 1px;
+    border-left-color: var(--color-warn-a40);
+}
+
+/* Wraps a heading Label + a plain-text suffix Label (eg. fluid name + " Pipe") on one line -
+   .tooltip-heading-row itself is column-direction (name stacked over subtitle), so the name+
+   suffix pair needs its own row wrapper to sit side by side. */
+.tooltip-heading-name-row {
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+/* Both labels share one font size and zero padding, so flex-end puts their baselines on the same line. */
+.tooltip-heading-name-row Label {
+    padding: 0;
+    margin: 0;
+}
+
+.tooltip-heading-name-row Label#heading-suffix {
+    margin-left: 6px;
+}
+
+/* Label#heading picks up flex-grow:1 from the generic TooltipElement/PropTooltip/... Label#heading
+   rule (meant for a heading that's the only thing in its row). Inside this name+suffix row that
+   would stretch the name to fill all available width and shove the suffix (" Input"/" Pipe") far
+   to the right - override back to natural content width so the suffix sits right after it. */
+.tooltip-heading-name-row Label#heading {
+    flex-grow: 0;
+}
+
+.pipe-fluid-row {
+    flex-direction: row;
+    padding: 3px 8px 5px 8px;
+}
+
+.tooltip-prop-cost {
+    color: rgba(232, 200, 130, 0.75);
+    padding: 2px 8px;
+}
+
+.tooltip-prop-extra {
+    /* wrapper for provider-added content; no default padding */
+}
+
+.tooltip-cp-status {
+    margin: 2px 8px;
+}
+
+.tooltip-producers-list {
+    flex-direction: column;
+    padding: 2px 8px 4px 8px;
+}
+
+.tooltip-producer-pill {
+    color: var(--color-white-a75);
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin: 1px 0;
+    font-size: var(--fs-small);
+}
+
+/* ============================================================
+   ItemInfoTooltip — amber/gold structural card
+   ============================================================ */
+ItemInfoTooltip {
+    border-width: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-left-width: 1px;
+    padding-bottom: 8px;
+    background-color: var(--color-120c02-a97);
+    border-color: var(--color-amber-a55);
+}
+
+ItemInfoTooltip .tooltip-heading-row {
+    background-color: var(--color-panel-amber-a97);
+    border-bottom-color: var(--color-amber-a30);
+}
+
+ItemInfoTooltip Label#heading {
+    color: rgba(230, 190, 100, 0.95);
+}
+
+ItemInfoTooltip .tooltip-header-icon {
+    border-bottom-color: var(--color-amber-a30);
+    border-left-color: var(--color-amber-a30);
+}
+
+/* ============================================================
+   FluidInfoTooltip — blue structural card
+   ============================================================ */
+FluidInfoTooltip {
+    border-width: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-left-width: 1px;
+    padding-bottom: 8px;
+    background-color: rgba(2, 10, 20, 0.97);
+    border-color: rgba(67, 140, 212, 0.55);
+}
+
+FluidInfoTooltip .tooltip-heading-row {
+    background-color: rgba(8, 30, 58, 0.97);
+    border-bottom-color: var(--color-438cd4-a30);
+}
+
+FluidInfoTooltip Label#heading {
+    color: rgba(130, 190, 230, 0.95);
+}
+
+FluidInfoTooltip .tooltip-header-icon {
+    border-bottom-color: var(--color-438cd4-a30);
+    border-left-color: var(--color-438cd4-a30);
+}
+
+/* ============================================================
+   InfoTooltip — plain heading/description card, mid-blue accent
+   ============================================================ */
+InfoTooltip {
+    border-width: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-left-width: 1px;
+    padding-bottom: 8px;
+    background-color: rgba(6, 10, 24, 0.97);
+    border-color: rgba(74, 108, 224, 0.6);
+}
+
+InfoTooltip .tooltip-heading-row {
+    background-color: rgba(16, 26, 64, 0.97);
+    border-bottom-color: rgba(74, 108, 224, 0.35);
+}
+
+InfoTooltip Label#heading {
+    color: rgba(150, 175, 240, 0.95);
+}
+
+/* ============================================================
+   DoorTooltip — single red panel
+   ============================================================ */
+DoorTooltip.door-info {
+    background-color: var(--color-280806-a97);
+    border-color: var(--color-c83c2d-a80);
+    border-left-color: var(--color-c83830);
+    padding: 6px 0 8px 0;
+}
+
+DoorTooltip.door-info.door-granted {
+    background-color: rgba(6, 40, 14, 0.97);
+    border-color: rgba(60, 200, 80, 0.8);
+    border-left-color: #38C850;
+}
+
+.door-locked-label {
+    -unity-font-definition: var(--font-black);
+    font-size: var(--fs-large);
+    letter-spacing: 3px;
+    color: var(--color-ff6b5b);
+    margin: 0;
+    padding: 0 10px 4px 10px;
+}
+
+.door-granted-label {
+    -unity-font-definition: var(--font-black);
+    font-size: var(--fs-large);
+    letter-spacing: 3px;
+    color: #6BFF8A;
+    margin: 0;
+    padding: 0 10px 4px 10px;
+}
+
+/* ── PropRefundInfoTooltip (RemovePropInteraction) ──────────────────────────── */
+PropRefundInfoTooltip.refund-info {
+    background-color: var(--color-280806-a97);
+    border-color: var(--color-c83c2d-a80);
+    border-left-color: var(--color-c83830);
+    padding-bottom: 6px;
+}
+
+PropRefundInfoTooltip.refund-info .tooltip-heading-row {
+    background-color: var(--color-370f0c-a97);
+    border-bottom-color: rgba(200, 60, 45, 0.35);
+}
+
+/* ── ItemListElement ── */
+.item-list {
+    flex-direction: column;
+}
+
+.item-list-row {
+    padding: 2px 8px;
+}
+
+.item-list-row Label#name {
+    padding: 0;
+    margin: 0;
+}
+
+/* ── AccessNeedElement: item-need row with a sector hex badge ── */
+.access-need-hex {
+    width: 20px;
+    height: 24px;
+    margin-right: 6px;
+}
+
+.access-need .sector-hex-monogram {
+    font-size: var(--fs-small);
+}
+
+/* ============================================================
+   Accepted Fluids list — column header + compact items
+   ============================================================ */
+.fluid-list-header {
+    flex-direction: row;
+    padding: 1px 8px 3px 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.fluid-list-header Label {
+    font-size: var(--fs-small);
+    letter-spacing: 1px;
+    color: var(--color-white-a30);
+    -unity-font-definition: var(--font-semibold);
+    padding: 0;
+    margin: 0;
+}
+
+.fluid-list-header .header-fluid {
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+}
+
+.fluid-list-header .header-effort {
+    flex-shrink: 0;
+    width: 100px;
+    -unity-text-align: middle-right;
+}
+
+ConnectionPointStatusElement.tooltip-fluid-item {
+    background-color: var(--color-black-a30);
+    padding: 1px 8px;
+}
+
+ConnectionPointStatusElement.tooltip-pipe-contents-item Label#status {
+    color: var(--color-accent);
+}
+
+ConnectionPointStatusElement.fluid-highlighted {
+    border-width: 1px;
+    border-color: rgba(126, 200, 160, 0.65);
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    background-color: rgba(126, 200, 160, 0.12);
+    padding: 5px 7px;
+    margin: 2px 0;
+}
+
+ConnectionPointStatusElement.fluid-highlighted Label#name {
+    color: var(--color-positive);
+}
+
+ConnectionPointStatusElement.fluid-highlighted Label#status {
+    color: var(--color-positive);
+}
+
+/* ============================================================
+   UpgradeStatusElement — reusable upgrade slot indicator
+   ============================================================ */
+UpgradeStatusElement {
+    flex-direction: column;
+    background-color: var(--color-black-a30);
+    padding: 3px 8px 4px 8px;
+    margin: 1px 0;
+}
+
+.upgrade-main-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+UpgradeStatusElement Label#upgrade-name {
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+    padding: 0;
+    margin: 0;
+}
+
+.upgrade-item-icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+}
+
+UpgradeStatusElement Label#upgrade-item {
+    flex-shrink: 0;
+    width: 84px;
+    -unity-font-definition: var(--font-semibold);
+    -unity-text-align: middle-right;
+    font-size: var(--fs-small);
+    padding: 0;
+    margin: 0;
+}
+
+UpgradeStatusElement Label#upgrade-desc {
+    font-size: var(--fs-small);
+    padding: 0;
+    margin: 0;
+    padding-top: 1px;
+    white-space: normal;
+}
+
+UpgradeStatusElement.upgrade-inactive Label#upgrade-name {
+    color: var(--color-white-a75);
+}
+
+UpgradeStatusElement.upgrade-inactive Label#upgrade-item {
+    color: rgba(212, 168, 67, 0.8);
+}
+
+UpgradeStatusElement.upgrade-inactive Label#upgrade-desc {
+    color: var(--color-white-a30);
+}
+
+UpgradeStatusElement.upgrade-active {
+    background-color: rgba(126, 200, 160, 0.1);
+}
+
+UpgradeStatusElement.upgrade-active Label#upgrade-name {
+    color: var(--color-positive);
+}
+
+UpgradeStatusElement.upgrade-active Label#upgrade-item {
+    color: var(--color-positive-a70);
+}
+
+UpgradeStatusElement.upgrade-active Label#upgrade-desc {
+    color: rgba(126, 200, 160, 0.45);
+}

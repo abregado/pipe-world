@@ -30,6 +30,11 @@ namespace PipeWorld.Player
         public float maxPitch = 89f;
 
         public bool IsCrouching { get; private set; }
+        public bool IsGrounded => body != null && body.isGrounded;
+        public bool MenuOpen => menuLevel > 0;
+        public bool IsWalking => planarVelocity.sqrMagnitude > 0.25f;
+
+        int menuLevel;
 
         readonly Collider[] headroomHits = new Collider[8];
 
@@ -79,7 +84,7 @@ namespace PipeWorld.Player
             jump.Enable();
             sprint.Enable();
             crouch.Enable();
-            SetCursorLocked(true);
+            SetCursorLocked(menuLevel == 0);
         }
 
         void OnDisable()
@@ -95,8 +100,7 @@ namespace PipeWorld.Player
 
         void Update()
         {
-            UpdateCursorLock();
-            if (Cursor.lockState == CursorLockMode.Locked)
+            if (menuLevel == 0 && Cursor.lockState == CursorLockMode.Locked)
                 UpdateLook();
             UpdateCrouch();
             UpdateMovement();
@@ -116,12 +120,12 @@ namespace PipeWorld.Player
             ApplyLook();
         }
 
-        void UpdateCursorLock()
+        // Reference counted so a menu opened inside another menu does not relock the cursor when it closes first.
+        public void SetMenuState(bool open)
         {
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-                SetCursorLocked(false);
-            else if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-                SetCursorLocked(true);
+            menuLevel = Mathf.Max(0, menuLevel + (open ? 1 : -1));
+            if (enabled)
+                SetCursorLocked(menuLevel == 0);
         }
 
         static void SetCursorLocked(bool locked)
@@ -149,7 +153,7 @@ namespace PipeWorld.Player
 
         void UpdateCrouch()
         {
-            if (crouch.IsPressed())
+            if (menuLevel == 0 && crouch.IsPressed())
                 IsCrouching = true;
             else if (IsCrouching && HasStandingHeadroom())
                 IsCrouching = false;
@@ -181,8 +185,8 @@ namespace PipeWorld.Player
 
         void UpdateMovement()
         {
-            var input = Vector2.ClampMagnitude(move.ReadValue<Vector2>(), 1f);
-            var speed = IsCrouching ? crouchSpeed : sprint.IsPressed() ? sprintSpeed : walkSpeed;
+            var input = menuLevel > 0 ? Vector2.zero : Vector2.ClampMagnitude(move.ReadValue<Vector2>(), 1f);
+            var speed = IsCrouching ? crouchSpeed : sprint.IsPressed() && menuLevel == 0 ? sprintSpeed : walkSpeed;
             var wish = (transform.right * input.x + transform.forward * input.y) * speed;
 
             bool grounded = body.isGrounded;
@@ -196,7 +200,7 @@ namespace PipeWorld.Player
                 verticalVelocity = -2f;
 
             bool canJump = !IsCrouching && Time.time - lastGroundedTime <= coyoteTime;
-            if (canJump && jump.WasPressedThisFrame())
+            if (canJump && menuLevel == 0 && jump.WasPressedThisFrame())
             {
                 verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
                 lastGroundedTime = float.NegativeInfinity;

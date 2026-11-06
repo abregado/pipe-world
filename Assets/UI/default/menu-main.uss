@@ -1,0 +1,122 @@
+/* ── Main Menu two-column layout ──────────────────────────────────────── */
+.menu.main-menu {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.menu-main-content {
+    flex-direction: row;
+    flex-grow: 1;
+    flex-shrink: 1;
+    align-items: stretch;
+}
+
+.menu-button-column {
+    flex-direction: column;
+    align-items: flex-start;
+    flex-shrink: 0;
+    width: 300px;
+}
+
+.menu-panel-area {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 32px;
+    overflow: hidden;
+    justify-content: flex-start;
+}
+
+/* ── Main Menu Discord CTA ────────────────────────────────────────────── */
+.menu-discord-cta {
+    align-self: flex-start;
+    max-width: 420px;
+    background-color: var(--color-panel-a92);
+    border-width: 1px;
+    border-color: var(--color-accent-a35);
+    border-left-width: 4px;
+    border-left-color: var(--color-accent);
+    padding: 28px;
+}
+
+.menu-discord-cta-heading {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-menu-large);
+    letter-spacing: 1px;
+    color: white;
+    margin-bottom: 14px;
+    padding: 0;
+}
+
+.menu-discord-cta-text {
+    white-space: normal;
+    -unity-font-definition: var(--font-normal);
+    font-size: var(--fs-menu-body);
+    color: var(--color-white-a65);
+    margin-bottom: 22px;
+}
+
+.menu Button.menu-social-icon-btn.menu-discord-cta-icon-btn {
+    align-self: center;
+    width: 72px;
+    height: 72px;
+    margin-right: 0;
+}
+
+/* Social icon-only buttons — strip all menu button chrome, tint + grow on hover */
+.menu Button.menu-social-icon-btn {
+    width: 42px;
+    height: 42px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-color: rgba(0, 0, 0, 0);
+    padding: 0;
+    margin: 0;
+    margin-right: 14px;
+    transform-origin: center center;
+    scale: 1 1;
+    transition-property: -unity-background-image-tint-color, scale;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out;
+}
+
+.menu Button.menu-social-icon-btn:hover {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(0, 0, 0, 0);
+    margin-left: 0;
+    margin-right: 14px;
+    scale: 1.25 1.25;
+}
+
+.menu Button.menu-social-icon-btn:focus {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(0, 0, 0, 0);
+    margin-left: 0;
+}
+
+/* Reddit — white at rest, orange on hover */
+.menu Button.menu-social-icon-btn--reddit {
+    -unity-background-image-tint-color: var(--color-white-a70);
+}
+
+.menu Button.menu-social-icon-btn--reddit:hover {
+    -unity-background-image-tint-color: #FF4500;
+}
+
+/* Discord — white at rest, blurple on hover */
+.menu Button.menu-social-icon-btn--discord {
+    -unity-background-image-tint-color: var(--color-white-a70);
+}
+
+.menu Button.menu-social-icon-btn--discord:hover {
+    -unity-background-image-tint-color: #5865F2;
+}
+
+.menu-version-label {
+    font-size: var(--fs-menu-small);
+    color: var(--color-white-a35);
+    -unity-font-definition: var(--font-semibold);
+    letter-spacing: 1px;
+    padding: 0;
+    margin: 0;
+    -unity-text-align: middle-right;
+}

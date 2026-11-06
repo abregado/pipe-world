@@ -1,0 +1,690 @@
+.prompttext {
+    font-size: var(--fs-large);
+    -unity-text-align: middle-right;
+}
+
+.prompterrortext {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-body);
+    color: var(--color-text-error);
+    -unity-text-align: middle-right;
+}
+
+InventoryListElement {
+    flex-direction: column;
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.inventory-header {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-body);
+    color: var(--color-accent);
+    letter-spacing: 2px;
+    padding: 3px 6px 2px 6px;
+}
+
+InventoryItemElement {
+    padding: 1px 6px;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 0;
+    transition-property: margin-left, opacity;
+    transition-duration: 0.5s;
+    margin-left: 0;
+    opacity: 1;
+}
+
+InventoryItemElement.offscreen {
+    margin-left: -200px;
+    opacity: 0;
+}
+
+.inventory-gradient {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+}
+
+.gradient-step {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0);
+    transition-property: background-color;
+    transition-duration: 1.0s;
+}
+
+InventoryItemElement Label {
+    -unity-text-align: middle-right;
+}
+
+InventoryItemElement #title {
+    font-size: var(--fs-body);
+    margin-left: 6px;
+    -unity-text-align: middle-left;
+}
+
+InventoryItemElement #count {
+    font-size: var(--fs-body);
+    color: white;
+    -unity-text-align: middle-right;
+    width: 40px;
+    flex-shrink: 0;
+}
+
+InventoryItemElement #icon {
+    flex-shrink: 0;
+    height: 16px;
+    width: 16px;
+}
+
+/* Gradient step base: slow fade-out, reverse-order delays so right side fades first */
+.gradient-step-1  { transition-delay: 1.80s; }
+
+.gradient-step-2  { transition-delay: 1.68s; }
+
+.gradient-step-3  { transition-delay: 1.56s; }
+
+.gradient-step-4  { transition-delay: 1.44s; }
+
+.gradient-step-5  { transition-delay: 1.32s; }
+
+.gradient-step-6  { transition-delay: 1.20s; }
+
+.gradient-step-7  { transition-delay: 1.08s; }
+
+.gradient-step-8  { transition-delay: 0.96s; }
+
+.gradient-step-9  { transition-delay: 0.84s; }
+
+.gradient-step-10 { transition-delay: 0.72s; }
+
+.gradient-step-11 { transition-delay: 0.60s; }
+
+.gradient-step-12 { transition-delay: 0.48s; }
+
+.gradient-step-13 { transition-delay: 0.36s; }
+
+.gradient-step-14 { transition-delay: 0.24s; }
+
+.gradient-step-15 { transition-delay: 0.12s; }
+
+.gradient-step-16 { transition-delay: 0.00s; }
+
+/* Up flash: fast sweep in left-to-right, decreasing alpha */
+InventoryItemElement.up .gradient-step { transition-duration: 0.15s; }
+
+InventoryItemElement.up .gradient-step-1  { background-color: var(--color-positive-a70); transition-delay: 0.00s; }
+
+InventoryItemElement.up .gradient-step-2  { background-color: rgba(126,200,160,0.66); transition-delay: 0.05s; }
+
+InventoryItemElement.up .gradient-step-3  { background-color: rgba(126,200,160,0.61); transition-delay: 0.10s; }
+
+InventoryItemElement.up .gradient-step-4  { background-color: rgba(126,200,160,0.57); transition-delay: 0.15s; }
+
+InventoryItemElement.up .gradient-step-5  { background-color: rgba(126,200,160,0.53); transition-delay: 0.20s; }
+
+InventoryItemElement.up .gradient-step-6  { background-color: rgba(126,200,160,0.48); transition-delay: 0.25s; }
+
+InventoryItemElement.up .gradient-step-7  { background-color: rgba(126,200,160,0.44); transition-delay: 0.30s; }
+
+InventoryItemElement.up .gradient-step-8  { background-color: rgba(126,200,160,0.39); transition-delay: 0.35s; }
+
+InventoryItemElement.up .gradient-step-9  { background-color: var(--color-positive-a35); transition-delay: 0.40s; }
+
+InventoryItemElement.up .gradient-step-10 { background-color: rgba(126,200,160,0.31); transition-delay: 0.45s; }
+
+InventoryItemElement.up .gradient-step-11 { background-color: rgba(126,200,160,0.26); transition-delay: 0.50s; }
+
+InventoryItemElement.up .gradient-step-12 { background-color: rgba(126,200,160,0.22); transition-delay: 0.55s; }
+
+InventoryItemElement.up .gradient-step-13 { background-color: rgba(126,200,160,0.18); transition-delay: 0.60s; }
+
+InventoryItemElement.up .gradient-step-14 { background-color: rgba(126,200,160,0.13); transition-delay: 0.65s; }
+
+InventoryItemElement.up .gradient-step-15 { background-color: rgba(126,200,160,0.09); transition-delay: 0.70s; }
+
+InventoryItemElement.up .gradient-step-16 { background-color: rgba(126,200,160,0.04); transition-delay: 0.75s; }
+
+/* Down flash: fast sweep in left-to-right, decreasing alpha */
+InventoryItemElement.down .gradient-step { transition-duration: 0.15s; }
+
+InventoryItemElement.down .gradient-step-1  { background-color: rgba(200,100,60,0.70); transition-delay: 0.00s; }
+
+InventoryItemElement.down .gradient-step-2  { background-color: rgba(200,100,60,0.66); transition-delay: 0.05s; }
+
+InventoryItemElement.down .gradient-step-3  { background-color: rgba(200,100,60,0.61); transition-delay: 0.10s; }
+
+InventoryItemElement.down .gradient-step-4  { background-color: rgba(200,100,60,0.57); transition-delay: 0.15s; }
+
+InventoryItemElement.down .gradient-step-5  { background-color: rgba(200,100,60,0.53); transition-delay: 0.20s; }
+
+InventoryItemElement.down .gradient-step-6  { background-color: rgba(200,100,60,0.48); transition-delay: 0.25s; }
+
+InventoryItemElement.down .gradient-step-7  { background-color: rgba(200,100,60,0.44); transition-delay: 0.30s; }
+
+InventoryItemElement.down .gradient-step-8  { background-color: rgba(200,100,60,0.39); transition-delay: 0.35s; }
+
+InventoryItemElement.down .gradient-step-9  { background-color: rgba(200,100,60,0.35); transition-delay: 0.40s; }
+
+InventoryItemElement.down .gradient-step-10 { background-color: rgba(200,100,60,0.31); transition-delay: 0.45s; }
+
+InventoryItemElement.down .gradient-step-11 { background-color: rgba(200,100,60,0.26); transition-delay: 0.50s; }
+
+InventoryItemElement.down .gradient-step-12 { background-color: rgba(200,100,60,0.22); transition-delay: 0.55s; }
+
+InventoryItemElement.down .gradient-step-13 { background-color: rgba(200,100,60,0.18); transition-delay: 0.60s; }
+
+InventoryItemElement.down .gradient-step-14 { background-color: rgba(200,100,60,0.13); transition-delay: 0.65s; }
+
+InventoryItemElement.down .gradient-step-15 { background-color: rgba(200,100,60,0.09); transition-delay: 0.70s; }
+
+InventoryItemElement.down .gradient-step-16 { background-color: rgba(200,100,60,0.04); transition-delay: 0.75s; }
+
+.prompt {
+    height: 34px;
+    width: 34px;
+    background-image: resource('Glyphs/KeyboardMouse/mouse_left');
+}
+
+CompassElement {
+    width: 40%;
+    height: 22px;
+    align-self: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    margin-bottom: 4px;
+}
+
+.compass-line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.compass-line-seg {
+    flex-grow: 1;
+}
+
+.compass-line-seg-1 { height: 2px; background-color: var(--color-accent-a20); }
+
+.compass-line-seg-2 { height: 2px; background-color: var(--color-accent-a40); }
+
+.compass-line-seg-3 { height: 2px; background-color: var(--color-accent-a60); }
+
+.compass-line-seg-4 { height: 3px; background-color: var(--color-accent-a80); }
+
+.compass-line-seg-5 { height: 3px; background-color: var(--color-accent); }
+
+CompassElement .compass-dir {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-body);
+    color: var(--color-accent);
+    -unity-text-align: middle-center;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    translate: -50% 0;
+}
+
+CompassElement .compass-marker {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-small);
+    color: var(--color-warn);
+    -unity-text-align: middle-center;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    translate: -50% 0;
+}
+
+LocationDisplayElement {
+    align-self: center;
+    align-items: center;
+}
+
+/* SHOWN state: indicator is a line — expands immediately when showing */
+.location-indicator {
+    width: 170px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--color-accent);
+    transition: width 0.3s 0s, height 0.3s 0s, border-radius 0.3s 0s;
+}
+
+/* TOAST state: indicator is a dot — compacts after text has slid up */
+LocationDisplayElement.toast .location-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    transition: width 0.3s 0.35s, height 0.3s 0.35s, border-radius 0.3s 0.35s;
+}
+
+.location-clip {
+    overflow: hidden;
+    height: 64px;
+    align-self: center;
+    align-items: center;
+}
+
+/* SHOWN state: content in view — slides down after indicator starts expanding */
+.location-content {
+    align-items: center;
+    translate: 0 0%;
+    transition: translate 0.4s 0.25s;
+    background-color: var(--color-black-a40);
+}
+
+/* TOAST state: content hidden above clip — slides up immediately */
+LocationDisplayElement.toast .location-content {
+    translate: 0 -80px;
+    transition: translate 0.4s 0s;
+    background-color: var(--color-black-a40);
+}
+
+LocationDisplayElement Label {
+    -unity-text-align: middle-center;
+    margin: 0px;
+    padding: 0px;
+}
+
+LocationDisplayElement Label#location {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-large);
+    color: white;
+    letter-spacing: 2px;
+    padding-bottom: 3px;
+}
+
+LocationDisplayElement Label#sub-location {
+    font-size: var(--fs-body);
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 1px;
+    padding-top: 4px;
+    border-top-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.15);
+    min-width: 100px;
+}
+
+InteractionPromptElement {
+    margin-right: 10px;
+    flex-direction: row-reverse;
+    align-items: center;
+}
+
+InteractionPromptElement .prompt-icon-container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+InteractionPromptElement .prompt-icon-container * {
+    margin: 0;
+    padding: 0;
+}
+
+.prompthold {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-small);
+    color: white;
+    -unity-text-align: middle-center;
+}
+
+InteractionPromptElement .prompt-text-container {
+    flex-direction: column;
+    align-items: flex-end;
+    margin: 0;
+    margin-right: 5px;
+    padding: 3px 6px 3px 8px;
+    background-color: var(--color-panel-dark-a97);
+    border-width: 1px;
+    border-color: var(--color-warn-a20);
+    border-right-color: var(--color-warn);
+    border-right-width: 3px;
+    border-left-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: 4px;
+}
+
+InteractionPromptElement .prompt-text-container * {
+    margin: 0;
+    padding: 0;
+}
+
+QuestLogElement {
+    transition-property: margin-right;
+    transition-duration: 0.5s;
+    transform-origin: right;
+    margin-right: 0px;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+QuestLogElement.offscreen {
+    margin-right:-380px;
+}
+
+QuestLogElement Label {
+    -unity-text-align: lower-right;
+    margin: 0px;
+}
+
+QuestLogElement Label#quest-heading {
+    color: white;
+    margin-bottom: 3px;
+    padding: 1px 0px;
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-body);
+}
+
+QuestItemElement {
+    transition-property: margin-right;
+    transition-duration: 0.5s;
+    transform-origin: right;
+    margin-right: 0px;
+    flex-shrink: 0;
+    margin-bottom: 4px;
+}
+
+QuestItemElement Label {
+    padding-top: 0px;
+}
+
+QuestItemElement.offscreen {
+    margin-right: -500px;
+}
+
+QuestItemElement Label.quest-item-title {
+    -unity-text-align: lower-right;
+    -unity-font-definition: var(--font-normal);
+    font-size: var(--fs-body);
+    color: #A5D5E5;
+}
+
+QuestItemElement Label.quest-item-title-completed {
+    color: #4A7080;
+}
+
+QuestItemElement Label.quest-item-description {
+    white-space: normal;
+    font-size: var(--fs-body);
+    color: #F2CFA8;
+    margin-top: 1px;
+    margin-bottom: -3px;
+    margin-left: 12px;
+    margin-right: 6px;
+    padding: 2px 6px;
+    background-color: rgba(0, 0, 0, 0.25);
+    border-right-color: var(--color-warn);
+    border-right-width: 2px;
+    max-width: var(--quest-w);
+}
+
+.hud-status-readout {
+    flex-direction: column;
+    align-self: flex-end;
+    align-items: flex-end;
+    background-color: rgba(10, 28, 38, 0.75);
+    border-width: 0;
+    margin-top: 2px;
+}
+
+.hud-status-readout .status-key {
+    font-size: var(--fs-body);
+    color: var(--color-accent-a65);
+    -unity-font-definition: var(--font-semibold);
+    letter-spacing: 1px;
+    padding: 1px 6px 2px 6px;
+    border-bottom-color: var(--color-accent);
+    border-bottom-width: 1px;
+    -unity-text-align: middle-right;
+}
+
+.hud-status-readout .status-value {
+    font-size: var(--fs-body);
+    color: white;
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-right;
+    background-color: rgba(0, 0, 0, 0.45);
+    padding: 1px 6px 2px 6px;
+}
+
+/* Every status readout line must stay on one row and size to its content - never wrap. */
+.hud-status-readout .status-key,
+.hud-status-readout .status-value {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   IconStatusRowElement - shared layout: PulseIcon on the left, box
+   with two right-aligned stacked labels on the right (divided by
+   a rule, thick accent border on the box's right edge). Used by
+   both SubstrateProgressElement and SectorRowElement so they stay
+   visually identical apart from icon, accent color, and text.
+   ============================================================ */
+.icon-status-row {
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-end;
+    margin-top: 2px;
+}
+
+/* Box has no fixed width/height - flexbox sizes it from its own content, so
+   every row's box is exactly as wide as its own text needs. The "collapsed"
+   state (SectorRowElement only - substrate's box never collapses) is a
+   scale/opacity pop anchored at the top-right corner rather than a
+   width/height transition, since USS can't animate to/from auto. */
+.icon-status-box {
+    flex-direction: column;
+    align-items: flex-end;
+    margin-left: 4px;
+    background-color: rgba(20, 20, 22, 0.75);
+    border-right-width: 4px;
+    transform-origin: top right;
+    transition-property: scale, opacity;
+    transition-duration: 0.4s;
+    scale: 1 1;
+    opacity: 1;
+}
+
+.icon-status-box.collapsed {
+    scale: 0 0;
+    opacity: 0;
+}
+
+.icon-status-box .status-key {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: var(--fs-body);
+    color: rgba(190, 190, 196, 0.55);
+    -unity-font-definition: var(--font-semibold);
+    letter-spacing: 1px;
+    padding: 1px 6px 2px 6px;
+    border-bottom-color: rgba(190, 190, 196, 0.3);
+    border-bottom-width: 1px;
+    -unity-text-align: middle-right;
+}
+
+.icon-status-box .status-value {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: var(--fs-body);
+    color: rgba(225, 225, 230, 0.85);
+    -unity-font-definition: var(--font-bold);
+    -unity-text-align: middle-right;
+    background-color: rgba(0, 0, 0, 0.35);
+    padding: 1px 6px 2px 6px;
+    transition-property: background-color, color;
+    transition-duration: 0.5s;
+}
+
+.icon-status-row.flash .status-value {
+    transition-duration: 0.1s;
+    background-color: rgba(126, 200, 160, 0.85);
+    color: var(--color-08161e);
+}
+
+/* ---- PulseIcon: generic icon + looping ping ring ---- */
+.pulse-icon {
+    position: relative;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition-property: scale, opacity;
+    transition-duration: 0.2s, 0.6s;
+}
+
+/* Opt-in: starts invisible and fades in on ".discovered" - SectorRowElement uses this
+   (undiscovered sectors show nothing); SubstrateProgressElement doesn't opt in, so its
+   icon just stays at the base opacity: 1 always. */
+.pulse-icon.discoverable {
+    opacity: 0;
+}
+
+.pulse-icon.discoverable.discovered {
+    opacity: 1;
+}
+
+.pulse-icon.flash {
+    transition-duration: 0.1s;
+    scale: 1.3 1.3;
+}
+
+.pulse-icon-image {
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Ping ring overlay - looped in C# since USS transitions can't repeat on their own.
+   Purely decorative: ignores layout and pointer events. */
+.pulse-icon-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Icon size variants */
+.sector-hex-icon {
+    width: 30px;
+    height: 36px;
+}
+
+.substrate-diamond-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.sector-hex-monogram {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-body);
+    color: rgba(8, 8, 10, 0.75);
+    margin: 0;
+    padding: 0;
+    -unity-text-align: middle-center;
+}
+
+/* ============================================================
+   SubstrateProgressElement - first-appearance slide/fade
+   ============================================================ */
+.substrate-progress {
+    transition-property: margin-right, opacity;
+    transition-duration: 0.4s;
+    margin-right: 0;
+    opacity: 1;
+}
+
+.substrate-progress.offscreen {
+    margin-right: -260px;
+    opacity: 0;
+}
+
+/* ============================================================
+   AccessServerProgressListElement - all 8 sectors always exist;
+   each row is a collapsible box badged with its own hex icon
+   ============================================================ */
+.access-server-progress-list {
+    flex-direction: column;
+    align-items: flex-end;
+    margin-top: 4px;
+    transition-property: margin-right, opacity;
+    transition-duration: 0.4s;
+    margin-right: 0;
+    opacity: 1;
+}
+
+.access-server-progress-list.offscreen {
+    margin-right: -260px;
+    opacity: 0;
+}
+
+.objectives-header {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-body);
+    color: var(--color-accent);
+    letter-spacing: 2px;
+    padding: 4px 8px 3px 8px;
+    -unity-text-align: middle-right;
+}
+
+.button-prompt-disabled {
+    color: #ff0000;
+}
+
+TooltipManagerElement {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+TooltipManagerElement.pipe-view {
+    flex-direction: column;
+    align-items: flex-end;
+    align-self: flex-end;
+}
+
+TooltipManagerElement.pipe-view > * {
+    margin-bottom: 8px;
+}
+
+#CrossHairLayer {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+CrosshairElement {
+    flex-shrink: 0;
+}
+
+#crosshair-left {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+#crosshair-right {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+#mode-label {
+    display: none;
+}
+

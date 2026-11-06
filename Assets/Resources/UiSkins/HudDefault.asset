@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fda38bcc9558ab5409fa58a795f5f443, type: 3}
+  m_Name: HudDefault
+  m_EditorClassIdentifier: Assembly-CSharp::PipeWorld.Piper.UiSkin
+  surface: 0
+  sheets:
+  - {fileID: 7433441132597879392, guid: 8495f6c57cef17146aff704be5f3de97, type: 3}
+  - {fileID: 7433441132597879392, guid: cca93b907ba5a0d40b4e94673ff5227f, type: 3}
+  - {fileID: 7433441132597879392, guid: f579f4c096cf0d042a19de2d7e6ed838, type: 3}
+  - {fileID: 7433441132597879392, guid: b6e82e82fbf77c342985c761a8272576, type: 3}

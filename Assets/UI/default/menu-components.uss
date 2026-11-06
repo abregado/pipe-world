@@ -1,0 +1,1278 @@
+.menu {
+    padding:32px;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.menu-logo {
+    -unity-font-definition: var(--font-black);
+    font-size: 52px;
+    color: var(--color-accent);
+    -unity-text-align: middle-center;
+    letter-spacing: 6px;
+    margin-bottom: 0;
+}
+
+.menu-button-group {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 300px;
+}
+
+.menu-divider {
+    width: 300px;
+    height: 1px;
+    background-color: var(--color-accent-a30);
+    margin-top: 36px;
+    margin-bottom: 36px;
+}
+
+.menu-divider-tight {
+    width: 300px;
+    height: 1px;
+    background-color: var(--color-accent-a30);
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+
+.menu-status {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    translate: -50% 0;
+    flex-direction: row;
+    background-color: var(--color-panel-a92);
+    border-color: var(--color-accent-a35);
+    border-width: 1px;
+    border-top-color: var(--color-accent);
+    border-top-width: 3px;
+}
+
+.menu-status #status-key {
+    color: var(--color-accent);
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-body);
+    padding: 6px 6px 6px 12px;
+}
+
+.menu-status #status-value {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-body);
+    padding: 6px 12px 6px 10px;
+    background-color: rgba(3, 8, 12, 0.98);
+    border-width: 1px;
+    border-color: var(--color-black-a60);
+    border-right-color: var(--color-accent-a15);
+    border-bottom-color: var(--color-accent-a15);
+}
+
+.menu-status #status-value.status-single {
+    color: var(--color-positive);
+}
+
+.menu-status #status-value.status-hosting {
+    color: #D4A843;
+}
+
+.menu-status #status-value.status-client {
+    color: #A07ED4;
+}
+
+.menu Button {
+    flex-grow: 0;
+    border-color: var(--color-accent-a35);
+    border-left-color: var(--color-accent);
+    background-color: var(--color-panel-a92);
+    border-width: 1px;
+    border-left-width: 4px;
+    width: 300px;
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-large);
+    color: var(--color-text-main);
+    margin-bottom: 3px;
+    -unity-text-align: middle-left;
+    transition-property: margin-left, margin-right, width, background-color, border-color, color;
+    transition-duration: 0.2s;
+}
+
+.menu Button:focus {
+    background-color: var(--color-accent-a6);
+    border-color: var(--color-accent-a70);
+    border-left-color: var(--color-accent);
+    margin-left: 10px;
+}
+
+.menu Button:hover {
+    background-color: var(--color-accent);
+    border-color: var(--color-4a9ab5);
+    border-left-color: var(--color-4a9ab5);
+    color: var(--color-08161e);
+    margin-left: 25px;
+}
+
+.menu Button:disabled {
+    transition-property: none;
+    margin-left: 3px;
+    border-width: 1px;
+    border-left-width: 1px;
+    border-color: var(--color-8c8c8c-a12);
+    border-left-color: var(--color-8c8c8c-a20);
+    background-color: var(--color-282a2c-a40);
+    color: var(--color-white-a30);
+}
+
+.menu Button:disabled:hover {
+    margin-left: 3px;
+    border-width: 1px;
+    border-left-width: 1px;
+    border-color: var(--color-8c8c8c-a12);
+    border-left-color: var(--color-8c8c8c-a20);
+    background-color: var(--color-282a2c-a40);
+    color: var(--color-white-a30);
+}
+
+.menu TextField {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(0, 0, 0, 0);
+    -unity-font-definition: var(--font-normal);
+    font-size: var(--fs-menu-body);
+    color: var(--color-text-main);
+    margin-bottom: 0;
+}
+
+.menu TextField #unity-text-input {
+    background-color: var(--color-panel-a92);
+    border-color: var(--color-accent-a35);
+    border-left-color: var(--color-accent-a70);
+    border-width: 1px;
+    border-left-width: 4px;
+    color: var(--color-text-main);
+    -unity-font-definition: var(--font-normal);
+    font-size: var(--fs-menu-body);
+    padding: 4px 8px;
+}
+
+.menu-join-row {
+    flex-direction: row;
+    width: 300px;
+    margin-bottom: 3px;
+}
+
+.menu-join-row Button {
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: 160px;
+    margin-bottom: 0;
+}
+
+/* ── Main Menu footer ─────────────────────────────────────────────────── */
+.menu-footer {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top-width: 1px;
+    border-top-color: var(--color-accent-a20);
+}
+
+.menu-footer-left {
+    flex-direction: row;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.menu-footer-right {
+    flex-shrink: 0;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+/* Steam wishlist — icon + label in a clickable container, no chrome, grows on hover */
+.menu-steam-wishlist {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    padding: 4px 0;
+    cursor: link;
+    transform-origin: center center;
+    scale: 1 1;
+    transition-property: scale;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out;
+}
+
+.menu-steam-wishlist:hover {
+    scale: 1.1 1.1;
+}
+
+.menu-steam-wishlist .steam-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    margin-right: 15px;
+    -unity-background-image-tint-color: var(--color-white-a45);
+    transition-property: -unity-background-image-tint-color;
+    transition-duration: 0.15s;
+}
+
+.menu-steam-wishlist:hover .steam-icon {
+    -unity-background-image-tint-color: var(--color-accent);
+}
+
+.menu-steam-wishlist .steam-label {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-large);
+    color: var(--color-white-a45);
+    padding: 0;
+    margin: 0;
+    transition-property: color;
+    transition-duration: 0.15s;
+}
+
+.menu-steam-wishlist:hover .steam-label {
+    color: var(--color-accent);
+}
+
+/* ── MenuViewPanel ────────────────────────────────────────────────────── */
+.menu-view-panel {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-panel-a92);
+    border-width: 1px;
+    border-color: var(--color-accent-a35);
+    border-left-width: 4px;
+    border-left-color: var(--color-accent);
+    padding: 32px;
+    opacity: 0;
+    translate: 110% 0;
+    transition-property: translate, opacity;
+    transition-duration: 0.25s, 0.15s;
+    transition-timing-function: ease-out;
+}
+
+.menu-view-panel.visible {
+    opacity: 1;
+    translate: 0% 0;
+}
+
+/* ── Panel-trigger button: active / back state ────────────────────────── */
+.menu Button.menu-button--active {
+    background-color: rgba(232, 146, 42, 0.12);
+    border-color: rgba(232, 146, 42, 0.6);
+    border-left-color: var(--color-warn-soft);
+    color: var(--color-warn-soft);
+    margin-left: 25px;
+}
+
+.menu Button.menu-button--active:hover {
+    background-color: rgba(232, 146, 42, 0.25);
+    border-color: rgba(232, 146, 42, 0.8);
+    border-left-color: var(--color-warn-soft);
+    color: var(--color-warn-soft);
+    margin-left: 25px;
+}
+
+/* ── Load Game Panel ─────────────────────────────────────────────── */
+.load-game-title {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-menu-large);
+    letter-spacing: 2px;
+    color: white;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+.load-game-list {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.load-game-empty {
+    font-size: var(--fs-menu-body);
+    color: var(--color-white-a35);
+    padding: 8px 0;
+}
+
+.load-game-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 14px;
+    margin-bottom: 2px;
+    border-width: 1px;
+    border-color: var(--color-accent-a12);
+    border-left-width: 3px;
+    border-left-color: var(--color-accent-a18);
+    background-color: rgba(3, 10, 16, 0.7);
+    transition-property: background-color, border-left-color;
+    transition-duration: 0.12s;
+}
+
+.load-game-item:hover {
+    background-color: rgba(10, 28, 44, 0.85);
+    border-left-color: var(--color-accent-a55);
+}
+
+.load-game-item.selected {
+    background-color: rgba(15, 38, 55, 0.9);
+    border-left-color: var(--color-accent);
+}
+
+.load-game-item--incompatible {
+    border-left-color: rgba(200, 80, 65, 0.55);
+}
+
+.load-game-item--incompatible:hover {
+    background-color: rgba(44, 14, 10, 0.85);
+    border-left-color: rgba(220, 100, 80, 0.7);
+}
+
+.load-game-item--incompatible.selected {
+    background-color: rgba(50, 16, 12, 0.9);
+    border-left-color: var(--color-text-error);
+}
+
+.load-game-item--incompatible .load-game-item-name,
+.load-game-item--incompatible .load-game-item-pipe-metres,
+.load-game-item--incompatible .load-game-item-playtime,
+.load-game-item--incompatible .load-game-item-version {
+    color: var(--color-text-error);
+}
+
+.load-game-item-left {
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.load-game-item-name {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-large);
+    padding: 0;
+    margin: 0;
+}
+
+.load-game-item-meta {
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.load-game-item-playtime {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-large);
+    color: var(--color-accent);
+    padding: 0;
+    margin: 0;
+}
+
+.load-game-item-pipe-metres {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-large);
+    color: var(--color-white-a40);
+    padding: 0;
+    margin: 0;
+}
+
+.load-game-item-version {
+    font-size: var(--fs-menu-small);
+    color: var(--color-white-a40);
+    padding: 0;
+    margin: 0;
+}
+
+.load-game-item-date {
+    font-size: var(--fs-menu-small);
+    color: var(--color-white-a40);
+    padding: 0;
+    margin: 0;
+}
+
+.load-game-action-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top-width: 1px;
+    border-top-color: var(--color-accent-a15);
+    flex-shrink: 0;
+}
+
+.load-game-version-info {
+    flex-direction: column;
+}
+
+.load-game-version-label {
+    font-size: var(--fs-menu-small);
+    color: var(--color-white-a40);
+    padding: 0;
+    margin: 0;
+}
+
+.load-game-error-label {
+    font-size: var(--fs-menu-small);
+    color: var(--color-text-error);
+    padding: 2px 0 0 0;
+    margin: 0;
+    min-height: 20px;
+}
+
+.load-game-action-bar Button {
+    width: 180px;
+}
+
+/* ── Load Game scrollbar ─────────────────────────────────────────── */
+.load-game-list .unity-scroller--vertical,
+.settings-preview-scroll .unity-scroller--vertical {
+    width: 8px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.load-game-list #unity-high-button,
+.load-game-list #unity-low-button,
+.settings-preview-scroll #unity-high-button,
+.settings-preview-scroll #unity-low-button {
+    display: none;
+}
+
+.load-game-list .unity-base-slider__tracker,
+.settings-preview-scroll .unity-base-slider__tracker {
+    background-color: var(--color-accent-a8);
+    border-width: 0;
+    border-radius: 4px;
+    margin: 0;
+}
+
+.load-game-list .unity-base-slider__dragger,
+.settings-preview-scroll .unity-base-slider__dragger {
+    background-color: var(--color-accent-a30);
+    border-width: 0;
+    border-radius: 4px;
+}
+
+.load-game-list .unity-base-slider__dragger:hover,
+.settings-preview-scroll .unity-base-slider__dragger:hover {
+    background-color: var(--color-accent-a60);
+}
+
+.load-game-list .unity-base-slider__dragger-border,
+.settings-preview-scroll .unity-base-slider__dragger-border {
+    border-width: 0;
+}
+
+/* ── Settings Panel ──────────────────────────────────────────────── */
+.settings-tab-bar {
+    flex-direction: row;
+    flex-shrink: 0;
+    margin-bottom: 24px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--color-accent-a20);
+}
+
+/* Override .menu Button defaults for tab buttons */
+.settings-tab-bar .settings-tab {
+    width: auto;
+    flex-shrink: 0;
+    flex-grow: 0;
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-color: transparent;
+    border-left-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-body);
+    padding: 8px 20px;
+    margin: 0;
+    margin-right: 2px;
+    margin-bottom: -1px;
+    color: var(--color-white-a45);
+    letter-spacing: 1px;
+    transition-property: color, border-color, background-color;
+    transition-duration: 0.15s;
+}
+
+.settings-tab-bar .settings-tab:hover {
+    background-color: var(--color-accent-a6);
+    border-color: transparent;
+    border-bottom-color: var(--color-accent-a30);
+    border-left-width: 0;
+    color: var(--color-white-a70);
+    margin-left: 0;
+}
+
+.settings-tab-bar .settings-tab:focus {
+    background-color: var(--color-accent-a4);
+    border-color: transparent;
+    border-bottom-color: var(--color-accent-a30);
+    border-left-width: 0;
+    color: var(--color-white-a70);
+    margin-left: 0;
+}
+
+.settings-tab-bar .settings-tab.selected {
+    color: var(--color-accent);
+    border-color: transparent;
+    border-bottom-color: var(--color-accent);
+    border-left-width: 0;
+    background-color: var(--color-accent-a4);
+}
+
+.settings-tab-bar .settings-tab.selected:hover {
+    color: var(--color-accent);
+    background-color: var(--color-accent-a8);
+    border-color: transparent;
+    border-bottom-color: var(--color-accent);
+    border-left-width: 0;
+    margin-left: 0;
+}
+
+.settings-tab-bar .settings-tab.selected:focus {
+    color: var(--color-accent);
+    background-color: var(--color-accent-a6);
+    border-color: transparent;
+    border-bottom-color: var(--color-accent);
+    border-left-width: 0;
+    margin-left: 0;
+}
+
+.settings-content {
+    flex-grow: 1;
+    flex-direction: column;
+    display: none;
+}
+
+.settings-content.active {
+    display: flex;
+}
+
+.settings-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 20px;
+    min-height: 36px;
+}
+
+.settings-row-label {
+    width: 180px;
+    flex-shrink: 0;
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-body);
+    letter-spacing: 1px;
+    color: var(--color-white-a65);
+    padding: 0;
+    margin: 0;
+}
+
+.settings-row-value {
+    width: 56px;
+    flex-shrink: 0;
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-body);
+    color: var(--color-accent);
+    -unity-text-align: middle-right;
+    padding: 0;
+    margin: 0;
+    margin-left: 12px;
+}
+
+.settings-row-value--wide {
+    width: 190px;
+}
+
+.settings-preview-caption {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-body);
+    letter-spacing: 1px;
+    color: var(--color-white-a45);
+    margin: 12px 0 8px 0;
+}
+
+.settings-preview-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 120px;
+}
+
+.settings-preview-scroll .unity-scroll-view__content-container {
+    padding-right: 12px;
+}
+
+.settings-preview {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.settings-preview > * {
+    margin-left: 0;
+    margin-right: 12px;
+    margin-bottom: 12px;
+}
+
+.settings-dropdown {
+    width: 260px;
+    flex-grow: 0;
+    margin: 0 12px 0 0;
+    font-size: var(--fs-menu-body);
+}
+
+.settings-choice-group {
+    flex-direction: row;
+    flex-grow: 1;
+    flex-wrap: wrap;
+}
+
+.menu .settings-choice {
+    flex-grow: 0;
+    width: auto;
+    margin: 0 6px 0 0;
+    padding: 6px 14px;
+    border-width: 1px;
+    border-color: var(--color-accent-a15);
+    background-color: rgba(0, 0, 0, 0);
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-body);
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.55);
+    -unity-text-align: middle-center;
+}
+
+.menu .settings-choice:hover,
+.menu .settings-choice:focus {
+    margin-left: 0;
+    border-left-width: 1px;
+    border-color: var(--color-accent-a35);
+    background-color: var(--color-accent-a8);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.menu .settings-choice.selected,
+.menu .settings-choice.selected:hover,
+.menu .settings-choice.selected:focus {
+    border-color: var(--color-accent);
+    background-color: rgba(117, 184, 203, 0.1);
+    color: var(--color-accent);
+}
+
+/* ── Piperspace Slider ───────────────────────────────────────────── */
+.menu .settings-content Slider {
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+}
+
+.menu .settings-content Slider .unity-base-field__label {
+    display: none;
+}
+
+.menu .settings-content Slider .unity-base-slider__input {
+    flex-grow: 1;
+    height: 36px;
+}
+
+.menu .settings-content Slider .unity-base-slider__tracker {
+    height: 3px;
+    background-color: var(--color-accent-a20);
+    border-width: 0;
+    border-radius: 2px;
+    margin: 0 8px;
+}
+
+.menu .settings-content Slider .unity-base-slider__dragger {
+    width: 16px;
+    height: 16px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background-color: var(--color-accent);
+    border-width: 0;
+    transition-property: background-color;
+    transition-duration: 0.1s;
+}
+
+.menu .settings-content Slider .unity-base-slider__dragger:hover {
+    background-color: white;
+}
+
+.menu .settings-content Slider .unity-base-slider__dragger-border {
+    border-width: 0;
+}
+
+/* ── Piperspace Toggle ───────────────────────────────────────────── */
+.menu .settings-content Toggle {
+    margin: 0;
+    padding: 0;
+    min-height: 36px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.menu .settings-content Toggle > VisualElement {
+    flex-direction: row;
+    align-items: center;
+}
+
+.menu .settings-content Toggle > VisualElement > Label {
+    display: none;
+}
+
+.menu .settings-content Toggle .unity-toggle__checkmark {
+    width: 22px;
+    height: 22px;
+    background-color: var(--color-panel-a92);
+    border-color: var(--color-accent-a40);
+    border-width: 1px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    margin: 0;
+    flex-shrink: 0;
+    transition-property: background-color, border-color;
+    transition-duration: 0.1s;
+}
+
+.menu .settings-content Toggle:checked .unity-toggle__checkmark {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.menu .settings-content Toggle:hover .unity-toggle__checkmark {
+    border-color: var(--color-accent-a80);
+}
+
+.menu .settings-content Toggle:checked:hover .unity-toggle__checkmark {
+    background-color: white;
+    border-color: white;
+}
+
+/* ── Piperspace IntegerField (Settings) ─────────────────────────── */
+.menu .settings-content IntegerField {
+    flex-grow: 1;
+    margin: 0;
+    padding: 0;
+    -unity-font-definition: var(--font-normal);
+    font-size: var(--fs-menu-body);
+    color: var(--color-text-main);
+}
+
+.menu .settings-content IntegerField .unity-base-field__label {
+    display: none;
+}
+
+.menu .settings-content IntegerField #unity-text-input {
+    flex-grow: 1;
+    background-color: var(--color-panel-a92);
+    border-color: var(--color-accent-a35);
+    border-left-color: var(--color-accent-a70);
+    border-width: 1px;
+    border-left-width: 4px;
+    color: var(--color-text-main);
+    -unity-font-definition: var(--font-normal);
+    font-size: var(--fs-menu-body);
+    padding: 4px 8px;
+}
+
+/* ── Settings per-row reset button ───────────────────────────────── */
+.menu .settings-reset-btn {
+    width: 58px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin: 0;
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-width: 1px;
+    border-left-width: 1px;
+    border-color: var(--color-accent-a15);
+    background-color: rgba(0, 0, 0, 0);
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-small);
+    letter-spacing: 1px;
+    color: var(--color-white-a30);
+    -unity-text-align: middle-center;
+    transition-property: color, background-color, border-color;
+    transition-duration: 0.15s;
+}
+
+.menu .settings-reset-btn:hover {
+    color: var(--color-white-a75);
+    background-color: var(--color-accent-a8);
+    border-color: var(--color-accent-a35);
+    border-left-width: 1px;
+    margin-left: 10px;
+}
+
+.menu .settings-reset-btn:focus {
+    color: var(--color-white-a60);
+    background-color: rgba(117, 184, 203, 0.05);
+    border-color: rgba(117, 184, 203, 0.25);
+    border-left-width: 1px;
+    margin-left: 10px;
+}
+
+/* ── Settings tab action bar (Reset to Defaults) ─────────────────── */
+.settings-action-bar {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top-width: 1px;
+    border-top-color: var(--color-accent-a15);
+    flex-shrink: 0;
+}
+
+.settings-action-bar .settings-reset-all-btn {
+    width: 200px;
+}
+
+/* ── Join Game Panel ─────────────────────────────────────────── */
+
+/* Header row: "Join Game" title on the left, steam controls on the right */
+.join-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.join-header .load-game-title {
+    margin-bottom: 0;
+    flex-grow: 1;
+}
+
+/* Steam toggle + status pill grouped together on the right of the header */
+.join-steam-controls {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.join-steam-toggle-label {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-small);
+    color: var(--color-white-a60);
+    margin: 0 8px 0 0;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+/* Steam toggle — Piperspace blue style */
+.menu .join-steam-toggle {
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    height: 28px;
+}
+
+.menu .join-steam-toggle > .unity-toggle__input {
+    margin: 0;
+    padding: 0;
+}
+
+.menu .join-steam-toggle .unity-toggle__checkmark {
+    background-color: var(--color-black-a60);
+    border-color: var(--color-accent);
+    border-width: 2px;
+    width: 18px;
+    height: 18px;
+}
+
+.menu .join-steam-toggle:checked .unity-toggle__checkmark {
+    background-color: var(--color-accent);
+}
+
+/* Steam connected/unavailable/disabled status pill */
+.join-steam-status {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-small);
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-left: 10px;
+    flex-shrink: 0;
+}
+
+.join-steam-status--connected {
+    color: rgb(80, 220, 120);
+    background-color: rgba(80, 220, 120, 0.12);
+    border-width: 1px;
+    border-color: rgba(80, 220, 120, 0.35);
+}
+
+.join-steam-status--unavailable {
+    color: var(--color-f0a03c);
+    background-color: rgba(240, 160, 60, 0.12);
+    border-width: 1px;
+    border-color: rgba(240, 160, 60, 0.35);
+}
+
+.join-steam-status--disabled {
+    color: var(--color-white-a30);
+    background-color: var(--color-white-a6);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Restart notice shown after changing the Steam toggle */
+.join-restart-notice {
+    font-size: var(--fs-menu-small);
+    color: var(--color-f0a03c);
+    padding: 0 0 12px 0;
+    margin: 0;
+    flex-shrink: 0;
+    display: none;
+}
+
+.join-restart-notice--visible {
+    display: flex;
+}
+
+.join-section-title {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-menu-large);
+    letter-spacing: 2px;
+    color: white;
+    margin-bottom: 12px;
+    padding: 0;
+}
+
+/* Title row for the friend list, with a small refresh button on the right */
+.join-friends-title-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.join-friends-title-row .join-section-title {
+    margin-bottom: 0;
+}
+
+/* Compact refresh button next to the friends title */
+.menu .join-refresh-btn {
+    width: 90px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    font-size: var(--fs-menu-small);
+    margin: 0;
+    -unity-text-align: middle-center;
+}
+
+.menu .join-refresh-btn:hover {
+    margin-left: 0;
+}
+
+.menu .join-refresh-btn:focus {
+    margin-left: 0;
+}
+
+/* Override load-game-list's natural height so the friend list can shrink
+   and leave room for the direct-connect section below it. */
+.join-friend-list {
+    min-height: 0;
+}
+
+/* Direct-connect block never shrinks away when the friend list is large. */
+.join-connect-section {
+    flex-shrink: 0;
+}
+
+/* Wider IP row in the join panel (50% wider than the default 300px) */
+.menu-view-panel--join-game .menu-join-row {
+    width: 450px;
+}
+
+/* Section headers inside the friends scroll view */
+.join-friend-section-header {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-small);
+    letter-spacing: 1px;
+    color: var(--color-white-a40);
+    padding: 6px 0 4px 0;
+    margin: 0;
+    -unity-text-align: upper-left;
+}
+
+/* Avatar thumbnail on the left of each friend row */
+.join-friend-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-right: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.join-friend-status {
+    flex-shrink: 0;
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-small);
+    color: var(--color-white-a30);
+    padding: 0;
+    margin: 0;
+}
+
+/* Name grows to fill the row so the Join button/status lands on the right edge */
+.join-friend-name {
+    flex-grow: 1;
+}
+
+/* Higher specificity than .load-game-item so the friend row background is fully opaque */
+.load-game-item.join-friend-item {
+    background-color: rgb(3, 10, 16);
+}
+
+.load-game-item.join-friend-item:hover {
+    background-color: rgb(10, 28, 44);
+}
+
+.load-game-item.join-friend-item.selected {
+    background-color: rgb(15, 38, 55);
+}
+
+/* Inline join button inside a friend row: higher specificity than .menu Button */
+.menu .join-friend-btn {
+    width: 120px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin: 0;
+}
+
+.menu .join-friend-btn:hover {
+    margin-left: 0;
+}
+
+.menu .join-friend-btn:focus {
+    margin-left: 0;
+}
+
+.join-error-label {
+    font-size: var(--fs-menu-small);
+    color: var(--color-text-error);
+    padding: 4px 0;
+    margin: 0;
+}
+
+/* ── Credits Panel ──────────────────────────────────────────────── */
+.menu-view-panel--credits {
+    padding: 0;
+    background-color: rgba(10, 28, 38, 0.98);
+}
+
+.credits-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.credits-content {
+    align-items: center;
+}
+
+.credits-spacer {
+    flex-shrink: 0;
+    /* height set dynamically to match viewport height */
+}
+
+.credits-game-title {
+    -unity-font-definition: var(--font-black);
+    font-size: 104px;
+    color: var(--color-accent);
+    letter-spacing: 6px;
+    -unity-text-align: middle-center;
+    margin-top: 24px;
+    margin-bottom: 60px;
+    padding: 0;
+}
+
+.credits-category-header {
+    -unity-font-definition: var(--font-bold);
+    font-size: var(--fs-menu-large);
+    letter-spacing: 4px;
+    color: rgba(117, 184, 203, 0.5);
+    -unity-text-align: middle-center;
+    margin-top: 52px;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    width: 560px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--color-accent-a20);
+}
+
+.credits-entry {
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 6px 32px;
+    min-width: 240px;
+    border-radius: 4px;
+    transition-property: background-color, border-color;
+    transition-duration: 0.3s;
+}
+
+.credits-entry-title {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-large);
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.38);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 3px;
+}
+
+.credits-entry-name {
+    -unity-font-definition: var(--font-semibold);
+    font-size: 44px;
+    color: white;
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0;
+}
+
+.credits-sponsor-entry {
+    align-items: center;
+    margin-bottom: 28px;
+    padding: 14px 32px;
+    border-width: 1px;
+    border-color: var(--color-accent-a12);
+    border-radius: 4px;
+    transition-property: background-color, border-color;
+    transition-duration: 0.3s;
+}
+
+.credits-sponsor-logo {
+    width: 200px;
+    height: 80px;
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgba(255, 255, 255, 0.04);
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.credits-sponsor-caption {
+    -unity-font-definition: var(--font-semibold);
+    font-size: 36px;
+    color: var(--color-white-a65);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0;
+}
+
+.credits-text-block {
+    max-width: 1020px;
+    white-space: normal;
+    -unity-text-align: upper-center;
+    font-size: 36px;
+    color: var(--color-white-a60);
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding: 16px 24px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: var(--color-white-a6);
+    background-color: rgba(255, 255, 255, 0.025);
+    transition-property: background-color, border-color;
+    transition-duration: 0.3s;
+}
+
+/* Search result highlight */
+.credits-entry.credits-highlight,
+.credits-sponsor-entry.credits-highlight {
+    background-color: var(--color-accent-a18);
+    border-width: 1px;
+    border-color: var(--color-accent-a45);
+}
+
+.credits-text-block.credits-highlight {
+    background-color: var(--color-accent-a12);
+    border-color: var(--color-accent-a45);
+}
+
+/* Search bar — absolute overlay, bottom-left */
+.credits-search-bar {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    flex-direction: row;
+    align-items: center;
+    background-color: rgba(10, 28, 38, 0.9);
+    padding: 4px 12px;
+    border-width: 1px;
+    border-color: var(--color-accent-a20);
+    border-left-width: 3px;
+    border-left-color: var(--color-accent-a55);
+}
+
+.credits-search-label {
+    -unity-font-definition: var(--font-semibold);
+    font-size: var(--fs-menu-large);
+    letter-spacing: 2px;
+    color: var(--color-accent-a55);
+    margin: 0;
+    padding: 0;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.credits-search-bar .credits-search-field {
+    width: 200px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(0, 0, 0, 0);
+    -unity-font-definition: var(--font-normal);
+    font-size: var(--fs-menu-large);
+    margin: 0;
+    padding: 0;
+}
+
+.menu .credits-search-bar .credits-search-field #unity-text-input {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--color-accent-a30);
+    border-left-width: 0;
+    color: white;
+    -unity-font-definition: var(--font-normal);
+    font-size: var(--fs-menu-large);
+    padding: 2px 4px;
+}
+
+/* Credits scrollbar — slim, teal, no arrow buttons */
+.credits-scroll .unity-scroller--vertical {
+    width: 8px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.credits-scroll #unity-high-button,
+.credits-scroll #unity-low-button {
+    display: none;
+}
+
+.credits-scroll .unity-base-slider__tracker {
+    background-color: var(--color-accent-a8);
+    border-width: 0;
+    border-radius: 4px;
+    margin: 0;
+}
+
+.credits-scroll .unity-base-slider__dragger {
+    background-color: var(--color-accent-a30);
+    border-width: 0;
+    border-radius: 4px;
+}
+
+.credits-scroll .unity-base-slider__dragger:hover {
+    background-color: var(--color-accent-a60);
+}
+
+.credits-scroll .unity-base-slider__dragger-border {
+    border-width: 0;
+}

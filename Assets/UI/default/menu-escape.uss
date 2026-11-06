@@ -1,0 +1,76 @@
+.menu.blackout {
+    background-color: rgba(0,0,0,0.8);
+}
+
+.menu.escape-menu {
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 80px;
+}
+
+/* ── Escape Menu two-column layout ───────────────────────────────── */
+
+/*
+ * Default: contentRow is auto-sized (fits the 300px button group).
+ * The escape-menu container's align-items:center keeps it centred.
+ * When has-panel is added, align-self:stretch overrides that so the
+ * row spans the full container width.
+ */
+.escape-menu-content {
+    flex-direction: row;
+    align-items: flex-start;
+    flex-grow: 1;
+    align-self: stretch;
+    justify-content: center;
+}
+
+.escape-menu-content.has-panel {
+    justify-content: flex-start;
+}
+
+.escape-menu .menu-footer {
+    align-self: stretch;
+    position: relative;
+}
+
+/* Panel area: hidden until .open is added */
+.escape-menu-panel-area {
+    display: none;
+    position: relative;
+    flex-grow: 1;
+    align-self: stretch;
+    margin-left: 32px;
+    overflow: hidden;
+}
+
+.escape-menu-panel-area.open {
+    display: flex;
+}
+
+/* Status widget pulled out of absolute flow and into the footer */
+.escape-menu-status {
+    position: relative;
+    left: 0;
+    bottom: 0;
+    translate: 0 0;
+}
+
+/* "Game Saved" toast — absolutely centred in the footer, fades in/out */
+.escape-menu-save-notice {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    -unity-font-definition: var(--font-bold);
+    font-size: 36px;
+    color: var(--color-positive);
+    -unity-text-align: middle-center;
+    padding: 0;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.6s;
+}
+
+.escape-menu-save-notice.visible {
+    opacity: 1;
+}
