@@ -7,6 +7,7 @@ namespace PipeWorld.Landscape
         Tundra,
         Rock,
         Ice,
+        Grass,
     }
 
     public static class Walkable

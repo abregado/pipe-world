@@ -5,6 +5,7 @@ Shader "PipeWorld/Scatter"
         _Tint ("Tint", Color) = (1, 1, 1, 1)
         _GlowTint ("Glow Tint", Color) = (0.6, 0.95, 1, 1)
         _EmissionStrength ("Glow Strength (vertex alpha mask)", Range(0, 3)) = 0.6
+        [Toggle] _DistanceFade ("Dissolve Toward Draw Distance", Float) = 1
     }
     SubShader
     {
@@ -27,6 +28,7 @@ Shader "PipeWorld/Scatter"
 
             #include "ScatterProps.hlsl"
             #include "PipeWorldLighting.hlsl"
+            #include "PipeWorldFade.hlsl"
 
             struct Attributes
             {
@@ -55,12 +57,16 @@ Shader "PipeWorld/Scatter"
 
             half4 frag(Varyings input) : SV_Target
             {
+                // Dissolve toward the draw distance so tiles never pop, glow included.
+                float fade = _DistanceFade > 0.5 ? PW_ScatterFade(input.positionWS) : 1.0;
+                PW_DitherClip(fade, input.positionCS.xy);
+
                 float3 n = normalize(input.normalWS);
                 half3 albedo = SRGBToLinear(input.color.rgb) * _Tint.rgb;
                 half4 shaded = PW_ShadeMasked(albedo, n, input.positionWS, input.positionCS);
                 half3 lit = PW_ApplyFog(shaded.rgb, input.positionWS);
                 // Glow is added after fog so it stays visible at any distance.
-                half3 glow = albedo * _GlowTint.rgb * (input.color.a * _EmissionStrength);
+                half3 glow = albedo * _GlowTint.rgb * (input.color.a * _EmissionStrength * fade);
                 // Glowing surfaces (flames, crystals) count as lit, so the grade does not dim them.
                 return half4(lit + glow, max(shaded.a, input.color.a));
             }
@@ -97,6 +103,7 @@ Shader "PipeWorld/Scatter"
             #pragma target 3.5
             #pragma vertex PWDepthVert
             #pragma fragment PWDepthFrag
+            #define PW_DISTANCE_FADE
 
             #include "ScatterProps.hlsl"
             #include "PipeWorldPasses.hlsl"

@@ -7,6 +7,7 @@ CBUFFER_START(UnityPerMaterial)
     half4 _Tint;
     half4 _GlowTint;
     float _EmissionStrength;
+    float _DistanceFade;
 CBUFFER_END
 
 #endif

@@ -22,22 +22,30 @@ namespace PipeWorld.Landscape
             new Color(0.62f, 0.88f, 0.96f), new Color(0.78f, 0.95f, 1.00f), new Color(0.50f, 0.80f, 0.92f),
         };
         static readonly Color MoundColor = new Color(0.92f, 0.95f, 0.97f);
+        static readonly Color[] MeadowColors =
+        {
+            new Color(0.36f, 0.58f, 0.26f), new Color(0.46f, 0.64f, 0.28f), new Color(0.30f, 0.50f, 0.24f),
+        };
+        static readonly Color[] FlowerColors =
+        {
+            new Color(0.95f, 0.85f, 0.35f), new Color(0.92f, 0.55f, 0.70f), new Color(0.85f, 0.88f, 0.95f),
+        };
+        static readonly Color BushColor = new Color(0.28f, 0.44f, 0.22f);
 
         public static Dictionary<(Biome biome, int tx, int tz), MeshBuilder> Build(WorldShape shape, ShapeLibrary library, int seed)
         {
             var tiles = new Dictionary<(Biome, int, int), MeshBuilder>();
             var rng = new System.Random(seed);
             var cells = Mathf.FloorToInt(2f * WorldShape.HalfSize / CellSize);
-            var limit = shape.OuterRadius - 14f;
 
             for (var gx = 0; gx < cells; gx++)
             for (var gz = 0; gz < cells; gz++)
             {
                 var x = -WorldShape.HalfSize + (gx + (float)rng.NextDouble()) * CellSize;
                 var z = -WorldShape.HalfSize + (gz + (float)rng.NextDouble()) * CellSize;
-                if (x * x + z * z > limit * limit)
+                if (!shape.InPlayArea(x, z, 14f))
                     continue;
-                if (!shape.IsClear(x, z, 4f) || shape.WallDistance(x, z) < 9f)
+                if (!shape.IsClear(x, z, 4f, false) || shape.WallDistance(x, z) < 9f)
                     continue;
 
                 var biome = shape.BiomeAt(x, z);
@@ -60,6 +68,7 @@ namespace PipeWorld.Landscape
                 {
                     case Biome.Tundra: AddTundraClump(builder, library, rng, origin, frame); break;
                     case Biome.Rock: AddRockPile(builder, library, rng, origin, frame); break;
+                    case Biome.Grass: AddMeadowClump(builder, library, rng, origin, frame); break;
                     default: AddCrystalCluster(builder, library, rng, origin, frame); break;
                 }
             }
@@ -72,6 +81,7 @@ namespace PipeWorld.Landscape
             {
                 case Biome.Tundra: return 0.5f;
                 case Biome.Rock: return 0.34f;
+                case Biome.Grass: return 0.55f;
                 default: return 0.32f;
             }
         }
@@ -110,6 +120,47 @@ namespace PipeWorld.Landscape
                 builder.Append(library.Mound(rng),
                     Matrix4x4.TRS(origin + offset, frame * Quaternion.Euler(0f, Range(rng, 0f, 360f), 0f), new Vector3(span, span * Range(rng, 0.25f, 0.45f), span)),
                     Vary(rng, MoundColor));
+            }
+        }
+
+        // Tall green tufts, sometimes with a few flowers or a low bush.
+        static void AddMeadowClump(MeshBuilder builder, ShapeLibrary library, System.Random rng, Vector3 origin, Quaternion frame)
+        {
+            var size = Range(rng, 0.9f, 1.7f);
+            var color = Vary(rng, MeadowColors[rng.Next(MeadowColors.Length)]);
+            var bladeCount = rng.Next(10, 18);
+            for (var i = 0; i < bladeCount; i++)
+            {
+                var angle = Range(rng, 0f, Mathf.PI * 2f);
+                var radial = Mathf.Pow((float)rng.NextDouble(), 0.7f) * 0.9f * size;
+                var outward = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                var lean = Quaternion.AngleAxis(Range(rng, 4f, 22f), Vector3.Cross(Vector3.up, outward));
+                var height = Range(rng, 0.7f, 1.5f) * size;
+                var width = Range(rng, 0.12f, 0.22f) * size;
+                var rotation = frame * lean * Quaternion.Euler(0f, Range(rng, 0f, 360f), 0f);
+                builder.Append(library.Blade(rng), Matrix4x4.TRS(origin + frame * (outward * radial + Vector3.down * 0.02f), rotation, new Vector3(width, height, width)), color);
+            }
+
+            if (rng.NextDouble() < 0.45)
+            {
+                var flower = Vary(rng, FlowerColors[rng.Next(FlowerColors.Length)]);
+                var count = rng.Next(3, 7);
+                for (var i = 0; i < count; i++)
+                {
+                    var angle = Range(rng, 0f, Mathf.PI * 2f);
+                    var offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * Range(rng, 0.2f, 1.2f) * size;
+                    var head = Range(rng, 0.12f, 0.2f);
+                    var position = origin + frame * (offset + Vector3.up * Range(rng, 0.45f, 0.9f) * size);
+                    builder.Append(library.Mound(rng), Matrix4x4.TRS(position, frame * Quaternion.Euler(0f, Range(rng, 0f, 360f), 0f), new Vector3(head, head * 0.6f, head)), flower);
+                }
+            }
+            else if (rng.NextDouble() < 0.3)
+            {
+                var span = Range(rng, 1.2f, 2.2f) * size;
+                var offset = frame * new Vector3(Range(rng, -0.6f, 0.6f), -0.1f, Range(rng, -0.6f, 0.6f));
+                builder.Append(library.Rock(rng),
+                    Matrix4x4.TRS(origin + offset, frame * Quaternion.Euler(0f, Range(rng, 0f, 360f), 0f), new Vector3(span, span * Range(rng, 0.5f, 0.8f), span)),
+                    Vary(rng, BushColor));
             }
         }
 

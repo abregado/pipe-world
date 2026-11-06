@@ -16,7 +16,14 @@ struct PWAttributes
 struct PWVaryings
 {
     float4 positionCS : SV_POSITION;
+#ifdef PW_DISTANCE_FADE
+    float3 positionWS : TEXCOORD0;
+#endif
 };
+
+#ifdef PW_DISTANCE_FADE
+#include "PipeWorldFade.hlsl"
+#endif
 
 PWVaryings PWShadowVert(PWAttributes input)
 {
@@ -48,12 +55,21 @@ half4 PWShadowFrag(PWVaryings input) : SV_Target
 PWVaryings PWDepthVert(PWAttributes input)
 {
     PWVaryings output;
-    output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+    float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+    output.positionCS = TransformWorldToHClip(positionWS);
+#ifdef PW_DISTANCE_FADE
+    output.positionWS = positionWS;
+#endif
     return output;
 }
 
+// The depth pass dissolves with the same dither as the colour pass, so depth and colour agree.
 half4 PWDepthFrag(PWVaryings input) : SV_Target
 {
+#ifdef PW_DISTANCE_FADE
+    float fade = _DistanceFade > 0.5 ? PW_ScatterFade(input.positionWS) : 1.0;
+    PW_DitherClip(fade, input.positionCS.xy);
+#endif
     return 0;
 }
 

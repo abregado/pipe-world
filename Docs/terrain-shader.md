@@ -27,11 +27,13 @@ Everything is sampled in world space; the meshes have no UVs.
 
 ### Hiding the tiling
 
-A single repeating texture shows its repeat at distance. The top sample ([lines 68-76](../Assets/Shaders/TriplanarTerrain.shader)) therefore combines:
+A single repeating texture shows its repeat, close up as well as far away. **Every tiled sample goes through [PW_SampleNoTile](../Assets/Shaders/TerrainProps.hlsl)** (top, detail, and all three side projections). Hash-based value noise over about two tiles picks one of eight offsets of the texture, and where the noise moves from one offset to the next, the two samples are blended, weighted toward the darker one so the seam follows the texture's own shapes. That is two texture samples per layer, with gradients from the unshifted UV so mip selection stays correct. The idea is Inigo Quilez's "texture repetition" technique 3.
 
-- The base sample.
-- A second sample, rotated 37° and 1.9x larger, blended in by a much larger (7.3x) sample's brightness relative to the texture's average colour.
-- A fine detail sample at 0.13x scale, applied as a small brightness change.
+The top colour then combines:
+
+- The base sample, without a repeat.
+- A much larger (7.3x) plain sample, used as a brightness change relative to the texture's average colour, so brightness drifts over tens of metres.
+- A fine detail sample at 0.13x scale, also without a repeat, applied as a small brightness change. A plain detail sample used to repeat every 1.8 m, which was the repeat visible at close range.
 
 The texture's average colour comes from its lowest mip (`SAMPLE_TEXTURE2D_LOD` at level 12). **The macro and detail multipliers are clamped (0.75-1.25 and 0.88-1.12), because an unclamped multiplier can reach zero where a texture is darker than its average and renders as black.**
 
@@ -78,4 +80,4 @@ Both shaders light through [PipeWorldLighting.hlsl](../Assets/Shaders/PipeWorldL
 
 ## Scatter Shader
 
-[Scatter.shader](../Assets/Shaders/Scatter.shader) shades the clutter meshes. Colour comes from the vertex colour RGB (authored in sRGB, converted to linear in the shader). The vertex alpha is a glow mask: `lit += albedo * _GlowTint * alpha * _EmissionStrength`. Only the crystal tips and torch flames write a non-zero alpha. **The glow is added after fog**, so glowing vertices stay visible at any distance; see [visibility-and-depth.md](visibility-and-depth.md#light-through-fog).
+[Scatter.shader](../Assets/Shaders/Scatter.shader) shades the clutter meshes. Colour comes from the vertex colour RGB (authored in sRGB, converted to linear in the shader). The vertex alpha is a glow mask: `lit += albedo * _GlowTint * alpha * _EmissionStrength`. Only the crystal tips, flames and monolith crystals write a non-zero alpha. **The glow is added after fog**, so glowing vertices stay visible at any distance; see [visibility-and-depth.md](visibility-and-depth.md#light-through-fog). With `_DistanceFade` on (the default), scatter dissolves toward its draw distance and the glow fades with it; see [visibility-and-depth.md](visibility-and-depth.md#draw-distance).

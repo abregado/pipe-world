@@ -30,6 +30,7 @@ Shader "PipeWorld/Grass"
 
             #include "GrassProps.hlsl"
             #include "PipeWorldLighting.hlsl"
+            #include "PipeWorldFade.hlsl"
 
             struct Attributes
             {
@@ -59,8 +60,11 @@ Shader "PipeWorld/Grass"
                 float gust = sin(t * 0.37 + positionWS.x * 0.05) * 0.5 + 0.5;
                 positionWS.xz += wave * _WindStrength * weight * (0.5 + gust);
 
-                // Blades sink toward the ground with distance so they never pop out of existence.
-                float fade = 1.0 - smoothstep(_FadeStart, _FadeEnd, distance(positionWS, _WorldSpaceCameraPos));
+                // Blades sink toward the ground with distance so they never pop out of existence. The sink finishes
+                // before the tiles' draw distance, which is shorter at night.
+                float sinkEnd = _PW_GrassDrawDistance > 1.0 ? min(_FadeEnd, _PW_GrassDrawDistance * 0.9) : _FadeEnd;
+                float sinkStart = min(_FadeStart, sinkEnd * 0.55);
+                float fade = 1.0 - smoothstep(sinkStart, sinkEnd, distance(positionWS, _WorldSpaceCameraPos));
                 positionWS.y -= weight * 0.55 * (1.0 - fade);
 
                 output.positionWS = positionWS;

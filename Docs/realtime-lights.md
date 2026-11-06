@@ -1,37 +1,45 @@
 # Real-Time Lights
 
-How point lights work in the visual set-up: the torches and beacons, the colour grade they apply to their surroundings, and what the custom shaders and the URP asset need for additional lights to take effect. Read this before adding any light besides the sun.
+How point lights work in the visual set-up: the torches, campfires, beacons and monoliths, the colour grade they apply to their surroundings, and what the custom shaders and the URP asset need for additional lights to take effect. Read this before adding any light besides the sun.
 
 ---
 
-## Torches and Beacons
+## Torches, Campfires, Beacons and Monoliths
 
-[TorchBuilder.cs](../Assets/Scripts/Landscape/TorchBuilder.cs) (`BuildAll`, line 76) builds every torch from one `Spec` (size, colours, light settings), called from `DemoWorld`.
+[TorchBuilder.cs](../Assets/Scripts/Landscape/TorchBuilder.cs) (`BuildAll`, line 137) builds every light from one `Spec` (kind, size, colours, light settings, light height, rock spacing, sway), called from `DemoWorld`.
 
 | Kind | Count | Placement | Size | Light | Shadows within |
 |---|---|---|---|---|---|
 | Torch | 2 | (4.5, 6) and (-5, 8) | 1x | Warm, intensity 9, range 12 m | 90 m |
-| Torch | 8 | Evenly spaced angles with jitter, radius 12 to 25 m | 1x | Same | 90 m |
-| Beacon | 11 | One on the start floor at (-14, 35), then two on opposite sides of each of the five terraces | 5x (9.5 m post) | Intensity 70, range 60 m | 220 m |
+| Torch | 4 | Every other one of eight evenly spaced angles with jitter, radius 12 to 25 m | 1x | Same | 90 m |
+| Campfire | 4 | The other four of those eight | Stone ring 1.5 m across | Warm, intensity 7, range 11 m, 0.8 m above the ground | 90 m |
+| Beacon | 11 on warm ground | One on the start floor at (-14, 35), then two on opposite sides of each terrace | 5x (9.5 m post) | Intensity 70, range 60 m | 220 m |
+| Monolith | Beacons on ice | Same places as a beacon | 9 m crystal on a plinth | Cyan, intensity 45, range 45 m, 4.5 m up inside the crystal | 220 m |
+| Plateau light | 1 per plateau | A little off the plateau's centre | Campfire, or a monolith on ice | As its kind | As its kind |
 | Cave torch | 1 per cave | Centred, 1.8 m in front of the cave's back wall | 1x | Same as a torch | 90 m |
+| Lantern | 1 | Carried by the player; see [player-controller.md](player-controller.md#lantern) | 0.25 m | Warm, intensity 2.2, range 9 m | Always |
 
-Every light casts soft shadows (strength 0.95) while the camera is within its shadow distance; [TorchFlicker](../Assets/Scripts/Landscape/TorchBuilder.cs) switches them off beyond it. Torches and beacons each have two large `Shadow Rock`s beside them, 2.4 to 3.8 m away (scaled by the light's size, so 12 to 19 m for a beacon). They use the biome's terrain material and convex mesh colliders, and give the light something to throw a shadow from ([AddShadowRocks](../Assets/Scripts/Landscape/TorchBuilder.cs), line 208). A cave torch has no rocks; the cave walls cast its shadows.
+Every light casts soft shadows (strength 0.95) while the camera is within its shadow distance; [TorchFlicker](../Assets/Scripts/Landscape/TorchBuilder.cs) switches them off beyond it. Every light except the cave torch has two large `Shadow Rock`s beside them, 2.4 to 3.8 m away times `rockDistance` (1 for torches and campfires, 3 for monoliths, 5 for beacons). A campfire's light is low, so its rocks throw long shadows. They use the biome's terrain material and convex mesh colliders, and give the light something to throw a shadow from ([AddShadowRocks](../Assets/Scripts/Landscape/TorchBuilder.cs), line 365). A cave torch has no rocks; the cave walls cast its shadows.
 
 **Ranges are short so torch pools do not overlap.** With the old 24 m range, the ten start torches and the start beacon lit the whole start floor about evenly, so each torch's rock shadow was filled in by the others. With 12 m, only a torch's own light reaches most of its shadow.
 
 **Torches dim to 20% by day** (`TorchFlicker.dayIntensity`, faded in by `DayNightCycle.NightFactor`). At full strength they lit the start floor more than the low morning sun does and filled in its shadows.
 
-Beacon positions are random per terrace, kept 12 m from flat areas and 25 m from walls ([BuildBeacons](../Assets/Scripts/Landscape/TorchBuilder.cs), line 107). **A beacon takes its colour from the biome it stands in** ([Beacon](../Assets/Scripts/Landscape/TorchBuilder.cs), line 44):
+Beacon positions are random per terrace, kept 12 m from flat areas and 25 m from walls ([BuildBeacons](../Assets/Scripts/Landscape/TorchBuilder.cs), line 170). **A beacon takes its colour from the biome it stands in** ([Beacon](../Assets/Scripts/Landscape/TorchBuilder.cs), line 104); on ice a monolith stands instead:
 
 | Biome | Light and flame | Grade |
 |---|---|---|
-| Tundra | Warm orange | Warm LUT plus tint |
+| Tundra, Grass | Warm orange | Warm LUT plus tint |
 | Rock | Red-orange | Warm LUT plus tint |
-| Ice | Cyan | Tint only |
+| Ice (monolith) | Cyan | Tint only |
 
 A torch is a root object with a capsule collider and these children: `Body` (the wooden post), `Brazier` (an iron flat block at the top of the post), `Flame` (a crystal template with every triangle's glow alpha at 255), `Light` (the point light plus its `GradeLight`) and the shadow rocks. **The brazier casts no shadows.** It sits just below the light, so as a caster it would throw a dark disc several metres wide around its own torch. The thin post sits directly under the light and casts only a small spot. [TorchFlicker](../Assets/Scripts/Landscape/TorchBuilder.cs) varies intensity and range with two Perlin noise rates and scales the flame mesh each frame. Its `shadowType` (soft by default) is the shadow mode used within the shadow distance.
 
-The flame uses its own material, `Flame.mat`: the Scatter shader with a white glow tint and an emission strength of 3, so the flame glows in its own vertex colour and bloom picks it up. Everything else uses the normal scatter material.
+**Every flame's light drifts a little, so its shadows move.** `swayAmount` is how far the light wanders from its rest position on Perlin noise: 0.06 m for a torch, 0.1 m for a campfire, 0.2 m for a beacon. Monoliths do not sway or flicker; their intensity pulses slowly (`pulse`).
+
+A campfire is a ring of eight stones, four leaning logs and a cluster of four flame crystals. A monolith is a stone plinth, a 9 m crystal and six smaller crystals leaning out from its base, all glowing in the flame material. **Neither casts shadows from its own parts.** They sit around or below the light (inside it, for the monolith), so as casters they would darken the ground around their own light, like the brazier.
+
+The flame uses its own material, `Flame.mat`: the Scatter shader with a white glow tint and an emission strength of 3, so the flame glows in its own vertex colour and bloom picks it up. Everything else uses a copy of the scatter material with the distance dissolve off, so torches and beacons stay solid across the crater (see [visibility-and-depth.md](visibility-and-depth.md#draw-distance)).
 
 Point-light shadows render six faces each into the additional-light shadow atlas (4096x4096). With every light near the start in range, about 11 lights request 66 faces, and URP scales each face down to fit (by 4, logged once as `Reduced additional punctual light shadows resolution`). Fewer shadowed lights in range, or a larger atlas, gives sharper torch shadows. Hard shadows look almost the same as soft at this resolution.
 

@@ -19,7 +19,7 @@ Press **F1** (or the backquote key), or click the window's close button, to togg
 | Fog start / end | Day and night fog start and end sliders |
 | Light grade | Global strength of the [light grade](realtime-lights.md#light-grade) |
 | Shadows block grade | Whether the light grade is masked by the shadowed point light each pixel received, so torch shadows keep the night grade (`LightGradeSystem.shadowedGrade`) |
-| Respawn | Centre of crater, Inside outer wall |
+| Respawn | Centre of crater, Inside outer wall, Open edge |
 
 Start of day and start of night use [DayNightCycle.StartOfDayTime](../Assets/Scripts/World/DayNightCycle.cs) and `StartOfNightTime`: the times at which sun elevation crosses `nightStart`, the point where the night grade begins to fade in.
 
@@ -37,7 +37,7 @@ The window uses `NoSavedSettings` and `AlwaysAutoResize`, so ImGui never stores 
 
 ## Respawn
 
-[RespawnAtCentre](../Assets/Scripts/Tools/DebugMenu.cs) places the player at the crater centre. [RespawnInsideOuterWall](../Assets/Scripts/Tools/DebugMenu.cs) places the player 25 m inside the outer ring at 225°, on the terrace's actual ground height from `WorldShape.Height`, facing the crater centre.
+[RespawnAtCentre](../Assets/Scripts/Tools/DebugMenu.cs) places the player at the crater centre. [RespawnInsideOuterWall](../Assets/Scripts/Tools/DebugMenu.cs) places the player 25 m inside the outer ring at 225°, on the terrace's actual ground height from `WorldShape.Height`, facing the crater centre. [RespawnAtOpenEdge](../Assets/Scripts/Tools/DebugMenu.cs) places the player 6 m short of the top of the drop at the centre of the [open edge](landscape.md#the-open-edge), facing out over the lowland.
 
 Both go through `PlayerController.Teleport`, which also resets velocity and crouch (see [player-controller.md](player-controller.md#teleport)).
 

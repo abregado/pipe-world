@@ -9,9 +9,10 @@ The first-person player: how it moves, looks, and is wired into the `World` scen
 [WorldSetup.cs:136](../Assets/Editor/WorldSetup.cs) (`BuildScene`) creates the player as plain scene objects, not a prefab:
 
 ```
-Player          CharacterController (height 1.8, radius 0.4, step offset 0.4) + PlayerController
+Player          CharacterController (height 1.8, radius 0.4, step offset 0.4) + PlayerController + PlayerLantern
 └─ Camera Pivot   local y 1.6; receives pitch
-   └─ Main Camera   Camera, AudioListener, post-processing enabled
+   ├─ Main Camera   Camera, AudioListener, post-processing enabled
+   └─ Lantern Hinge   created at runtime by PlayerLantern
 ```
 
 `Player` receives yaw; `Camera Pivot` receives pitch. The player spawns at the centre of the crater at `(0, 0.05, 0)` facing +Z, with `slopeLimit` set to [Walkable.SlopeLimitDegrees](../Assets/Scripts/Landscape/Biome.cs) (see [terrain-shader.md](terrain-shader.md#walkable-cue)).
@@ -93,3 +94,13 @@ Speed is `crouchSpeed` while crouching, otherwise `sprintSpeed` when sprint is h
 ## Verification
 
 Walking, sprinting, strafing, jumping, crouch speed, crouch overriding sprint, and crouch blocking jumps are checked in the built player by injecting key presses with [shot.ps1](../shot.ps1) (see [screenshots.md](screenshots.md)). Mouse and gamepad look are not covered by that harness.
+
+---
+
+## Lantern
+
+[PlayerLantern.cs](../Assets/Scripts/Player/PlayerLantern.cs) builds a small lantern at startup and hangs it at the lower right of the view, as if held in the right hand. It is generated from the world's shape templates, like the torches: an iron frame from flat blocks and a glowing crystal inside, in `DemoWorld.PropMaterial` and the flame material.
+
+**The lantern swings as a damped pendulum.** Its hinge sits at `handOffset` (0.36 right, 0.16 down, 0.72 forward) in the camera pivot's space, so it follows the view, but each `LateUpdate` its rotation is reset to the player's yaw plus the swing, so it always hangs under gravity, whatever the pitch. Two swing angles, forward-back and side to side, are driven by the hinge's own acceleration (starting, stopping and turning all swing it) and by a stride term at `strideRate` scaled by walking speed. They settle with `damping`. `length` (0.3 m) sets the rate, about one swing a second. A jump of more than 2 m in one frame, such as a teleport, resets the history instead of kicking the swing.
+
+The point light sits inside the lantern, so its shadows move with the swing. It is warm, intensity 2.2, range 9 m, soft shadows, and dims to 15% by day like the torches. No part of the lantern casts shadows. It also carries a weak `GradeLight` (strength 0.7, radius 10.8 m), so the night grade warms a little around the player.

@@ -57,6 +57,29 @@ namespace PipeWorld.EditorTools
             Generate("Ice_Side", IceSide),
         };
 
+        public static Texture2D[] GenerateGrass() => new[]
+        {
+            Generate("Grass_Top", GrassTop),
+            Generate("Grass_Side", GrassSide),
+        };
+
+        static Color GrassTop(float u, float v)
+        {
+            var patch = Smooth(0.35f, 0.65f, Fbm(u, v, 4, 4, 21));
+            var c = Color.Lerp(new Color(0.34f, 0.52f, 0.22f), new Color(0.50f, 0.62f, 0.28f), patch);
+            var dry = Smooth(0.62f, 0.75f, Fbm(u, v, 3, 3, 23));
+            c = Color.Lerp(c, new Color(0.62f, 0.60f, 0.34f), dry * 0.6f);
+            var speckle = Value(u * 48f, v * 48f, 48, 48, 25);
+            return c * (0.9f + 0.16f * speckle);
+        }
+
+        static Color GrassSide(float u, float v)
+        {
+            var bands = 0.5f + 0.5f * Mathf.Sin((v * 7f + Fbm(u, v, 3, 3, 27) * 1.3f) * Mathf.PI * 2f);
+            var c = Color.Lerp(new Color(0.36f, 0.30f, 0.24f), new Color(0.50f, 0.42f, 0.32f), bands);
+            return c * (0.88f + 0.22f * Fbm(u, v, 6, 3, 29));
+        }
+
         static Color TundraTop(float u, float v)
         {
             var patch = Smooth(0.40f, 0.60f, Fbm(u, v, 4, 4, 1));

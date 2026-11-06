@@ -85,6 +85,14 @@ namespace PipeWorld.EditorTools
                 so.FindProperty("m_Settings.Intensity").floatValue = 0.9f;
                 so.FindProperty("m_Settings.Radius").floatValue = 0.6f;
                 so.FindProperty("m_Settings.DirectLightingStrength").floatValue = 0.15f;
+                // Blue noise switches to a new noise texture at a random offset every frame, which is meant to be resolved
+                // by temporal anti-aliasing. There is none here, so it crawls. Interleaved gradient noise is fixed per pixel;
+                // 12 samples, high-quality reconstructed normals and the bilateral blur keep it smooth.
+                so.FindProperty("m_Settings.AOMethod").enumValueIndex = 1;
+                so.FindProperty("m_Settings.Samples").enumValueIndex = 0;
+                so.FindProperty("m_Settings.NormalSamples").enumValueIndex = 2;
+                so.FindProperty("m_Settings.BlurQuality").enumValueIndex = 0;
+                so.FindProperty("m_Settings.Downsample").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(asset);
             }
@@ -283,8 +291,9 @@ namespace PipeWorld.EditorTools
 
             var dof = profile.Add<DepthOfField>(true);
             dof.mode.Override(DepthOfFieldMode.Gaussian);
-            dof.gaussianStart.Override(400f);
-            dof.gaussianEnd.Override(1500f);
+            // Starts far out so the lowland beyond the open side stays readable; only the far hills soften.
+            dof.gaussianStart.Override(900f);
+            dof.gaussianEnd.Override(2600f);
             dof.gaussianMaxRadius.Override(1f);
 
             foreach (var c in profile.components) AssetDatabase.AddObjectToAsset(c, profile);
@@ -317,6 +326,7 @@ namespace PipeWorld.EditorTools
                 (name: "Tundra", textures: TerrainTextureGenerator.GenerateTundra(), top: new Color(1f, 1f, 1f), side: new Color(1f, 1f, 1f)),
                 (name: "Rock", textures: TerrainTextureGenerator.GenerateRock(), top: new Color(1f, 1f, 1f), side: new Color(1f, 1f, 1f)),
                 (name: "Ice", textures: TerrainTextureGenerator.GenerateIce(), top: new Color(1f, 1f, 1f), side: new Color(1f, 1f, 1f)),
+                (name: "Grass", textures: TerrainTextureGenerator.GenerateGrass(), top: new Color(1f, 1f, 1f), side: new Color(1f, 1f, 1f)),
             };
 
             var materials = new Material[sets.Length];
@@ -373,6 +383,7 @@ namespace PipeWorld.EditorTools
             body.stepOffset = 0.4f;
             body.slopeLimit = Walkable.SlopeLimitDegrees;
             var player = playerGo.AddComponent<PlayerController>();
+            playerGo.AddComponent<PlayerLantern>();
 
             var pivotGo = new GameObject("Camera Pivot");
             pivotGo.transform.SetParent(playerGo.transform, false);
@@ -384,7 +395,8 @@ namespace PipeWorld.EditorTools
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.Skybox;
             cam.nearClipPlane = 0.15f;
-            cam.farClipPlane = 2500f;
+            // The lowland beyond the open side reaches 2600 m.
+            cam.farClipPlane = 3200f;
             camGo.AddComponent<AudioListener>();
             var camData = camGo.AddComponent<UniversalAdditionalCameraData>();
             camData.renderPostProcessing = true;
@@ -423,6 +435,7 @@ namespace PipeWorld.EditorTools
             world.flameMaterial = LoadOrCreateMaterial("Assets/Art/Materials/Flame.mat", "PipeWorld/Scatter");
             world.flameMaterial.SetColor("_GlowTint", Color.white);
             world.flameMaterial.SetFloat("_EmissionStrength", 3f);
+            world.flameMaterial.SetFloat("_DistanceFade", 0f);
             EditorUtility.SetDirty(world.flameMaterial);
 
             var gradeSystem = new GameObject("Light Grade").AddComponent<LightGradeSystem>();

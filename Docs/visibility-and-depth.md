@@ -6,7 +6,7 @@ How far the player can see, how distant terrain is simplified and hazed, and whi
 
 ## Draw Distance
 
-The camera's far clip plane is 2500 m ([WorldSetup.cs:242](../Assets/Editor/WorldSetup.cs)), well beyond the 860 m world, so the opposite side of the crater is never clipped. Terrain and cliff meshes are always drawn; they are a few hundred thousand triangles in total and are bounded by the frustum.
+The camera's far clip plane is 3200 m ([WorldSetup.cs](../Assets/Editor/WorldSetup.cs) `BuildScene`), beyond the lowland's 2600 m, so neither the far side of the crater nor the lowland is clipped. Terrain and cliff meshes are always drawn; they are a few hundred thousand triangles in total and are bounded by the frustum.
 
 [ScatterCulling.cs](../Assets/Scripts/Landscape/ScatterCulling.cs) is the level of detail for clutter, the expensive part of the world. Every `refreshSeconds` (0.25) it measures the distance from the camera to each scatter tile's bounds:
 
@@ -16,7 +16,9 @@ The camera's far clip plane is 2500 m ([WorldSetup.cs:242](../Assets/Editor/Worl
 | `nightDrawDistance` | 220 m | The same limit at full night. |
 | `shadowDistance` | 110 m | Tiles farther than this stop casting shadows. |
 
-Those are the scatter defaults. Each tile is registered with its own three distances; grass uses 95 m day, 60 m night and no shadows (see [grass.md](grass.md)). The draw limit moves between the day and night values with `DayNightCycle.NightFactor`. It sits inside the fog, so tiles vanish where they are already mostly hazed out.
+Those are the scatter defaults. Each tile is registered with its own three distances; grass uses 95 m day, 60 m night and no shadows (see [grass.md](grass.md)). The draw limit moves between the day and night values with `DayNightCycle.NightFactor`.
+
+**Scatter dissolves before its tile switches off.** `ScatterCulling.RegisterFade` publishes the current draw distance as a shader global: `_PW_ScatterDrawDistance` for scatter and `_PW_GrassDrawDistance` for grass. [PipeWorldFade.hlsl](../Assets/Shaders/PipeWorldFade.hlsl) fades scatter from 70% to 95% of that distance, measured per pixel, with a screen-space dither: the colour and depth passes both clip the dithered pixels through `PW_DitherClip`, so they agree, and the glow fades with it. **A fully visible surface is never clipped.** An earlier version clipped wherever `fade - dither - 0.001` was negative, which at full visibility still cut every pixel whose dither value was above 0.999: a sparse sprinkle of dots over every Scatter-shader surface, torches and flames included. A tile switches off when its nearest point passes the draw distance, so everything in it has already gone. **The glow made the pop-in obvious before:** it is added after fog, so the ice crystals' tips stayed bright to the last metre. The Scatter shader's `_DistanceFade` toggle turns the dissolve off; `Flame.mat` and the torch parts' material have it off. Grass sinks into the ground instead (see [grass.md](grass.md)).
 
 ---
 
@@ -27,7 +29,7 @@ Those are the scatter defaults. Each tile is registered with its own three dista
 | Setting | Day | Night |
 |---|---|---|
 | `dayFogStart` / `nightFogStart` | 120 m | 30 m |
-| `dayFogEnd` / `nightFogEnd` | 1000 m | 420 m |
+| `dayFogEnd` / `nightFogEnd` | 1600 m | 420 m |
 | `dayFogDarken` / `nightFogDarken` | 0.62 | 0.5 |
 
 Start, end and darkening blend by `NightFactor`.
@@ -77,9 +79,11 @@ The global volume's effects are described in [lighting-and-day-night.md](lightin
 
 | Effect | Where | Setting |
 |---|---|---|
-| Ambient occlusion | `PC_Renderer` SSAO feature, configured by [ConfigureSsao](../Assets/Editor/WorldSetup.cs) (line 60) | Depth source, after opaques, intensity 0.9, radius 0.6, direct lighting strength 0.15 |
+| Ambient occlusion | `PC_Renderer` SSAO feature, configured by [ConfigureSsao](../Assets/Editor/WorldSetup.cs) (line 60) | Depth source, after opaques, intensity 0.9, radius 0.6, direct lighting strength 0.15, interleaved gradient noise, 12 samples, high normal quality, bilateral blur, full resolution |
 | Depth of field | `WorldVolumeProfile`, Gaussian | Blur begins at 400 m, full at 1500 m, max radius 1 |
 | Split toning | `WorldVolumeProfile` | Faint cool shadows, warm highlights |
+
+**SSAO uses interleaved gradient noise, not blue noise.** URP's blue noise mode switches to a different noise texture at a random offset every frame, which is meant to be resolved by temporal anti-aliasing. Without it, the occlusion visibly crawls near objects. Interleaved gradient noise is fixed per pixel, and the higher sample count and bilateral blur hide its pattern. It costs about 2 ms a frame more than the old Medium settings.
 
 **SSAO reads the depth buffer, not depth and normals, because the terrain and scatter shaders write depth but no normals.** A `DepthNormals` source would leave those objects out of the normal texture and the effect would misbehave.
 

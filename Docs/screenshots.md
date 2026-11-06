@@ -17,7 +17,7 @@ How to capture a frame from the built game, and drive the player with virtual ke
 | `-Keys` | Comma-separated Input System key names (`W`, `A`, `Space`, `LeftShift`) held down. |
 | `-Hold` | Seconds to hold `-Keys`. Default 1.5. |
 | `-Frames` | Frames to wait before the hold or the capture. Default 30. |
-| `-Respawn` | `centre` or `outer`: calls the matching [debug menu](debug-menu.md#respawn) respawn and logs the position. |
+| `-Respawn` | `centre`, `outer` or `edge`: calls the matching [debug menu](debug-menu.md#respawn) respawn and logs the position. |
 | `-Menu` | Opens the debug menu before the capture. |
 | `-Click` | `x,y` in screen pixels, origin bottom-left: injects a left click there after the warm-up frames, to drive the menu. |
 | `-Build`, `-Setup` | Run [build.ps1](../build.ps1) (with `-Setup` for `-Setup`) first. |

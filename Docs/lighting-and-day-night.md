@@ -39,7 +39,7 @@ The `ambientColor` gradient and `maxSunIntensity` are serialized in `World.unity
 | Color Adjustments | contrast +8, saturation +6 |
 | Vignette | intensity 0.18, smoothness 0.5 |
 | Split Toning | shadows (0.78, 0.78, 0.88), highlights (1.0, 0.95, 0.87) |
-| Depth of Field | Gaussian, start 400 m, end 1500 m, max radius 1 |
+| Depth of Field | Gaussian, start 900 m, end 2600 m, max radius 1, so the lowland stays readable and only its far ridges soften |
 
 Screen-space ambient occlusion comes from the renderer, not the volume; see [visibility-and-depth.md](visibility-and-depth.md#post-processing). Distance fog is applied by the terrain and scatter shaders from values `DayNightCycle` sets; see [visibility-and-depth.md](visibility-and-depth.md#fog).
 
@@ -80,7 +80,9 @@ The gradients are sampled by elevation remapped to 0..1 (0 midnight, 0.5 horizon
 
 ## Sky Shader
 
-[GradientSky.shader](../Assets/Shaders/GradientSky.shader) blends horizon to zenith above the horizon and horizon to ground below it. The blend is quantised into `_Bands` (10) equal steps, the ground blend into three, and the sun's glow into five rings, so the sky has the same hard-edged, stepped look as the faceted ground. A sun disc and glow are drawn toward `_SunDir`, which `DayNightCycle` sets from the sun transform. The disc is HDR, so bloom picks it up, and is masked to the sky above the horizon.
+[GradientSky.shader](../Assets/Shaders/GradientSky.shader) blends horizon to zenith above the horizon and horizon to ground below it. The blend is quantised into `_Bands` (10) equal steps, the ground blend into three, and the sun's glow into five rings, so the sky has the same hard-edged, stepped look as the faceted ground.
+
+**The bands are widest at sunrise and sunset and squeezed toward the horizon at noon and midnight.** `DayNightCycle` sets `_BandSqueeze` to the sun elevation's magnitude to the power 1.5, and the shader divides the horizon falloff exponent by up to 16 (`exp2(-4 * _BandSqueeze)`). At noon and midnight the zenith colour fills almost the whole sky, and the other nine bands fit in the lowest few degrees, mostly behind the crater walls. A sun disc and glow are drawn toward `_SunDir`, which `DayNightCycle` sets from the sun transform. The disc is HDR, so bloom picks it up, and is masked to the sky above the horizon.
 
 ---
 

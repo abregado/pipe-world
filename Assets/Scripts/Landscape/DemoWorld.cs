@@ -15,13 +15,22 @@ namespace PipeWorld.Landscape
         public Material grassMaterial;
         public Material flameMaterial;
 
+        const float ScatterDayDistance = 420f;
+        const float ScatterNightDistance = 220f;
+        const float GrassDayDistance = 95f;
+        const float GrassNightDistance = 60f;
+
         public WorldShape Shape { get; private set; }
+        public ShapeLibrary Library { get; private set; }
+        // The scatter material with the distance dissolve off, for props that must stay solid at any range.
+        public Material PropMaterial { get; private set; }
 
         void Awake()
         {
             var timer = Stopwatch.StartNew();
             Shape = new WorldShape(seed);
             var library = new ShapeLibrary(seed);
+            Library = library;
 
             var terrainMesh = TerrainMeshBuilder.Build(Shape, terrainCellSize);
             CreateObject("Terrain", terrainMesh, terrainMaterials, true, ShadowCastingMode.On);
@@ -36,11 +45,13 @@ namespace PipeWorld.Landscape
 
             var scatterTriangles = 0;
             var culling = gameObject.AddComponent<ScatterCulling>();
+            culling.RegisterFade("_PW_ScatterDrawDistance", ScatterDayDistance, ScatterNightDistance);
+            culling.RegisterFade("_PW_GrassDrawDistance", GrassDayDistance, GrassNightDistance);
             foreach (var entry in ScatterBuilder.Build(Shape, library, seed + 2))
             {
                 scatterTriangles += entry.Value.TriangleCount;
                 var name = $"Scatter {entry.Key.biome} {entry.Key.tx},{entry.Key.tz}";
-                culling.Register(CreateObject(name, entry.Value.ToMesh(name), new[] { scatterMaterial }, false, ShadowCastingMode.On), 420f, 220f, 110f);
+                culling.Register(CreateObject(name, entry.Value.ToMesh(name), new[] { scatterMaterial }, false, ShadowCastingMode.On), ScatterDayDistance, ScatterNightDistance, 110f);
             }
 
             var grassTriangles = 0;
@@ -48,11 +59,19 @@ namespace PipeWorld.Landscape
             {
                 grassTriangles += entry.Value.TriangleCount;
                 var name = $"Grass {entry.Key.tx},{entry.Key.tz}";
-                culling.Register(CreateObject(name, entry.Value.ToMesh(name), new[] { grassMaterial }, false, ShadowCastingMode.Off), 95f, 60f, 0f);
+                culling.Register(CreateObject(name, entry.Value.ToMesh(name), new[] { grassMaterial }, false, ShadowCastingMode.Off), GrassDayDistance, GrassNightDistance, 0f);
             }
 
-            TorchBuilder.BuildAll(transform, Shape, library, scatterMaterial, flameMaterial, terrainMaterials, seed + 4);
+            // Torches and beacons are seen from across the crater, so their parts must not dissolve with the scatter.
+            PropMaterial = new Material(scatterMaterial) { name = "Scatter (no fade)" };
+            PropMaterial.SetFloat("_DistanceFade", 0f);
+            TorchBuilder.BuildAll(transform, Shape, library, PropMaterial, flameMaterial, terrainMaterials, seed + 4);
 
+            foreach (Transform child in transform)
+                if (child.name == "Monolith" || child.name == "Campfire")
+                    Debug.Log($"[DemoWorld] {child.name.ToLowerInvariant()} at ({child.position.x:F0}, {child.position.y:F1}, {child.position.z:F0})");
+            foreach (var plateau in Shape.Plateaus)
+                Debug.Log($"[DemoWorld] plateau at ({plateau.center.x:F0}, {plateau.center.y:F0}) radius {plateau.radius:F1} height {plateau.height:F1} top {plateau.baseHeight + plateau.height:F1} ramp {plateau.rampDeg:F0} deg");
             foreach (var mesa in Shape.Mesas)
                 Debug.Log($"[DemoWorld] mesa at ({mesa.center.x:F0}, {mesa.center.y:F0}) radius {mesa.radius:F1} ground {Shape.Height(mesa.center.x, mesa.center.y):F1}");
 

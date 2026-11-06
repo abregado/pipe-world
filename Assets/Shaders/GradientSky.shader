@@ -11,6 +11,7 @@ Shader "PipeWorld/GradientSky"
         _SunGlow ("Sun Glow", Range(0, 1)) = 0.25
         _SunDir ("Sun Direction", Vector) = (0, 1, 0, 0)
         _Bands ("Gradient Bands", Range(2, 32)) = 10
+        _BandSqueeze ("Band Squeeze Toward Horizon", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -26,7 +27,7 @@ Shader "PipeWorld/GradientSky"
             #include "UnityCG.cginc"
 
             fixed4 _ZenithColor, _HorizonColor, _GroundColor, _SunColor;
-            half _HorizonFalloff, _SunSize, _SunGlow, _Bands;
+            half _HorizonFalloff, _SunSize, _SunGlow, _Bands, _BandSqueeze;
             float4 _SunDir;
 
             struct v2f
@@ -50,7 +51,8 @@ Shader "PipeWorld/GradientSky"
 
                 float up = saturate(d.y);
                 float down = saturate(-d.y * 3.0);
-                float skyT = pow(up, _HorizonFalloff);
+                // Squeeze 1 divides the falloff exponent by 16: every band but the zenith colour fits in the lowest few degrees.
+                float skyT = pow(up, _HorizonFalloff * exp2(-4.0 * _BandSqueeze));
                 skyT = min(floor(skyT * _Bands), _Bands - 1.0) / (_Bands - 1.0);
                 down = floor(down * 3.0 + 0.5) / 3.0;
                 float3 col = lerp(_HorizonColor.rgb, _ZenithColor.rgb, skyT);

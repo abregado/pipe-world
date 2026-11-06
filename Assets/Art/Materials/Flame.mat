@@ -25,6 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _DistanceFade: 0
     - _EmissionStrength: 3
     m_Colors:
     - _GlowTint: {r: 1, g: 1, b: 1, a: 1}

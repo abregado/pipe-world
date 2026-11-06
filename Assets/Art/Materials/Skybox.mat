@@ -27,6 +27,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AtmosphereThickness: 1
+    - _BandSqueeze: 0
     - _Bands: 10
     - _Exposure: 1.3
     - _HorizonFalloff: 0.6

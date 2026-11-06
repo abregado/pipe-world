@@ -67,25 +67,22 @@ Shader "PipeWorld/TriplanarTerrain"
 
                 float walkable = smoothstep(_WalkableCos - _EdgeSoftness, _WalkableCos + _EdgeSoftness, n.y);
 
-                half3 top = SAMPLE_TEXTURE2D(_TopTex, sampler_TopTex, p.xz / _TopScale).rgb;
-                // A much larger copy of the same texture, relative to its average colour, breaks up visible tiling.
+                // Every layer is sampled without a repeating grid (PW_SampleNoTile), at scales that do not divide each other.
+                half3 top = PW_SampleNoTile(TEXTURE2D_ARGS(_TopTex, sampler_TopTex), p.xz / _TopScale, 0.0);
+                // A much larger copy of the same texture, relative to its average colour, varies the brightness over tens of metres.
                 half3 macro = SAMPLE_TEXTURE2D(_TopTex, sampler_TopTex, p.xz / (_TopScale * 7.3) + 0.37).rgb;
                 half3 mean = SAMPLE_TEXTURE2D_LOD(_TopTex, sampler_TopTex, float2(0.5, 0.5), 12).rgb;
-                // A rotated, differently scaled second layer is blended in by the large-scale value so the repeat is never aligned.
-                float2 rotated = float2(p.x * 0.8 - p.z * 0.6, p.x * 0.6 + p.z * 0.8) / (_TopScale * 1.9);
-                half3 topB = SAMPLE_TEXTURE2D(_TopTex, sampler_TopTex, rotated).rgb;
-                top = lerp(top, topB, saturate(0.5 + (dot(macro, 0.3333) - dot(mean, 0.3333)) * 4.0));
                 top *= clamp(1.0 + (dot(macro, 0.3333) - dot(mean, 0.3333)) * 1.2, 0.75, 1.25);
-                half3 detail = SAMPLE_TEXTURE2D(_TopTex, sampler_TopTex, p.xz / (_TopScale * 0.13)).rgb;
+                half3 detail = PW_SampleNoTile(TEXTURE2D_ARGS(_TopTex, sampler_TopTex), p.xz / (_TopScale * 0.13), 17.0);
                 top *= clamp(1.0 + (dot(detail, 0.3333) - dot(mean, 0.3333)) * 0.9, 0.88, 1.12);
                 top *= _TopTint.rgb;
                 top = lerp(top, top * _AccentColor.rgb, _AccentStrength);
 
                 float3 w = pow(abs(n), 4.0);
                 w /= (w.x + w.y + w.z + 1e-4);
-                half3 sideX = SAMPLE_TEXTURE2D(_SideTex, sampler_SideTex, p.zy / _SideScale).rgb;
-                half3 sideY = SAMPLE_TEXTURE2D(_SideTex, sampler_SideTex, p.xz / _SideScale).rgb;
-                half3 sideZ = SAMPLE_TEXTURE2D(_SideTex, sampler_SideTex, p.xy / _SideScale).rgb;
+                half3 sideX = PW_SampleNoTile(TEXTURE2D_ARGS(_SideTex, sampler_SideTex), p.zy / _SideScale, 3.0);
+                half3 sideY = PW_SampleNoTile(TEXTURE2D_ARGS(_SideTex, sampler_SideTex), p.xz / _SideScale, 5.0);
+                half3 sideZ = PW_SampleNoTile(TEXTURE2D_ARGS(_SideTex, sampler_SideTex), p.xy / _SideScale, 7.0);
                 half3 side = (sideX * w.x + sideY * w.y + sideZ * w.z);
                 half3 sideMacro = SAMPLE_TEXTURE2D(_SideTex, sampler_SideTex, p.xz / (_SideScale * 6.1) + 0.21).rgb;
                 half3 sideMean = SAMPLE_TEXTURE2D_LOD(_SideTex, sampler_SideTex, float2(0.5, 0.5), 12).rgb;

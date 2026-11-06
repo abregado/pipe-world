@@ -129,7 +129,7 @@ namespace PipeWorld.Tools
             if (respawn != null)
             {
                 var debugMenu = FindAnyObjectByType<DebugMenu>();
-                if (respawn == "outer") debugMenu.RespawnInsideOuterWall(); else debugMenu.RespawnAtCentre();
+                if (respawn == "outer") debugMenu.RespawnInsideOuterWall(); else if (respawn == "edge") debugMenu.RespawnAtOpenEdge(); else debugMenu.RespawnAtCentre();
                 Debug.Log($"[ShotRig] respawned at {player.transform.position}");
             }
 

@@ -14,6 +14,7 @@ namespace PipeWorld.World
         static readonly int FogColorId = Shader.PropertyToID("_PW_FogColor");
         static readonly int FogParamsId = Shader.PropertyToID("_PW_FogParams");
         static readonly int NightFactorId = Shader.PropertyToID("_PW_NightFactor");
+        static readonly int BandSqueezeId = Shader.PropertyToID("_BandSqueeze");
 
         public Light sun;
         public Material skyboxSource;
@@ -60,7 +61,8 @@ namespace PipeWorld.World
         public float ambientScale = 1f;
 
         public float dayFogStart = 120f;
-        public float dayFogEnd = 1000f;
+        // Far enough that the lowland beyond the open side shows depth instead of a flat fog band.
+        public float dayFogEnd = 1600f;
         public float nightFogStart = 30f;
         public float nightFogEnd = 420f;
         public float dayFogDarken = 0.62f;
@@ -138,6 +140,9 @@ namespace PipeWorld.World
                 skyInstance.SetColor(ZenithId, skyZenith.Evaluate(t));
                 skyInstance.SetColor(HorizonId, horizon);
                 skyInstance.SetColor(GroundId, horizon * 0.9f);
+                // The sky's colour bands are spread widest at sunrise and sunset and squeezed toward the horizon at noon and
+                // midnight, where the zenith colour fills most of the sky.
+                skyInstance.SetFloat(BandSqueezeId, Mathf.Pow(Mathf.Abs(elevation), 1.5f));
                 if (sun != null)
                 {
                     skyInstance.SetVector(SunDirId, -sun.transform.forward);

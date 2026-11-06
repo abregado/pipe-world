@@ -119,6 +119,18 @@ namespace PipeWorld.Tools
             if (ImGui.Button("Centre of crater")) RespawnAtCentre();
             ImGui.SameLine();
             if (ImGui.Button("Inside outer wall")) RespawnInsideOuterWall();
+            ImGui.SameLine();
+            if (ImGui.Button("Open edge")) RespawnAtOpenEdge();
+        }
+
+        // On the rim where the ground falls away, facing out over the lowland.
+        public void RespawnAtOpenEdge()
+        {
+            var angle = WorldShape.OpenCenterDeg * Mathf.Deg2Rad;
+            var radius = world.Shape.DropStart(angle) - 6f;
+            var x = Mathf.Cos(angle) * radius;
+            var z = Mathf.Sin(angle) * radius;
+            Respawn(x, z, Mathf.Atan2(x, z) * Mathf.Rad2Deg);
         }
 
         public void RespawnAtCentre() => Respawn(0f, 0f, 0f);
