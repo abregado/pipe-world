@@ -13,6 +13,16 @@ namespace PipeWorld.Piper
         ToggleOpenable,
         TakeFromRefreshable,
         AdjustInventory,
+        PlaceBuilding,
+        MoveBuildingEdge,
+        MoveBuildingVertex,
+        ExtrudeBuildingEdge,
+        CreateBuildingTri,
+        SliceBuildingArea,
+        DeleteBuildingArea,
+        PlaceBuildingProp,
+        DeleteBuildingObject,
+        SetBuildingHeights,
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -23,7 +33,7 @@ namespace PipeWorld.Piper
         public InputActionType type;
         public int sequenceNumber;
 
-        public const int SizeOf = 44;
+        public const int SizeOf = 48;
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -37,6 +47,16 @@ namespace PipeWorld.Piper
         [FieldOffset(0)] public ToggleOpenableData toggleOpenable;
         [FieldOffset(0)] public TakeFromRefreshableData takeFromRefreshable;
         [FieldOffset(0)] public AdjustInventoryData adjustInventory;
+        [FieldOffset(0)] public PlaceBuildingData placeBuilding;
+        [FieldOffset(0)] public MoveBuildingEdgeData moveBuildingEdge;
+        [FieldOffset(0)] public MoveBuildingVertexData moveBuildingVertex;
+        [FieldOffset(0)] public ExtrudeBuildingEdgeData extrudeBuildingEdge;
+        [FieldOffset(0)] public CreateBuildingTriData createBuildingTri;
+        [FieldOffset(0)] public SliceBuildingAreaData sliceBuildingArea;
+        [FieldOffset(0)] public DeleteBuildingAreaData deleteBuildingArea;
+        [FieldOffset(0)] public PlaceBuildingPropData placeBuildingProp;
+        [FieldOffset(0)] public DeleteBuildingObjectData deleteBuildingObject;
+        [FieldOffset(0)] public SetBuildingHeightsData setBuildingHeights;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -211,6 +231,182 @@ namespace PipeWorld.Piper
             {
                 type = InputActionType.AdjustInventory,
                 data = new InputActionData() { adjustInventory = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PlaceBuildingData
+    {
+        // The floor's centre; its Y is the floor height.
+        public Vec3f position;
+        public float yaw;
+        public float height;
+        public float groundY;
+
+        public static implicit operator InputAction(PlaceBuildingData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.PlaceBuilding,
+                data = new InputActionData() { placeBuilding = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MoveBuildingEdgeData
+    {
+        public uint building;
+        public uint edge;
+        public float offset;
+
+        public static implicit operator InputAction(MoveBuildingEdgeData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.MoveBuildingEdge,
+                data = new InputActionData() { moveBuildingEdge = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MoveBuildingVertexData
+    {
+        public uint building;
+        public uint vertex;
+        public float x;
+        public float z;
+
+        public static implicit operator InputAction(MoveBuildingVertexData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.MoveBuildingVertex,
+                data = new InputActionData() { moveBuildingVertex = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ExtrudeBuildingEdgeData
+    {
+        public uint building;
+        public uint edge;
+        public float offset;
+
+        public static implicit operator InputAction(ExtrudeBuildingEdgeData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.ExtrudeBuildingEdge,
+                data = new InputActionData() { extrudeBuildingEdge = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CreateBuildingTriData
+    {
+        public uint building;
+        public uint edge;
+        public float x;
+        public float z;
+
+        public static implicit operator InputAction(CreateBuildingTriData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.CreateBuildingTri,
+                data = new InputActionData() { createBuildingTri = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SliceBuildingAreaData
+    {
+        public uint building;
+        public uint area;
+        public float x;
+        public float z;
+
+        public static implicit operator InputAction(SliceBuildingAreaData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.SliceBuildingArea,
+                data = new InputActionData() { sliceBuildingArea = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DeleteBuildingAreaData
+    {
+        public uint building;
+        public uint area;
+
+        public static implicit operator InputAction(DeleteBuildingAreaData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.DeleteBuildingArea,
+                data = new InputActionData() { deleteBuildingArea = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PlaceBuildingPropData
+    {
+        public uint building;
+        public PropPrototypeId proto;
+        public BuildingFace face;
+        public uint faceRef;
+        public float u;
+        public float v;
+
+        public static implicit operator InputAction(PlaceBuildingPropData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.PlaceBuildingProp,
+                data = new InputActionData() { placeBuildingProp = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SetBuildingHeightsData
+    {
+        public uint building;
+        public float floorY;
+        public float height;
+
+        public static implicit operator InputAction(SetBuildingHeightsData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.SetBuildingHeights,
+                data = new InputActionData() { setBuildingHeights = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DeleteBuildingObjectData
+    {
+        public uint building;
+        public uint obj;
+
+        public static implicit operator InputAction(DeleteBuildingObjectData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.DeleteBuildingObject,
+                data = new InputActionData() { deleteBuildingObject = data }
             };
         }
     }

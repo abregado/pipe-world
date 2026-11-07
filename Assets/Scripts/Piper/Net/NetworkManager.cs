@@ -72,7 +72,7 @@ namespace PipeWorld.Piper
             }
         }
 
-        public const int SizeOf = 784;
+        public const int SizeOf = 848;
     }
 
     public abstract unsafe class NetworkManager : IDisposable
@@ -154,6 +154,7 @@ namespace PipeWorld.Piper
                     maxPropId = Math.Max(maxPropId, prop->slabHeader.perPlayerGeneration);
             }
             allocatorContextData.nextPropId = maxPropId + 1;
+            allocatorContextData.nextEntityId = world.maxEntityCounter(allocatorContextData.playerIndex) + 1;
         }
 
         public abstract bool isPlayerOnline(NetUid playerId);

@@ -64,7 +64,7 @@ The client applies its own actions immediately. When a snapshot arrives it repla
 
 ## Allocator Context
 
-Props get ids from the placing player's `AllocatorContextData` (player index plus a counter), so two players placing at once never collide. `InputActionManager.apply` stamps a local action with the manager's context and **writes the advanced counter back after the action**; without the write-back every placement reuses an id and the slab allocator asserts. `NetworkManager.loadAllocatorStateIfNeeded` finds the local player's slot and resumes the counter after the highest existing id.
+Props and building entities get ids from the placing player's `AllocatorContextData` (player index plus a `nextPropId` and a `nextEntityId` counter; see [buildings.md](buildings.md#data)), so two players placing at once never collide. `InputActionManager.apply` stamps a local action with the manager's context and **writes the advanced counter back after the action**; without the write-back every placement reuses an id and the slab allocator asserts. `NetworkManager.loadAllocatorStateIfNeeded` finds the local player's slot and resumes the counter after the highest existing id.
 
 ---
 
@@ -76,8 +76,8 @@ Props get ids from the placing player's `AllocatorContextData` (player index plu
 |---|---|
 | `BasicPlayerData` | 44 |
 | `PlayerData` | 108 |
-| `InputAction` | 44 |
-| `ClientToServerPacket` | 784 |
+| `InputAction` | 48 |
+| `ClientToServerPacket` | 848 |
 
 `InputAction.SizeOf` follows the largest member of the `InputActionData` union plus the 8-byte allocator context, the type byte and the sequence number.
 

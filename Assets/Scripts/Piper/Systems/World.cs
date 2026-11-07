@@ -7,6 +7,10 @@ namespace PipeWorld.Piper
     public unsafe class World
     {
         public readonly PropAllocator props = new PropAllocator();
+        public readonly EntitySlab<Building> buildings = new EntitySlab<Building>();
+        public readonly EntitySlab<BuildingVertexData> buildingVertices = new EntitySlab<BuildingVertexData>();
+        public readonly EntitySlab<BuildingEdgeData> buildingEdges = new EntitySlab<BuildingEdgeData>();
+        public readonly EntitySlab<BuildingAreaData> buildingAreas = new EntitySlab<BuildingAreaData>();
         public WorldData data;
 
         // Set when a save is loaded so PropSyncer re-creates every prop view instead of treating them as new placements.
@@ -21,6 +25,10 @@ namespace PipeWorld.Piper
         private IEnumerable<SlabAllocator> parts()
         {
             yield return props;
+            yield return buildings;
+            yield return buildingVertices;
+            yield return buildingEdges;
+            yield return buildingAreas;
         }
 
         private const uint SaveMagic = 0x57495053; // "SPIW"
@@ -99,6 +107,29 @@ namespace PipeWorld.Piper
             }
 
             SUtil.ReleaseAssert(offset == bytes.Length);
+        }
+
+        // Highest per-player counter used by any building entity of a player, so a rejoining player resumes after it.
+        public uint maxEntityCounter(int playerIndex)
+        {
+            uint max = 0;
+            max = Math.Max(max, maxCounter(buildings, playerIndex));
+            max = Math.Max(max, maxCounter(buildingVertices, playerIndex));
+            max = Math.Max(max, maxCounter(buildingEdges, playerIndex));
+            max = Math.Max(max, maxCounter(buildingAreas, playerIndex));
+            return max;
+        }
+
+        private static uint maxCounter<T>(EntitySlab<T> slab, int playerIndex) where T : unmanaged
+        {
+            uint max = 0;
+            for (int i = 0; i < slab.slabs.size; i++)
+            {
+                SlabHeader* header = (SlabHeader*)slab.slabs.get(i);
+                if (header->allocated && header->playerIndex == playerIndex)
+                    max = Math.Max(max, header->perPlayerGeneration);
+            }
+            return max;
         }
 
         public Prop* get(PropHandle handle) { return props.get(handle); }

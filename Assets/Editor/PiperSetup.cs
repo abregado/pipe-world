@@ -38,6 +38,7 @@ namespace PipeWorld.EditorTools
             EnsureFolder("Assets/Resources", "UiSkins");
 
             var material = BuildPropMaterial();
+            BuildBuildingMaterials();
             BuildPropPrefabs(material);
             BuildUiAssets();
             AssetDatabase.SaveAssets();
@@ -66,6 +67,33 @@ namespace PipeWorld.EditorTools
             return mat;
         }
 
+        static void BuildBuildingMaterials()
+        {
+            EnsureFolder("Assets/Resources", "Materials");
+
+            var building = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/Materials/Building.mat");
+            if (building == null)
+            {
+                building = new Material(Shader.Find("PipeWorld/Scatter"));
+                AssetDatabase.CreateAsset(building, "Assets/Resources/Materials/Building.mat");
+            }
+            building.shader = Shader.Find("PipeWorld/Scatter");
+            building.SetFloat("_DistanceFade", 0f);
+            building.SetColor("_GlowTint", Color.white);
+            building.SetFloat("_EmissionStrength", 1.2f);
+            EditorUtility.SetDirty(building);
+
+            var gizmo = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/Materials/Gizmo.mat");
+            if (gizmo == null)
+            {
+                gizmo = new Material(Shader.Find("PipeWorld/Gizmo"));
+                AssetDatabase.CreateAsset(gizmo, "Assets/Resources/Materials/Gizmo.mat");
+            }
+            gizmo.shader = Shader.Find("PipeWorld/Gizmo");
+            gizmo.SetColor("_BaseColor", Color.white);
+            EditorUtility.SetDirty(gizmo);
+        }
+
         // ---- Prop prefabs ----
 
         static void BuildPropPrefabs(Material material)
@@ -74,6 +102,7 @@ namespace PipeWorld.EditorTools
             BuildDoor(material);
             BuildLamp(material);
             BuildSupplyBox(material);
+            BuildBuildingProps(material);
             BuildOtherPlayer(material);
         }
 
@@ -242,6 +271,100 @@ namespace PipeWorld.EditorTools
             SavePrefab(root, PropPrototypeId.RefreshableBox);
         }
 
+        // ---- Building props ----
+        // Wall props have their origin on the wall's centre line with +Z pointing out of the face they hang on, so the wall is
+        // 0.16 thick (z from -0.08 to 0.08). Floor props stand on the origin; the ceiling lamp hangs below it.
+
+        static void BuildingProp<T>(Material material, PropPrototypeId id, System.Action<MeshBuilder> shape, params (Vector3 center, Vector3 size)[] colliders) where T : PropBehaviour
+        {
+            var b = new MeshBuilder();
+            shape(b);
+            var mesh = SaveMesh(b, "Building" + id);
+
+            var root = new GameObject(id.ToString());
+            root.AddComponent<MeshFilter>().sharedMesh = mesh;
+            root.AddComponent<MeshRenderer>().sharedMaterial = material;
+            foreach (var (center, size) in colliders)
+            {
+                var box = root.AddComponent<BoxCollider>();
+                box.center = center;
+                box.size = size;
+            }
+            root.AddComponent<T>();
+            SavePrefab(root, id);
+        }
+
+        static void BuildBuildingProps(Material material)
+        {
+            var wood = new Color32(150, 108, 72, 0);
+            var darkWood = new Color32(110, 80, 56, 0);
+            var trim = new Color32(70, 74, 82, 0);
+            var glow = new Color32(255, 236, 170, 255);
+
+            BuildingProp<TableBehaviour>(material, PropPrototypeId.Table, b =>
+            {
+                AddBox(b, new Vector3(0f, 0.71f, 0f), new Vector3(0.95f, 0.08f, 0.95f), wood);
+                foreach (var (sx, sz) in new[] { (-1f, -1f), (1f, -1f), (-1f, 1f), (1f, 1f) })
+                    AddBox(b, new Vector3(sx * 0.42f, 0.335f, sz * 0.42f), new Vector3(0.08f, 0.67f, 0.08f), darkWood);
+            }, (new Vector3(0f, 0.375f, 0f), new Vector3(0.95f, 0.75f, 0.95f)));
+
+            BuildingProp<ChairBehaviour>(material, PropPrototypeId.Chair, b =>
+            {
+                AddBox(b, new Vector3(0f, 0.45f, 0f), new Vector3(0.45f, 0.06f, 0.45f), wood);
+                AddBox(b, new Vector3(0f, 0.7f, 0.2f), new Vector3(0.45f, 0.45f, 0.05f), wood);
+                foreach (var (sx, sz) in new[] { (-1f, -1f), (1f, -1f), (-1f, 1f), (1f, 1f) })
+                    AddBox(b, new Vector3(sx * 0.19f, 0.21f, sz * 0.19f), new Vector3(0.05f, 0.42f, 0.05f), darkWood);
+            }, (new Vector3(0f, 0.45f, 0f), new Vector3(0.45f, 0.9f, 0.45f)));
+
+            BuildingProp<CeilingLampBehaviour>(material, PropPrototypeId.CeilingLamp, b =>
+            {
+                AddBox(b, new Vector3(0f, -0.1f, 0f), new Vector3(0.05f, 0.2f, 0.05f), trim);
+                AddBox(b, new Vector3(0f, -0.25f, 0f), new Vector3(0.5f, 0.1f, 0.5f), trim);
+                AddBox(b, new Vector3(0f, -0.32f, 0f), new Vector3(0.4f, 0.05f, 0.4f), glow);
+            }, (new Vector3(0f, -0.2f, 0f), new Vector3(0.5f, 0.4f, 0.5f)));
+
+            BuildingProp<PaintingBehaviour>(material, PropPrototypeId.Painting, b =>
+            {
+                AddBox(b, new Vector3(0f, 0f, 0.1f), new Vector3(0.9f, 0.6f, 0.04f), darkWood);
+                AddBox(b, new Vector3(0f, 0f, 0.115f), new Vector3(0.78f, 0.48f, 0.02f), new Color32(92, 140, 170, 0));
+                AddBox(b, new Vector3(-0.15f, -0.05f, 0.125f), new Vector3(0.3f, 0.2f, 0.01f), new Color32(220, 170, 90, 0));
+            }, (new Vector3(0f, 0f, 0.1f), new Vector3(0.9f, 0.6f, 0.05f)));
+
+            BuildingProp<BuildingDoorBehaviour>(material, PropPrototypeId.BuildingDoor, b =>
+            {
+                AddBox(b, new Vector3(-0.48f, 1.05f, 0f), new Vector3(0.06f, 2.1f, 0.2f), trim);
+                AddBox(b, new Vector3(0.48f, 1.05f, 0f), new Vector3(0.06f, 2.1f, 0.2f), trim);
+                AddBox(b, new Vector3(0f, 2.13f, 0f), new Vector3(1.02f, 0.06f, 0.2f), trim);
+            }, (new Vector3(0f, 2.13f, 0f), new Vector3(1.02f, 0.06f, 0.2f)));
+
+            BuildingProp<ArchwayBehaviour>(material, PropPrototypeId.Archway, b =>
+            {
+                AddBox(b, new Vector3(-0.68f, 1.15f, 0f), new Vector3(0.06f, 2.3f, 0.2f), trim);
+                AddBox(b, new Vector3(0.68f, 1.15f, 0f), new Vector3(0.06f, 2.3f, 0.2f), trim);
+                AddBox(b, new Vector3(0f, 2.33f, 0f), new Vector3(1.42f, 0.06f, 0.2f), trim);
+                AddBox(b, new Vector3(-0.55f, 2.2f, 0f), new Vector3(0.2f, 0.2f, 0.2f), trim);
+                AddBox(b, new Vector3(0.55f, 2.2f, 0f), new Vector3(0.2f, 0.2f, 0.2f), trim);
+            }, (new Vector3(0f, 2.33f, 0f), new Vector3(1.42f, 0.06f, 0.2f)));
+
+            // The exterior door is 0.4 thick against a 0.16 wall, so it stands proud of the wall on both sides.
+            BuildingProp<ExteriorDoorBehaviour>(material, PropPrototypeId.ExteriorDoor, b =>
+            {
+                AddBox(b, new Vector3(-0.525f, 1.05f, 0f), new Vector3(0.1f, 2.1f, 0.4f), trim);
+                AddBox(b, new Vector3(0.525f, 1.05f, 0f), new Vector3(0.1f, 2.1f, 0.4f), trim);
+                AddBox(b, new Vector3(0f, 2.05f, 0f), new Vector3(1.1f, 0.1f, 0.4f), trim);
+                AddBox(b, new Vector3(0f, 1.0f, 0f), new Vector3(0.96f, 2.0f, 0.3f), new Color32(60, 150, 90, 0));
+                AddBox(b, new Vector3(0.3f, 1.0f, 0.18f), new Vector3(0.08f, 0.08f, 0.06f), Hazard);
+                AddBox(b, new Vector3(0.3f, 1.0f, -0.18f), new Vector3(0.08f, 0.08f, 0.06f), Hazard);
+            }, (new Vector3(0f, 1.05f, 0f), new Vector3(1.1f, 2.1f, 0.4f)));
+
+            BuildingProp<TerminalBehaviour>(material, PropPrototypeId.Terminal, b =>
+            {
+                AddBox(b, new Vector3(0f, 0.6f, 0f), new Vector3(0.7f, 1.2f, 0.5f), new Color32(78, 84, 96, 0));
+                AddBox(b, new Vector3(0f, 0.85f, -0.26f), new Vector3(0.5f, 0.4f, 0.02f), new Color32(110, 230, 150, 255));
+                AddBox(b, new Vector3(0f, 0.55f, -0.3f), new Vector3(0.5f, 0.06f, 0.12f), trim);
+            }, (new Vector3(0f, 0.6f, 0f), new Vector3(0.7f, 1.2f, 0.5f)));
+        }
+
         static void BuildOtherPlayer(Material material)
         {
             var bodyBuilder = new MeshBuilder();
@@ -339,8 +462,11 @@ namespace PipeWorld.EditorTools
             var selector = interaction.AddComponent<InteractionModeSelector>();
             var superTool = interaction.AddComponent<SuperTool>();
             var finger = interaction.AddComponent<FingerInteraction>();
+            var buildingPlacer = interaction.AddComponent<BuildingPlacerInteraction>();
+            var objectPlacer = interaction.AddComponent<ObjectPlacerInteraction>();
+            var buildingEdit = interaction.AddComponent<BuildingEditInteraction>();
             superTool.controlledModes = new PipeWorld.Piper.InteractionMode[] { finger };
-            selector.allModes = new System.Collections.Generic.List<PipeWorld.Piper.InteractionMode> { superTool, finger };
+            selector.allModes = new System.Collections.Generic.List<PipeWorld.Piper.InteractionMode> { superTool, finger, buildingPlacer, objectPlacer, buildingEdit };
         }
     }
 }

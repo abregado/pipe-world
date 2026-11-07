@@ -37,8 +37,12 @@ namespace PipeWorld.Piper
 
         public void destroyAll()
         {
+            // Destroy only takes effect at the end of the frame; deactivating first removes the colliders from physics queries at once.
             foreach (PropBehaviour live in liveObjects.Values)
+            {
+                live.gameObject.SetActive(false);
                 UnityEngine.Object.Destroy(live.gameObject);
+            }
             liveObjects.Clear();
 
             foreach (GameObjectPool<PropBehaviour> pool in objectPools.Values)

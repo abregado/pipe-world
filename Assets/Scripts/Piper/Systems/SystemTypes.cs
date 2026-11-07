@@ -9,6 +9,7 @@ namespace PipeWorld.Piper
     {
         public int playerIndex;
         public uint nextPropId;
+        public uint nextEntityId;
     }
 
     public class AllocatorContext
@@ -24,6 +25,14 @@ namespace PipeWorld.Piper
         public Vec3f position;
         public Vec3f eulerRotation;
         public PropExtraData data;
+
+        // Building props belong to a building (0 for outdoor props) and are attached to one of its faces. Position and rotation
+        // are derived from the face and the 0-1 coordinates each time the building changes, so a prop follows its face when it is resized.
+        public uint building;
+        public uint faceRef;
+        public float faceU;
+        public float faceV;
+        public BuildingFace face;
 
         public PropHandle getHandleToSelf()
         {

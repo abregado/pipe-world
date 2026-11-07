@@ -104,6 +104,19 @@ namespace PipeWorld.Piper
                         break;
                     }
 
+                    case InputActionType.PlaceBuilding:
+                    case InputActionType.MoveBuildingEdge:
+                    case InputActionType.MoveBuildingVertex:
+                    case InputActionType.ExtrudeBuildingEdge:
+                    case InputActionType.CreateBuildingTri:
+                    case InputActionType.SliceBuildingArea:
+                    case InputActionType.DeleteBuildingArea:
+                    case InputActionType.PlaceBuildingProp:
+                    case InputActionType.DeleteBuildingObject:
+                    case InputActionType.SetBuildingHeights:
+                        BuildingActions.apply(world, allocator, inputAction.v);
+                        break;
+
                     case InputActionType.AdjustInventory:
                     {
                         world.data.inventory.adjustCount(inputAction.v.data.adjustInventory.item, inputAction.v.data.adjustInventory.amount);

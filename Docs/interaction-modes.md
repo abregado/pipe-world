@@ -1,6 +1,6 @@
 # Interaction Modes
 
-How the player highlights and uses props. Two modes exist: `FingerInteraction`, which uses what is under the crosshair, and `SuperTool`, the default mode, which hands the crosshair to the modes it controls. For what a prop does when used, see [props-and-inventory.md](props-and-inventory.md).
+How the player highlights and uses props and places and edits buildings. `FingerInteraction` uses what is under the crosshair and `SuperTool`, the default mode, hands the crosshair to the modes it controls. `BuildingPlacerInteraction`, `ObjectPlacerInteraction` (placing props) and `BuildingEditInteraction` are the [building modes](#building-modes). For what a prop does when used, see [props-and-inventory.md](props-and-inventory.md).
 
 ---
 
@@ -14,9 +14,9 @@ Modes and tooltips read `PiperMain.p.game.raycaster` and look only at the first 
 
 ## Mode Selection
 
-[InteractionModeSelector.cs](../Assets/Scripts/Piper/Interaction/InteractionModeSelector.cs) holds `allModes` (`SuperTool`, then `FingerInteraction`) and activates index 0 the first tick it runs. Each tick it resets the crosshair style and calls the active mode's `ModeUpdate`.
+[InteractionModeSelector.cs](../Assets/Scripts/Piper/Interaction/InteractionModeSelector.cs) holds `allModes` (`SuperTool`, `FingerInteraction`, `BuildingPlacerInteraction`, `ObjectPlacerInteraction`, `BuildingEditInteraction`) and activates index 0 the first tick it runs. **B** enters the building placer and **O** the prop placer from any mode except the edit mode; the same key, or right click in the placer, returns to the `SuperTool`. Each tick it resets the crosshair style and calls the active mode's `ModeUpdate`.
 
-`PiperGame` calls `doUpdate` only while no menu is open and the main menu is closed; otherwise it calls `Suspend`, which deactivates the mode and clears its prompts, highlight and crosshair progress. The next `doUpdate` reactivates it.
+`PiperGame` calls `doUpdate` only while no menu is open and the main menu is closed; otherwise it calls `Suspend`, which deactivates the mode and clears its prompts, highlight and crosshair progress. The next `doUpdate` reactivates it. **`Suspend` leaves the edit mode alone,** because deactivating it moves the player back to the terminal; a menu opened while editing only pauses the mode's updates.
 
 ---
 
@@ -69,6 +69,49 @@ The left prompt shows `GetPrimaryVerb`, greyed with its error text when the verb
 [SuperTool.cs](../Assets/Scripts/Piper/Interaction/SuperTool.cs) lists `controlledModes` (`FingerInteraction`). Each tick it asks each controlled mode whether it has an object of interest under the cursor, remembers the last one that did in `lastHighlightMode`, and runs that mode's `ModeUpdate`. If a mode's `ModeUpdate` returns true the selector switches to it. With nothing of interest it clears the prompts and the previous mode's highlight.
 
 It forwards tooltip overrides and `RequestedTooltipTags` to `lastHighlightMode`, so an object never shows two modes' tooltips; with no mode claiming the cursor it requests `Normal`, so basic prop info still shows.
+
+---
+
+## Building Modes
+
+[buildings.md](buildings.md) describes the data these modes change. All three aim with the crosshair ray, send their changes as [input actions](adding-an-input-action.md), and show what the action would do before sending it by running it on a copy of the building ([buildings.md](buildings.md#the-model)). `BuildingGizmos` draws previews as pooled line renderers and spheres with `PipeWorld/Gizmo`, an unlit shader that ignores depth so edit overlays show through walls and terrain.
+
+### Placing Buildings
+
+[BuildingPlacerInteraction.cs](../Assets/Scripts/Piper/Interaction/BuildingPlacerInteraction.cs) places a building in three clicks while a 3x3 wireframe shows the result. **The mouse wheel turns the hologram smoothly throughout (30 degrees per notch); holding Shift makes each scroll a whole 15 degree step, measured from world X.** Shift also snaps the floor height of click 2 to whole units of world Y.
+
+| Click | Sets | Aiming |
+|---|---|---|
+| 1 | The origin on the ground | The first hit within 30 m, valid on level ground (surface normal Y at least 0.7), not on a building, and 8 m from other buildings |
+| 2 | The floor height above the ground, up to `BuildingConstants.MaxRaise` | The crosshair's closest approach to the vertical line through the origin, in 0.25 m steps; the raised volume is outlined as the scaffold |
+| 3 | The ceiling height | The same line above the floor, in 0.25 m steps |
+
+The third click sends `PlaceBuilding` with the position, yaw, ceiling height and ground level, and returns to the `SuperTool`. Right click goes back a step, and cancels from the first.
+
+### Placing Props
+
+[ObjectPlacerInteraction.cs](../Assets/Scripts/Piper/Interaction/ObjectPlacerInteraction.cs) places the props in `BuildingProps.placeable` on the faces of buildings ([buildings.md](buildings.md#props)). **The mouse wheel chooses the prop and right click leaves the mode**; the scroll prompt shows the choice. The placer looks through props to the first building surface within 8 m and finds the face from its normal: a floor, a ceiling (the hit must be on the underside) or the nearest wall and the side the hit is on. It converts the hit to the face's 0-1 coordinates, snapped to 0.1 m, and runs `placeProp` on a copy of the building: the hologram is blue when the placement is valid and red otherwise, and the left prompt shows the reason. Left click sends `PlaceBuildingProp`. **X** removes the building prop directly under the crosshair with `DeleteBuildingObject`, which is refused when it would leave the building without its terminal or last exterior door.
+
+### Editing Buildings
+
+The terminal has two buttons: using it (left click) enters the editor, and holding right click on it ("Place furniture", `InteractionModeSelector.EnterFurnishing`) enters the prop placer alone, without flying. Using the terminal calls `InteractionModeSelector.EnterBuildingEdit`. [BuildingEditInteraction.cs](../Assets/Scripts/Piper/Interaction/BuildingEditInteraction.cs) records where the player stood, switches the player to [free flight](player-controller.md#flight), lifts them 2.5 m and hides the building's ceiling. **Right click (with no drag in progress) or Tab leaves the mode and teleports the player back to the recorded position.** The number keys or the mouse wheel choose the tool:
+
+| Key | Tool | Behaviour |
+|---|---|---|
+| 1 | Manipulate | Drag an outer or inner wall marker along its normal (the collinear chain moves together), or drag a corner of a triangular room freely |
+| 2 | Extrude | Drag an outer wall marker outwards to add a room |
+| 3 | Create Triangle | Drag from an outer wall marker to a point to add a triangle |
+| 4 | Slice | Aim into a room to preview the cut; left click commits |
+| 5 | Delete Room | Aim into a room; it outlines red when it can be deleted; left click deletes |
+| 6 | Floor and Ceiling Height | Drag the floor marker to raise or lower the whole building above its ground, or the ceiling marker to change the ceiling height; sends `SetBuildingHeights` |
+
+Targets are on the building's floor plane. A marker is hit when the ray passes near it, with a radius that grows with distance. Drags along a wall normal use the point of the normal line closest to the ray, so the pull does not depend on the aiming angle; free drags intersect the ray with the floor plane. Height drags use the closest approach to a vertical line, in 0.25 m steps. Right click cancels a drag; releasing applies it. Preview lines are green when the edit is valid and red when it is not, and the left prompt shows the reason an edit was refused.
+
+---
+
+## Mode Toolbar
+
+[ModeToolbarElement.cs](../Assets/Scripts/Piper/UI/ModeToolbarElement.cs) is a row of icons above the mode label ([GameHud.cs](../Assets/Scripts/Piper/UI/GameHud.cs)). It shows the modes the wheel steps through (Interact, Place building, Place props) with the current one lit, and while editing a building it shows the six edit tools instead. `InteractionModeSelector.RefreshToolbar` fills it whenever the mode or the tool changes. Each slot shows the number key that selects it in its top right corner: 1 to 3 choose the modes (in any mode but the editor), 1 to 6 the editor's tools. In the default mode the wheel steps to the next or previous slot; the placement modes use the wheel themselves. In the edit mode the wheel steps through the tools. A wheel that sends many small deltas per notch still gives one step per notch ([ScrollStepper.cs](../Assets/Scripts/Piper/Core/ScrollStepper.cs)). Shift is the only modifier key the game uses. The icons are PNGs in `Assets/Resources/Icons/` from game-icons.net ([CREDITS.txt](../Assets/Resources/Icons/CREDITS.txt)).
 
 ---
 

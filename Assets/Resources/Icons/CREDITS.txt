@@ -1,0 +1,12 @@
+Icons in this folder are from game-icons.net, licensed CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/).
+Taken from the official repository https://github.com/game-icons/icons and recoloured white.
+
+pointing.png        Lorc
+sword-slice.png     Lorc
+house.png           Delapouite
+wooden-chair.png    Delapouite
+move.png            Delapouite
+expand.png          Delapouite
+triangle-target.png Delapouite
+trash-can.png       Delapouite
+elevator.png        Delapouite

@@ -10,7 +10,7 @@ All game-layer code lives in `PipeWorld.Piper` under `Assets/Scripts/Piper/`. **
 
 | Folder | Contents |
 |---|---|
-| `Systems/` | Unmanaged world data: [SystemTypes.cs](../Assets/Scripts/Piper/Systems/SystemTypes.cs), [World.cs](../Assets/Scripts/Piper/Systems/World.cs), [SlabAllocator.cs](../Assets/Scripts/Piper/Systems/SlabAllocator.cs), prototypes and [PropLogic.cs](../Assets/Scripts/Piper/Systems/PropLogic.cs) |
+| `Systems/` | Unmanaged world data (props in [props-and-inventory.md](props-and-inventory.md), buildings in [buildings.md](buildings.md)): [SystemTypes.cs](../Assets/Scripts/Piper/Systems/SystemTypes.cs), [World.cs](../Assets/Scripts/Piper/Systems/World.cs), [SlabAllocator.cs](../Assets/Scripts/Piper/Systems/SlabAllocator.cs), prototypes and [PropLogic.cs](../Assets/Scripts/Piper/Systems/PropLogic.cs) |
 | `Net/` | InputActions, network managers, the GNS backend and the world-diff codec |
 | `Core/` | [PiperMain.cs](../Assets/Scripts/Piper/Core/PiperMain.cs), [PiperGame.cs](../Assets/Scripts/Piper/Core/PiperGame.cs), prop and remote-player syncers, input latching, settings |
 | `Props/` | One `PropBehaviour` view per prop prototype |
@@ -67,7 +67,7 @@ There is one scene. Menu choices do not reload it; `PiperGame` replaces the worl
 | Join | Resets to an empty world without moving the player, then connects a `Client`; the first world dump fills it |
 | Return to menu | Resets to an empty singleplayer world and opens the main menu |
 
-`PiperGame.SeedWorld` queues `PlacePropData` actions rather than writing the world directly, so a host's seed reaches clients through the normal path.
+`PiperGame.SeedWorld` queues `PlacePropData` and `PlaceBuildingData` actions rather than writing the world directly, so a host's seed reaches clients through the normal path.
 
 ---
 
@@ -82,6 +82,10 @@ There is one scene. Menu choices do not reload it; `PiperGame` replaces the worl
 | `-piperName <name>` | Overrides the player name for this run |
 | `-piperPlayerId <guid>` | Overrides the player id for this run, so several instances on one machine are distinct players. Never saved |
 | `-piperEscape` | Skips the menu and opens the escape menu |
+| `-piperEdit` | Skips the menu and enters the [building editor](interaction-modes.md#editing-buildings) on the first building |
+| `-piperEditTool <0-4>` | With `-piperEdit`, the tool to start with |
+| `-piperDecorate` | Once the world is available, raises the first building's floor and ceiling and places a table, chair, ceiling lamp and painting in it |
+| `-piperExtrude` | Once the world is available, sends an `ExtrudeBuildingEdge` action on the first building's entrance wall |
 | `-piperSelfTest` | Runs [PiperSelfTest.cs](../Assets/Scripts/Piper/Core/PiperSelfTest.cs): every `InputAction` and a save, reset and load round trip, logged as `[Piper] selftest ...`, then quits |
 
 `shot.ps1 -Extra` forwards flags to the player ([screenshots.md](screenshots.md)).

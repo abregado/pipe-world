@@ -32,6 +32,8 @@ namespace PipeWorld.Player
         public bool IsCrouching { get; private set; }
         public bool IsGrounded => body != null && body.isGrounded;
         public bool MenuOpen => menuLevel > 0;
+        public bool Flying { get; private set; }
+        public float flySpeed = 9f;
         public bool IsWalking => planarVelocity.sqrMagnitude > 0.25f;
 
         int menuLevel;
@@ -102,8 +104,39 @@ namespace PipeWorld.Player
         {
             if (menuLevel == 0 && Cursor.lockState == CursorLockMode.Locked)
                 UpdateLook();
+            if (Flying)
+            {
+                UpdateFly();
+                return;
+            }
             UpdateCrouch();
             UpdateMovement();
+        }
+
+        // Free flight ignores collision and gravity; leaving it restores the character controller.
+        public void SetFlying(bool flying)
+        {
+            if (Flying == flying)
+                return;
+
+            Flying = flying;
+            planarVelocity = Vector3.zero;
+            verticalVelocity = 0f;
+            body.enabled = !flying;
+            if (!flying)
+                ApplyHeight(standingHeight);
+        }
+
+        void UpdateFly()
+        {
+            if (menuLevel > 0)
+                return;
+
+            var input = Vector2.ClampMagnitude(move.ReadValue<Vector2>(), 1f);
+            Transform view = cameraPivot != null ? cameraPivot : transform;
+            var vertical = (jump.IsPressed() ? 1f : 0f) - (crouch.IsPressed() ? 1f : 0f);
+            var speed = sprint.IsPressed() ? flySpeed * 2f : flySpeed;
+            transform.position += (view.forward * input.y + view.right * input.x + Vector3.up * vertical) * (speed * Time.deltaTime);
         }
 
         public void Teleport(Vector3 position, float newYaw, float newPitch)

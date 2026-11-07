@@ -7,7 +7,7 @@ namespace PipeWorld.Piper
     public static class Constants
     {
         public const ulong TICKS_PER_SECOND = 60;
-        public const int saveVersion = 1;
+        public const int saveVersion = 3;
 
         public const int MAX_PLAYER_COUNT = 32;
         public static NetUid spectatorGuid = new NetUid(Guid.Parse("695569e9-7f9e-4df8-b6c1-2da4ae7d20c8"));

@@ -94,7 +94,10 @@ namespace PipeWorld.Piper
             }
 
             if (Mouse.current != null)
-                accumulatedScrollDelta += Mouse.current.scroll.ReadValue() / 120f;
+            {
+                // The Input System reports one unit per wheel notch (it has already divided Windows' 120).
+                accumulatedScrollDelta += Mouse.current.scroll.ReadValue();
+            }
         }
 
         public static void update()
@@ -113,6 +116,9 @@ namespace PipeWorld.Piper
         public static bool GetKey(KeyCode key) => currentHeld[(int)key];
 
         public static bool GetKeyUp(KeyCode key) => wasHeldAtTickStart[(int)key] && !currentHeld[(int)key];
+
+        // Shift is the only modifier key the game uses.
+        public static bool shift => GetKey(KeyCode.LeftShift) || GetKey(KeyCode.RightShift);
 
         public static bool GetMouseButtonDown(int button) => GetKeyDown(KeyCode.Mouse0 + button);
 

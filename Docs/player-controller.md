@@ -81,6 +81,12 @@ Speed is `crouchSpeed` while crouching, otherwise `sprintSpeed` when sprint is h
 
 ---
 
+## Flight
+
+`SetFlying(true)` disables the `CharacterController` and zeroes velocity; the [building editor](interaction-modes.md#editing-buildings) uses it. While flying, the move input flies along the camera's forward and right vectors, jump rises and crouch descends, and sprint doubles `flySpeed` (9 m/s). There is no collision or gravity. `SetFlying(false)` restores the controller and standing height; the caller teleports the player.
+
+---
+
 ## Look
 
 [PlayerController.cs:111](../Assets/Scripts/Player/PlayerController.cs) (`UpdateLook`) adds mouse delta times `mouseDegreesPerPixel` (0.1) to yaw and pitch, and the stick value times `stickDegreesPerSecond` (180) times `Time.deltaTime`. Pitch is clamped to `maxPitch` (89). **Mouse delta is a per-frame value, so it is not multiplied by `Time.deltaTime`; the stick is a rate, so it is.**

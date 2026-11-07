@@ -6,7 +6,7 @@ The world's placeable objects and the items the players carry: how they are stor
 
 ## World Storage
 
-The `World` ([World.cs](../Assets/Scripts/Piper/Systems/World.cs)) holds a `PropAllocator`, a slab of unmanaged `Prop` structs in native memory, and a `WorldData` with the tick, the player list and the `Inventory`. A `Prop` is a slab header, a `PropPrototypeId`, a position, a rotation and a `PropExtraData` union ([SystemTypes.cs](../Assets/Scripts/Piper/Systems/SystemTypes.cs)).
+The `World` ([World.cs](../Assets/Scripts/Piper/Systems/World.cs)) holds a `PropAllocator`, a slab of unmanaged `Prop` structs in native memory, and a `WorldData` with the tick, the player list and the `Inventory`. A `Prop` is a slab header, a `PropPrototypeId`, a position, a rotation, a `PropExtraData` union and the fields that attach it to a [building](buildings.md#props) ([SystemTypes.cs](../Assets/Scripts/Piper/Systems/SystemTypes.cs)).
 
 **A free slot is zeroed, so `slabHeader.allocated` is the only reliable liveness test, and a `PropHandle` stays valid only while its generation matches.** Use `world.tryGet(handle)` whenever the prop may have been deleted; `get` asserts.
 

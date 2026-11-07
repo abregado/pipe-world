@@ -32,6 +32,7 @@ namespace PipeWorld.Piper
         private CrosshairElement crosshair;
         private TooltipManagerElement tooltipManager;
         private Label networkStatus;
+        private ModeToolbarElement modeToolbar;
 
         private bool gameplayHudVisible = true;
         private UiPanel panel;
@@ -80,6 +81,8 @@ namespace PipeWorld.Piper
 
             bottomCenter = root.Q<VisualElement>("bottom-center");
             BuildModeLabel();
+            modeToolbar = new ModeToolbarElement();
+            bottomCenter.Add(modeToolbar);
 
             UiSettings.Changed += ApplyUiSettings;
             ApplyUiSettings();
@@ -158,6 +161,8 @@ namespace PipeWorld.Piper
             inventoryList.ResetElement();
             inventoryItemElements.Clear();
         }
+
+        public void SetToolbar(IReadOnlyList<(string name, string icon)> items, int selected) => modeToolbar.Set(items, selected);
 
         public void ChangeModeText(string text)
         {

@@ -22,6 +22,7 @@ namespace PipeWorld.Piper
         [NonSerialized] public MainMenu mainMenu;
         [NonSerialized] public EscapeMenu escapeMenu;
         [NonSerialized] public OtherPlayerSyncer otherPlayers;
+        [NonSerialized] public BuildingSyncer buildingSyncer;
         private PiperSelfTest selfTest;
 
         public bool mainMenuMode { get; private set; }
@@ -79,6 +80,7 @@ namespace PipeWorld.Piper
             SUtil.ReleaseAssert(interactionModeSelector != null && hud != null && mainMenu != null && escapeMenu != null, "UI objects missing from the scene");
 
             otherPlayers = new OtherPlayerSyncer(liveListObject.transform);
+            buildingSyncer = new BuildingSyncer(liveListObject.transform);
             hud.Setup();
             interactionModeSelector.setupUi();
             mainMenu.Setup();
@@ -104,6 +106,10 @@ namespace PipeWorld.Piper
 
         private bool skipMenuOnStart;
         private bool openEscapeOnStart;
+        private bool editOnStart;
+        private bool extrudeOnStart;
+        private bool decorateOnStart;
+        private int editToolOnStart;
         private string startHostAddress;
 
         // A screenshot run skips the main menu unless -piperMenu is given. -piperPlay skips the main menu; -piperHost starts hosting; -piperJoin <address> connects to a host.
@@ -131,6 +137,23 @@ namespace PipeWorld.Piper
                 {
                     skipMenuOnStart = true;
                     selfTest = new PiperSelfTest(this);
+                }
+                else if (args[i] == "-piperEdit")
+                {
+                    skipMenuOnStart = true;
+                    editOnStart = true;
+                }
+                else if (args[i] == "-piperDecorate")
+                {
+                    decorateOnStart = true;
+                }
+                else if (args[i] == "-piperExtrude")
+                {
+                    extrudeOnStart = true;
+                }
+                else if (args[i] == "-piperEditTool" && i + 1 < args.Length)
+                {
+                    int.TryParse(args[i + 1], out editToolOnStart);
                 }
                 else if (args[i] == "-piperEscape")
                 {
@@ -267,7 +290,64 @@ namespace PipeWorld.Piper
             }
 
             syncer.sync(playerObject.transform.position);
+            buildingSyncer.sync(world);
             selfTest?.tick();
+
+            // Dev flag: once the world is available, extrude the first building's entrance wall by two metres through an action.
+            if (extrudeOnStart && isNetworkReady() && networkManager.allocatorContextData.playerIndex != -1 && buildingSyncer.viewCount > 0)
+            {
+                extrudeOnStart = false;
+                for (int i = 0; i < world.buildings.slabs.size; i++)
+                {
+                    Building* b = world.buildings.slabs.get(i);
+                    if (!b->slabHeader.allocated)
+                        continue;
+
+                    BuildingModel m = BuildingStore.load(world, b->slabHeader._playerIndexAndGeneration);
+                    BObject entrance = m.objects.Find(o => o.proto == PropPrototypeId.ExteriorDoor);
+                    Debug.Log("[Piper] dev extrude queued");
+                    inputActionManager.add(new ExtrudeBuildingEdgeData { building = m.id, edge = entrance.faceRef, offset = 2f });
+                    break;
+                }
+            }
+
+            // Dev flag: once the world is available, raise the first building's floor and furnish it through actions.
+            if (decorateOnStart && isNetworkReady() && networkManager.allocatorContextData.playerIndex != -1 && buildingSyncer.viewCount > 0)
+            {
+                decorateOnStart = false;
+                for (int i = 0; i < world.buildings.slabs.size; i++)
+                {
+                    Building* b = world.buildings.slabs.get(i);
+                    if (!b->slabHeader.allocated)
+                        continue;
+
+                    BuildingModel m = BuildingStore.load(world, b->slabHeader._playerIndexAndGeneration);
+                    BArea room = m.areas[0];
+                    BEdge east = m.edges.Find(e => m.vertex(e.a).x == 1.5f && m.vertex(e.b).x == 1.5f);
+                    inputActionManager.add(new SetBuildingHeightsData { building = m.id, floorY = m.position.y + 0.75f, height = 3.25f });
+                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.Table, face = BuildingFace.Floor, faceRef = room.id, u = 0.3f, v = 0.4f });
+                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.Chair, face = BuildingFace.Floor, faceRef = room.id, u = 0.3f, v = 0.7f });
+                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.CeilingLamp, face = BuildingFace.Ceiling, faceRef = room.id, u = 0.5f, v = 0.5f });
+                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.Painting, face = BuildingFace.WallPositive, faceRef = east.id, u = 0.5f, v = 0.55f });
+                    Debug.Log("[Piper] dev decorate queued");
+                    break;
+                }
+            }
+
+            if (editOnStart && buildingSyncer.viewCount > 0)
+            {
+                editOnStart = false;
+                for (int i = 0; i < world.buildings.slabs.size; i++)
+                {
+                    Building* b = world.buildings.slabs.get(i);
+                    if (!b->slabHeader.allocated)
+                        continue;
+
+                    interactionModeSelector.EnterBuildingEdit(b->slabHeader._playerIndexAndGeneration);
+                    ((BuildingEditInteraction)interactionModeSelector.CurrentMode).SelectTool(editToolOnStart);
+                    break;
+                }
+            }
 
             raycaster.updateRaycast();
 
@@ -370,8 +450,10 @@ namespace PipeWorld.Piper
         private void ResetToSingleplayer(bool seed, bool movePlayer = true)
         {
             networkManager.Dispose();
+            interactionModeSelector.LeaveBuildingEdit();
             syncer.propSyncer.destroyAll();
             otherPlayers.destroyAll();
+            buildingSyncer.destroyAll();
 
             world = new World();
             inputActionManager = new InputActionManager();
@@ -404,15 +486,29 @@ namespace PipeWorld.Piper
                 (PropPrototypeId.CollectableGeneric, 0.5f, 6f, 300f),
             };
 
+            Vector3 buildingSite = new Vector3(-11f, GroundHeight(-11f, 12f), 12f);
+            inputActionManager.add(new PlaceBuildingData { position = buildingSite, yaw = 0f, height = BuildingConstants.CeilingHeight, groundY = buildingSite.y });
+
             foreach ((PropPrototypeId id, float x, float z, float yaw) entry in layout)
                 inputActionManager.addPlaceProp(entry.id, new Vector3(entry.x, GroundHeight(entry.x, entry.z), entry.z), new Vector3(0f, entry.yaw, 0f));
         }
 
         private static float GroundHeight(float x, float z)
         {
-            if (Physics.Raycast(new Vector3(x, 300f, z), Vector3.down, out RaycastHit hit, 600f, ~0, QueryTriggerInteraction.Ignore))
-                return hit.point.y;
-            return 0.05f;
+            // The terrain only: props and buildings (including ones about to be destroyed) are not ground.
+            float best = float.MaxValue;
+            float height = 0.05f;
+            foreach (RaycastHit hit in Physics.RaycastAll(new Vector3(x, 300f, z), Vector3.down, 600f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.collider.GetComponentInParent<BuildingView>() != null || hit.collider.GetComponentInParent<PropBehaviour>() != null)
+                    continue;
+                if (hit.distance < best)
+                {
+                    best = hit.distance;
+                    height = hit.point.y;
+                }
+            }
+            return height;
         }
 
         public string SaveGameNow()
