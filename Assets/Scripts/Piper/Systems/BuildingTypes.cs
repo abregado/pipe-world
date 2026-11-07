@@ -15,7 +15,7 @@ namespace PipeWorld.Piper
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct Building
+    public unsafe struct Building
     {
         public SlabHeader slabHeader;
         // The floor plane's centre. A building's floor is level, and its ceiling is `height` above it.
@@ -24,6 +24,8 @@ namespace PipeWorld.Piper
         public float height;
         // The terrain level the building was placed on: the scaffold under the floor reaches down to it.
         public float groundY;
+        // What this building holds: items are collected into and spent from the nearest building.
+        public Inventory inventory;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -74,6 +76,7 @@ namespace PipeWorld.Piper
         public const float WallThickness = 0.16f;
         public const float GlassThickness = 0.06f;
         public const float FloorThickness = 0.2f;
+        public const float RoofThickness = 0.2f;
         public const float FoundationDepth = 0.6f;
         public const float StartHalfSize = 1.5f;
         public const float MinEdgeLength = 0.5f;

@@ -21,7 +21,9 @@ namespace PipeWorld.Piper
         ExteriorWindow = 155,
         ExteriorStairs = 156,
         ExteriorLight = 157,
-        MAX_VALUE = 158,
+        Ladder = 158,
+        CargoTerminal = 159,
+        MAX_VALUE = 160,
     }
 
     public class PropPrototype
@@ -63,6 +65,8 @@ namespace PipeWorld.Piper
             PropPrototypeId.ExteriorWindow,
             PropPrototypeId.ExteriorStairs,
             PropPrototypeId.ExteriorLight,
+            PropPrototypeId.Ladder,
+            PropPrototypeId.CargoTerminal,
         };
 
         private class Builder
@@ -180,6 +184,16 @@ namespace PipeWorld.Piper
                     .name("Exterior Light")
                     .descriptiveType("Building")
                     .description("A lamp on the outside of an outer wall.")
+                    .build(),
+                new Builder(PropPrototypeId.Ladder)
+                    .name("Ladder")
+                    .descriptiveType("Building")
+                    .description("A ladder from a room's ceiling to a hatch on the roof. Use it to climb up, and the hatch to come back down.")
+                    .build(),
+                new Builder(PropPrototypeId.CargoTerminal)
+                    .name("Cargo Terminal")
+                    .descriptiveType("Building")
+                    .description("Makes this building's store the inventory for everyone nearby. Without one inside, the store is kept but nobody can reach it.")
                     .build(),
                 new Builder(PropPrototypeId.Terminal)
                     .name("Terminal")

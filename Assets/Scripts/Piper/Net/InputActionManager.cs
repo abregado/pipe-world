@@ -55,11 +55,12 @@ namespace PipeWorld.Piper
                     {
                         PlacePropUsingItemData place = inputAction.v.data.placePropUsingItem;
                         InventoryItemPrototypeId itemToSpend = PropPrototypes.instance[place.propPrototypeId].itemId;
-                        if (itemToSpend == InventoryItemPrototypeId.None || world.data.inventory.getCount(itemToSpend) < 1)
+                        Inventory* spendFrom = BuildingInventory.at(world, place.position);
+                        if (itemToSpend == InventoryItemPrototypeId.None || spendFrom == null || spendFrom->getCount(itemToSpend) < 1)
                             break;
 
                         spawnProp(world, allocator, place.propPrototypeId, place.position, place.eulerRotation);
-                        world.data.inventory.adjustCount(itemToSpend, -1);
+                        spendFrom->adjustCount(itemToSpend, -1);
                         break;
                     }
 
@@ -121,7 +122,11 @@ namespace PipeWorld.Piper
 
                     case InputActionType.AdjustInventory:
                     {
-                        world.data.inventory.adjustCount(inputAction.v.data.adjustInventory.item, inputAction.v.data.adjustInventory.amount);
+                        // A building by id, or the first one when none is named.
+                        AdjustInventoryData adjust = inputAction.v.data.adjustInventory;
+                        Building* target = adjust.building != 0 ? world.buildings.find(adjust.building) : BuildingInventory.nearest(world, Vector3.zero);
+                        if (target == null) break;
+                        target->inventory.adjustCount(adjust.item, adjust.amount);
                         world.data.dirty = true;
                         break;
                     }

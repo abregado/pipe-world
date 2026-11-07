@@ -45,6 +45,12 @@ namespace PipeWorld.Piper
         private Vector3 startEye, endEye;
         private Quaternion startRotation;
         private OtherPlayerBehaviour avatar;
+
+        // The terminal the player used, and where they stood relative to it. Edits can move the terminal (a wall pulled, the floor
+        // raised), and the stand-in and the place the player returns to move with it so they stay in front of it.
+        private uint terminalId;
+        private Vector3 terminalOffset;
+        private Vector3 pullFlat = Vector3.forward;
         private Tool tool;
 
         private BuildingModel model;
@@ -84,6 +90,15 @@ namespace PipeWorld.Piper
             returnPosition = playerPosition;
             returnYaw = playerYaw;
             tool = Tool.Manipulate;
+
+            terminalId = 0;
+            BuildingModel at = BuildingStore.load(PiperMain.p.game.world, building);
+            BObject terminal = at?.objects.Find(o => o.proto == PropPrototypeId.Terminal);
+            if (terminal != null)
+            {
+                terminalId = terminal.id;
+                terminalOffset = playerPosition - TerminalWorld(at, terminal);
+            }
         }
 
         public override void ActivateMode()
@@ -105,10 +120,10 @@ namespace PipeWorld.Piper
             avatar.SetTarget(returnPosition, new Vector3(returnPitch, returnYaw, 0f), false, "You");
             avatar.transform.rotation = Quaternion.Euler(0f, returnYaw, 0f);
 
-            Vector3 flat = Quaternion.Euler(0f, returnYaw, 0f) * Vector3.forward;
+            pullFlat = Quaternion.Euler(0f, returnYaw, 0f) * Vector3.forward;
             startEye = player.EyePosition;
             startRotation = player.EyeRotation;
-            endEye = returnPosition - flat * PullBack + Vector3.up * PullUp;
+            endEye = returnPosition - pullFlat * PullBack + Vector3.up * PullUp;
             phase = Phase.Entering;
             phaseTime = 0f;
             player.frameDriver = DriveEntering;
@@ -128,6 +143,24 @@ namespace PipeWorld.Piper
                 PiperMain.p.game.playerObject.frameDriver = null;
                 phase = Phase.Active;
             }
+        }
+
+        private static Vector3 TerminalWorld(BuildingModel m, BObject terminal) =>
+            m.position + Quaternion.Euler(0f, m.yaw, 0f) * m.objectLocalPosition(terminal);
+
+        private void FollowTerminal()
+        {
+            BObject terminal = terminalId == 0 ? null : model.objectById(terminalId);
+            if (terminal == null)
+                return;
+
+            Vector3 want = TerminalWorld(model, terminal) + terminalOffset;
+            if ((want - returnPosition).sqrMagnitude < 1e-6f)
+                return;
+
+            returnPosition = want;
+            avatar?.SetTarget(want, new Vector3(returnPitch, returnYaw, 0f), false, "You");
+            endEye = returnPosition - pullFlat * PullBack + Vector3.up * PullUp;
         }
 
         // Closes the eyes, leaves the mode while they are shut, and opens them on the player's own view.
@@ -198,6 +231,8 @@ namespace PipeWorld.Piper
                 game.interactionModeSelector.SkipToMode(0);
                 return false;
             }
+
+            FollowTerminal();
 
             // The camera is moving: only the footprint is drawn, and no input is taken until the player has the view back.
             if (phase != Phase.Active)
@@ -643,9 +678,13 @@ namespace PipeWorld.Piper
             BuildingModel trial = model.Clone();
             string error = trial.slice(area.id, local.x, local.z);
             Color color = error == null ? Good : Bad;
-            gizmos.Line(World(info.pointA.x, info.pointA.z, 0.08f), World(info.pointB.x, info.pointB.z, 0.08f), color, 0.1f);
-            gizmos.Marker(World(info.pointA.x, info.pointA.z, 0.08f), color, 0.3f);
-            gizmos.Marker(World(info.pointB.x, info.pointB.z, 0.08f), color, 0.3f);
+            // The cut may cross several rooms: a line through every crossing, with a marker on each wall it splits.
+            for (int k = 0; k < info.points.Count; k++)
+            {
+                gizmos.Marker(World(info.points[k].x, info.points[k].z, 0.08f), color, 0.3f);
+                if (k > 0)
+                    gizmos.Line(World(info.points[k - 1].x, info.points[k - 1].z, 0.08f), World(info.points[k].x, info.points[k].z, 0.08f), color, 0.1f);
+            }
 
             if (InputFixed.GetMouseButtonDown(0))
             {

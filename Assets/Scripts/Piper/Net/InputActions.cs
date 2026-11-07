@@ -228,6 +228,8 @@ namespace PipeWorld.Piper
     {
         public InventoryItemPrototypeId item;
         public int amount;
+        // The building whose inventory changes; 0 means the first building (for debug grants).
+        public uint building;
 
         public static implicit operator InputAction(AdjustInventoryData data)
         {

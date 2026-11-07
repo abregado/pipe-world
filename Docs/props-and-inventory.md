@@ -6,7 +6,7 @@ The world's placeable objects and the items the players carry: how they are stor
 
 ## World Storage
 
-The `World` ([World.cs](../Assets/Scripts/Piper/Systems/World.cs)) holds a `PropAllocator`, a slab of unmanaged `Prop` structs in native memory, and a `WorldData` with the tick, the player list and the `Inventory`. A `Prop` is a slab header, a `PropPrototypeId`, a position, a rotation, a `PropExtraData` union and the fields that attach it to a [building](buildings.md#props) ([SystemTypes.cs](../Assets/Scripts/Piper/Systems/SystemTypes.cs)).
+The `World` ([World.cs](../Assets/Scripts/Piper/Systems/World.cs)) holds a `PropAllocator`, a slab of unmanaged `Prop` structs in native memory, and a `WorldData` with the tick and the player list. Inventories live in [buildings](buildings.md#inventory). A `Prop` is a slab header, a `PropPrototypeId`, a position, a rotation, a `PropExtraData` union and the fields that attach it to a [building](buildings.md#props) ([SystemTypes.cs](../Assets/Scripts/Piper/Systems/SystemTypes.cs)).
 
 **A free slot is zeroed, so `slabHeader.allocated` is the only reliable liveness test, and a `PropHandle` stays valid only while its generation matches.** Use `world.tryGet(handle)` whenever the prop may have been deleted; `get` asserts.
 
@@ -33,7 +33,7 @@ The `World` ([World.cs](../Assets/Scripts/Piper/Systems/World.cs)) holds a `Prop
 
 [InventoryItemPrototypes.cs](../Assets/Scripts/Piper/Systems/InventoryItemPrototypes.cs) defines `InventoryItemPrototypeId` and a prototype per id: name, category, description, a HUD colour and the prop it places (`placedBuildingId`, set when a `PropPrototype` names the item).
 
-`Inventory` is a fixed array of counts plus a `seen` bit per item. `setCount` sets `seen` once a count is positive, and the HUD lists exactly the seen items, so an item stays listed at zero after its first pickup.
+`Inventory` is a fixed array of counts plus a `seen` bit per item; every `Building` holds one ([buildings.md](buildings.md#inventory)). `setCount` sets `seen` once a count is positive, and the HUD lists exactly the seen items, so an item stays listed at zero after its first pickup.
 
 ---
 

@@ -48,8 +48,8 @@ namespace PipeWorld.Piper
                     break;
 
                 case 1:
-                    Check(world.data.inventory.getCount(InventoryItemPrototypeId.Obtainium) == 10, "obtainium granted");
-                    Check(world.data.inventory.getCount(InventoryItemPrototypeId.LightUnit) == 0, "light unit spent by the lamp placement, second placement refused");
+                    Check(Inv(world).getCount(InventoryItemPrototypeId.Obtainium) == 10, "obtainium granted");
+                    Check(Inv(world).getCount(InventoryItemPrototypeId.LightUnit) == 0, "light unit spent by the lamp placement, second placement refused");
                     Check(CountProps(world) == propCountBefore + 2, "lamp and salvage placed");
                     actions.add(new MovePropData { prop = Id(PropPrototypeId.CollectableGeneric, SalvagePosition), newPosition = SalvageMoved });
                     actions.add(new DeletePropData { prop = Id(PropPrototypeId.PlaceableLamp, LampPosition) });
@@ -68,8 +68,8 @@ namespace PipeWorld.Piper
                     Check(world.buildings.slabs.size > 0 && CountBuildings(world) == 1, "seeded building exists");
                     buildingId = FirstBuilding(world);
                     BuildingModel m = BuildingStore.load(world, buildingId);
-                    Check(m.vertices.Count == 4 && m.edges.Count == 4 && m.areas.Count == 1 && m.objects.Count == 2 && m.height == 3f && m.groundY <= m.position.y,
-                        "new building is a 3x3 room with an exterior door and a terminal");
+                    Check(m.vertices.Count == 4 && m.edges.Count == 4 && m.areas.Count == 1 && m.objects.Count == 3 && m.height == 3f && m.groundY <= m.position.y,
+                        "new building is a 3x3 room with an exterior door, a terminal and a cargo terminal");
                     originalArea = m.areas[0].id;
                     Check(FuzzSlices(m), "slicing at a grid of points never throws");
                     float pull = BuildingTargeting.ClosestOnLine(new Ray(new Vector3(3f, 5f, -5f), new Vector3(0f, -1f, 1f).normalized), Vector3.zero, Vector3.right);
@@ -90,6 +90,12 @@ namespace PipeWorld.Piper
                     Check(m.isEdgeOutside(door.faceRef) && m.roomOnSide(m.edge(door.faceRef), door.face) == null, "exterior door moved to an outer wall and faces outwards");
                     Check(m.validate() == null, "building valid after extrude");
 
+                    // A cut from the north wall runs through both rooms and splits them into four, all still four-sided.
+                    BuildingModel across = m.Clone();
+                    across.newId = BuildingModel.trialIds();
+                    string acrossResult = across.slice(originalArea, 0.1f, 1.3f);
+                    Check(acrossResult == null && across.areas.Count == 4 && across.areas.All(r => r.edges.Count == 4) && across.validate() == null, "a slice through two rooms makes four four-sided rooms");
+
                     BArea added = m.areas.Find(a => a.id != originalArea);
                     var c = m.areaCentroid(added);
                     actions.add(new SliceBuildingAreaData { building = buildingId, area = added.id, x = -1.4f, z = (float)c.z });
@@ -100,6 +106,8 @@ namespace PipeWorld.Piper
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Chair, face = BuildingFace.Floor, faceRef = originalArea, u = 0.3f, v = 0.3f });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.CeilingLamp, face = BuildingFace.Floor, faceRef = originalArea, u = 0.7f, v = 0.3f });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.CeilingLamp, face = BuildingFace.Ceiling, faceRef = originalArea, u = 0.7f, v = 0.3f });
+                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Ladder, face = BuildingFace.Ceiling, faceRef = originalArea, u = 0.3f, v = 0.7f });
+                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Ladder, face = BuildingFace.Floor, faceRef = originalArea, u = 0.5f, v = 0.5f });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Painting, face = BuildingFace.WallPositive, faceRef = east.id, u = 0.5f, v = 0.55f });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Archway, face = BuildingFace.WallPositive, faceRef = east.id, u = 0.5f, v = 0f });
                     Next(5);
@@ -113,6 +121,7 @@ namespace PipeWorld.Piper
                     Check(m.objects.Count(o => o.proto == PropPrototypeId.Table) == 1 && m.objects.Count(o => o.proto == PropPrototypeId.Chair) == 0, "table placed; a chair on top of it refused");
                     Check(m.objects.Count(o => o.proto == PropPrototypeId.CeilingLamp) == 1 && m.objects.Find(o => o.proto == PropPrototypeId.CeilingLamp).face == BuildingFace.Ceiling, "lamp placed on a ceiling, refused on a floor");
                     Check(m.objects.Any(o => o.proto == PropPrototypeId.Painting), "painting hung on an outer wall facing the room");
+                    Check(m.objects.Count(o => o.proto == PropPrototypeId.Ladder) == 1 && m.objects.Find(o => o.proto == PropPrototypeId.Ladder).face == BuildingFace.Ceiling, "ladder placed on a ceiling, refused on a floor");
                     Check(!m.objects.Any(o => o.proto == PropPrototypeId.Archway), "archway refused on an outer wall");
                     Check(m.validate() == null, "building valid after slice");
 
@@ -155,6 +164,10 @@ namespace PipeWorld.Piper
                     BObject light = m.objects.Find(o => o.proto == PropPrototypeId.ExteriorLight);
                     actions.add(new MoveBuildingPropData { building = buildingId, obj = light.id, face = light.face, faceRef = light.faceRef, u = 0.85f, v = 0.6f });
                     lightId = light.id;
+                    BObject cargo = m.objects.Find(o => o.proto == PropPrototypeId.CargoTerminal);
+                    Check(cargo != null, "a new building spawns with a cargo terminal");
+                    Check(BuildingInventory.nearest(world, Vector3.zero) != null, "a building with a cargo terminal is reachable");
+                    actions.add(new DeleteBuildingObjectData { building = buildingId, obj = cargo.id });
                     Check(m.objects.Any(o => o.proto == PropPrototypeId.ExteriorDoor), "the last exterior door cannot be deleted");
                     Check(m.height == 3.5f && Mathf.Abs(m.position.y - m.groundY - 1f) < 0.001f, "heights set; a ceiling of 1 m refused");
 
@@ -170,21 +183,30 @@ namespace PipeWorld.Piper
                 case 7:
                     BuildingModel last = BuildingStore.load(world, buildingId);
                     Check(Mathf.Abs(last.objectById(lightId).u - 0.85f) < 0.01f, "a building prop moved along its wall");
+                    Check(BuildingInventory.nearest(world, Vector3.zero) == null, "a building without a cargo terminal is not reachable");
+                    Check(Inv(world).getCount(InventoryItemPrototypeId.Obtainium) == 10, "the deleted cargo terminal's building keeps its inventory");
                     Check(last.edge(innerWall).type == WallStyle.Open && !last.objects.Any(o => o.faceRef == innerWall), "an open wall dropped its painting and refuses new props");
                     buildingCounts = CountEntities(world);
                     Check(CountProps(world) == propCountBefore, "salvage collected");
-                    Check(world.data.inventory.getCount(InventoryItemPrototypeId.Obtainium) == 10, "inventory unchanged by salvage of another item");
+                    Check(Inv(world).getCount(InventoryItemPrototypeId.Obtainium) == 10, "inventory unchanged by salvage of another item");
                     string path = game.SaveGameNow();
-                    int obtainium = world.data.inventory.getCount(InventoryItemPrototypeId.Obtainium);
+                    int obtainium = Inv(world).getCount(InventoryItemPrototypeId.Obtainium);
                     int props = CountProps(world);
                     game.ReloadFromDiskForTest(path);
-                    Check(game.world.data.inventory.getCount(InventoryItemPrototypeId.Obtainium) == obtainium, "inventory survives save/load");
+                    Check(Inv(game.world).getCount(InventoryItemPrototypeId.Obtainium) == obtainium, "inventory survives save/load");
                     Check(CountProps(game.world) == props, "props survive save/load");
                     Check(CountEntities(game.world) == buildingCounts, "building data survives save/load");
                     Check(BuildingStore.load(game.world, buildingId).validate() == null, "building valid after load");
                     Finish();
                     break;
             }
+        }
+
+        // The inventory of the first building: the test world has one, and every grant and spend goes to the nearest building.
+        private static Inventory Inv(World w)
+        {
+            Building* b = w.buildings.find(FirstBuilding(w));
+            return b == null ? default : b->inventory;
         }
 
         private void Next(int wait)

@@ -16,6 +16,7 @@ namespace PipeWorld.Piper
             ("Place building", "house"),
             ("Place props", "wooden-chair"),
             ("Move props", "move"),
+            ("Delete props", "trash-can"),
         };
 
         private int currentModeIndex = -1;
@@ -83,11 +84,12 @@ namespace PipeWorld.Piper
             current.ModeUpdate();
         }
 
-        private int ToolbarSlot(InteractionMode mode) => mode is BuildingPlacerInteraction ? 1 : mode is ObjectPlacerInteraction ? 2 : mode is PropMoveInteraction ? 3 : 0;
+        private int ToolbarSlot(InteractionMode mode) => mode is BuildingPlacerInteraction ? 1 : mode is ObjectPlacerInteraction ? 2 : mode is PropMoveInteraction ? 3 : mode is PropDeleteInteraction ? 4 : 0;
 
         private int ModeForSlot(int slot) => slot == 1 ? allModes.FindIndex(m => m is BuildingPlacerInteraction)
             : slot == 2 ? allModes.FindIndex(m => m is ObjectPlacerInteraction)
             : slot == 3 ? allModes.FindIndex(m => m is PropMoveInteraction)
+            : slot == 4 ? allModes.FindIndex(m => m is PropDeleteInteraction)
             : 0;
 
         // Shows the modes the wheel steps through, or the building tools while editing.

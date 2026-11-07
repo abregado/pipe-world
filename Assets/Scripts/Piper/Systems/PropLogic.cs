@@ -4,11 +4,10 @@ namespace PipeWorld.Piper
     {
         private static readonly InventoryItemPrototypeId[] collectableItems =
         {
-            InventoryItemPrototypeId.Cluster,
-            InventoryItemPrototypeId.Board,
-            InventoryItemPrototypeId.Tank,
-            InventoryItemPrototypeId.LightUnit,
-            InventoryItemPrototypeId.GreenSlate,
+            InventoryItemPrototypeId.Rock,
+            InventoryItemPrototypeId.Metal,
+            InventoryItemPrototypeId.Flower,
+            InventoryItemPrototypeId.Clay,
         };
 
         public static void setupProp(World world, Prop* prop, AllocatorContext allocator)
@@ -84,17 +83,23 @@ namespace PipeWorld.Piper
 
         public static void collectCollectable(World world, Prop* prop)
         {
-            world.data.inventory.adjustCount(prop->data.collectable.givenItem, prop->data.collectable.amount);
+            // Nothing can be kept without a building to keep it in, so the item stays where it is.
+            Inventory* inventory = BuildingInventory.at(world, prop->position);
+            if (inventory == null)
+                return;
+
+            inventory->adjustCount(prop->data.collectable.givenItem, prop->data.collectable.amount);
             deleteProp(world, prop);
         }
 
         public static void takeFromRefreshable(World world, Prop* prop)
         {
             ref RefreshableItemExtraData box = ref prop->data.refreshable;
-            if (box.amountStored <= 0)
+            Inventory* inventory = BuildingInventory.at(world, prop->position);
+            if (box.amountStored <= 0 || inventory == null)
                 return;
 
-            world.data.inventory.adjustCount(box.givenItem, box.amountStored);
+            inventory->adjustCount(box.givenItem, box.amountStored);
             box.amountStored = 0;
             box.nextRefreshTick = ulong.MaxValue;
             world.data.dirty = true;
@@ -109,9 +114,10 @@ namespace PipeWorld.Piper
                     ref DoorExtraData door = ref prop->data.door;
                     if (!door.doorOpen && door.requiredItem != InventoryItemPrototypeId.None)
                     {
-                        if (world.data.inventory.getCount(door.requiredItem) < 1)
+                        Inventory* inventory = BuildingInventory.at(world, prop->position);
+                        if (inventory == null || inventory->getCount(door.requiredItem) < 1)
                             return;
-                        world.data.inventory.adjustCount(door.requiredItem, -1);
+                        inventory->adjustCount(door.requiredItem, -1);
                     }
                     door.doorOpen = !door.doorOpen;
                     break;

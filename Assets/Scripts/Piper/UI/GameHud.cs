@@ -22,6 +22,7 @@ namespace PipeWorld.Piper
 
         private VisualElement uiRoot;
         private InventoryListElement inventoryList;
+        private uint shownBuilding;
         private readonly Dictionary<InventoryItemPrototypeId, InventoryItemElement> inventoryItemElements = new();
 
         private VisualElement fullLeft;
@@ -137,9 +138,19 @@ namespace PipeWorld.Piper
 
             if (gameplayHudVisible)
             {
+                // The inventory shown is the one of the building the player is in range of; out of range of every building there is none.
+                Building* near = BuildingInventory.nearest(world, PiperMain.p.game.playerObject.transform.position, BuildingInventory.Range);
+                uint nearId = near == null ? 0u : near->slabHeader._playerIndexAndGeneration;
+                if (nearId != shownBuilding)
+                {
+                    shownBuilding = nearId;
+                    ResetInventoryDisplay();
+                }
+                inventoryList.style.display = near == null ? DisplayStyle.None : DisplayStyle.Flex;
+
                 foreach (InventoryItemPrototypeId itemId in inventoryItemIds)
                 {
-                    if (!world.data.inventory.getSeen(itemId))
+                    if (near == null || !near->inventory.getSeen(itemId))
                         continue;
 
                     if (!inventoryItemElements.TryGetValue(itemId, out InventoryItemElement element))
@@ -152,7 +163,7 @@ namespace PipeWorld.Piper
                         element.title = InventoryItemPrototypes.instance[itemId].name;
                     }
 
-                    element.quantity = world.data.inventory.getCount(itemId);
+                    element.quantity = near->inventory.getCount(itemId);
                 }
 
                 inventoryList.UpdateElement();

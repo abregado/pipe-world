@@ -81,6 +81,7 @@ namespace PipeWorld.Piper
 
             otherPlayers = new OtherPlayerSyncer(liveListObject.transform);
             buildingSyncer = new BuildingSyncer(liveListObject.transform);
+            radiusDisplay = new InventoryRadiusDisplay();
             hud.Setup();
             interactionModeSelector.setupUi();
             mainMenu.Setup();
@@ -109,6 +110,7 @@ namespace PipeWorld.Piper
         private bool editOnStart;
         private bool extrudeOnStart;
         private bool decorateOnStart;
+        private InventoryRadiusDisplay radiusDisplay;
         private float eyesOnStart = -1f;
         private int editToolOnStart;
         private string startHostAddress;
@@ -296,6 +298,7 @@ namespace PipeWorld.Piper
 
             syncer.sync(playerObject.transform.position);
             buildingSyncer.sync(world);
+            radiusDisplay?.update(world, playerObject.transform.position, buildingSyncer.editingBuilding, !mainMenuMode);
             selfTest?.tick();
 
             // Dev flag: once the world is available, extrude the first building's entrance wall by two metres through an action.
@@ -345,6 +348,8 @@ namespace PipeWorld.Piper
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorWindow, face = m.outerSide(north), faceRef = north.id, u = 0.5f, v = 0.5f });
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorLight, face = m.outerSide(north), faceRef = north.id, u = 0.12f, v = 0.6f });
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorStairs, face = m.outerSide(west), faceRef = west.id, u = 0.5f, v = 0f });
+                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.Ladder, face = BuildingFace.Ceiling, faceRef = room.id, u = 0.2f, v = 0.8f });
+                    inputActionManager.add(new AdjustInventoryData { item = InventoryItemPrototypeId.Obtainium, amount = 7, building = m.id });
                     BObject entrance = m.objects.Find(o => o.proto == PropPrototypeId.ExteriorDoor);
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorStairs, face = entrance.face, faceRef = entrance.faceRef, u = entrance.u, v = 0f });
                     Debug.Log("[Piper] dev decorate queued");
@@ -506,6 +511,18 @@ namespace PipeWorld.Piper
 
             Vector3 buildingSite = new Vector3(-11f, GroundHeight(-11f, 12f), 12f);
             inputActionManager.add(new PlaceBuildingData { position = buildingSite, yaw = 0f, height = BuildingConstants.CeilingHeight, groundY = buildingSite.y });
+
+            // Raw materials lie scattered round the centre, on a ring of spiral points that keeps clear of the building site.
+            const int Scattered = 28;
+            for (int i = 0; i < Scattered; i++)
+            {
+                float angle = i * 137.5f * Mathf.Deg2Rad;
+                float radius = 5f + 15f * Mathf.Sqrt((i + 0.5f) / Scattered);
+                float sx = Mathf.Cos(angle) * radius, sz = Mathf.Sin(angle) * radius;
+                if (Vector2.Distance(new Vector2(sx, sz), new Vector2(buildingSite.x, buildingSite.z)) < 9f)
+                    continue;
+                inputActionManager.addPlaceProp(PropPrototypeId.CollectableGeneric, new Vector3(sx, GroundHeight(sx, sz), sz), new Vector3(0f, i * 53f % 360f, 0f));
+            }
 
             foreach ((PropPrototypeId id, float x, float z, float yaw) entry in layout)
                 inputActionManager.addPlaceProp(entry.id, new Vector3(entry.x, GroundHeight(entry.x, entry.z), entry.z), new Vector3(0f, entry.yaw, 0f));

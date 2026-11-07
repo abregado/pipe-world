@@ -35,7 +35,7 @@ Building space has X and Z on the floor plane and the origin at the building's p
 | `moveVertex` | Only the corners of triangle-only rooms move freely |
 | `extrude(edge, offset)` | Only a wall with one room, outwards only; adds a quad |
 | `createTri(edge, x, z)` | Only a wall with one room; adds a triangle |
-| `slice(area, x, z)` | Splits a room between two of its unshared walls, from the wall nearest the point along its inward normal; a triangle slices from its farthest corner |
+| `slice(area, x, z)` | Cuts in from the outer wall nearest the point, along its inward normal, through every room it crosses until it reaches an outer wall. Each room it crosses must be four-sided and be crossed from one wall to the opposite one, and each wall it crosses is split away from its corners, so no triangle or five-sided room is ever made (two rooms side by side become four). A cut that would meet a triangular room or a corner is refused. A triangle that is sliced directly cuts from its farthest corner |
 | `deleteArea` | Only a room attached by exactly one wall, never the last room |
 | `setWallStyle(edge, style)` | A wall between two rooms becomes solid, glass or open (see [Wall styles](#wall-styles)); refused on an outer wall |
 | `setHeights(floorY, height)` | Moves the floor (up to `MaxRaise` above `groundY`, never below) and sets the ceiling height |
@@ -68,13 +68,25 @@ The two wall faces are the sides of the wall: positive is the side the edge norm
 | Archway | A wall between two rooms | Cuts a walkable opening, 1.3 m wide |
 | Exterior Door | An outer wall | Does not cut the wall; always faces outwards. 0.4 m thick against a 0.16 m wall, so it stands proud on both sides. Using it moves the player ([Doors](#doors)) |
 | Exterior Window | An outer wall, from either side | Cuts a 1.2 m wide, 1.1 m high hole in the wall, filled by a glass pane (the glass material) with a collider, so it can be seen through but not walked through, and nothing else can be placed over it; the wall stays above and below it |
-| Exterior Stairs | The outside of an outer wall | 1.5 m wide. Steps from the floor level down to the ground at a gentle slope, rebuilt to fit the drop of the building they belong to (`ExteriorStairsBehaviour`); every step has a collider. They may share wall space with other props, so they go under an exterior door; only other stairs block them |
+| Cargo Terminal | A floor | Makes the building's inventory reachable ([Inventory](#inventory)); every new building starts with one; it can be deleted |
+| Ladder | A room's ceiling | A ladder from the ceiling to the floor with a closed hatch on the roof above it, one prop with two parts. Using the ladder climbs to the roof beside the hatch; using the hatch from the roof puts the player back on the floor beside the ladder (`BuildingTravel.UseLadder`). It does not cut the ceiling |
+| Exterior Stairs | The outside of an outer wall | 1.5 m wide. Steps from the floor level down to the real ground at a gentle slope: when shown, the stairs raycast down (ignoring buildings and props) where the flight will end and are rebuilt to fit (`ExteriorStairsBehaviour`), falling back to the building's `groundY` when nothing is hit; every step has a collider. They may share wall space with other props, so they go under an exterior door; only other stairs block them |
 | Exterior Light | The outside of an outer wall | A small glowing lamp; one-sided |
 | Terminal | A floor | Not placeable by the player; starts inside every new building |
 
 Wall props stay `PropMargin` clear of the ends of their wall and may not share a rectangle with another wall prop on the same wall (a prop that reaches both sides blocks both). A prop that no longer fits after an edit is dropped; an exterior door that no longer has an outer wall is moved to another outer wall. A new building is a 3x3 room with an exterior door on the south wall and a terminal inside, and an edit that would leave the building without either is refused.
 
 Prop prefabs are built by `PiperSetup.BuildBuildingProps` ([PiperSetup.cs](../Assets/Editor/PiperSetup.cs)) with the wall convention above. The Terminal and Exterior Door behaviours implement `IInteractable`; the rest are decoration.
+
+---
+
+## Inventory
+
+Each `Building` holds an `Inventory` ([SystemTypes.cs](../Assets/Scripts/Piper/Systems/SystemTypes.cs)); the world has no inventory of its own. **Only a building with a Cargo Terminal inside is reachable** (`BuildingInventory.buildingsWithCargo`), so one building in a group can serve as the store for the whole area. Items collected, taken from a box or spent come from the nearest reachable building to the prop or placement involved, measured on the ground plane from the building's position; ties go to the lower entity id so every peer agrees. With no reachable building a collectable stays where it is. A building that loses its last Cargo Terminal keeps what it stored, but nothing can reach it until another is placed. A new building starts with one.
+
+The HUD list in the top left shows the inventory of the nearest reachable building within `BuildingInventory.Range` (30 m) of the player, and nothing when none is in range; it restarts its list when that building changes. The debug `AdjustInventory` action names a building (0 means the first reachable one). Saves from before this change do not load (save version 4).
+
+[InventoryRadiusDisplay.cs](../Assets/Scripts/Piper/Core/InventoryRadiusDisplay.cs) draws each reachable building's radius as a line on the ground (sampled every 3.75 degrees, with the ground height measured every few seconds): always for every reachable building while a building is being edited (the edited building too, in grey if it has no Cargo Terminal), and otherwise whenever the player is within 4 m of a radius.
 
 ---
 
@@ -86,7 +98,7 @@ Prop prefabs are built by `PiperSetup.BuildBuildingProps` ([PiperSetup.cs](../As
 
 ### Floors and wall styles
 
-A floor is a slab `FloorThickness` (0.2 m) deep: its top at the floor level, its underside below, and sides closed round the edge, so it shows from every angle. The scaffold's top rail sits under the slab.
+A floor is a slab `FloorThickness` (0.2 m) deep: its top at the floor level, its underside below, and sides closed round the edge, so it shows from every angle. The roof is a slab too (`RoofThickness`, 0.2 m): its underside is the ceiling, at `height`, and the player can stand on its top. The scaffold's top rail sits under the slab.
 
 <a id="wall-styles"></a>
 A wall between two rooms has a style, chosen with the Wall Style edit tool ([interaction-modes.md](interaction-modes.md#editing-buildings)):
@@ -107,7 +119,7 @@ Under every room's floor a scaffold of posts and rails reaches from `groundY - F
 
 ## Doors
 
-[BuildingTravel.cs](../Assets/Scripts/Piper/Props/Building/BuildingTravel.cs) implements the Exterior Door. Using one tests whether the player is inside the building (their footprint position is in a room) and teleports them 1.5 m through the door: out onto the ground, found by a downward raycast that ignores buildings and props, or in at floor level. The player faces away from the door. Teleporting changes only the player's pose, which clients own, so it needs no action.
+[BuildingTravel.cs](../Assets/Scripts/Piper/Props/Building/BuildingTravel.cs) implements the Exterior Door. Using one tests whether the player is inside the building (their footprint position is in a room) and teleports them through the door to the nearest spot where a box the size of a standing player touches nothing (`FindClearSpot`: from 1.3 m out in steps to 4 m, and 0.5 m or 1 m to each side, so furniture or stairs in front of the door never trap them), falling back to the first spot: out onto the ground, found by a downward raycast that ignores buildings and props, or in at floor level. The player faces away from the door. Teleporting changes only the player's pose, which clients own, so it needs no action.
 
 ---
 

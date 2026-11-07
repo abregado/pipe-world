@@ -393,6 +393,22 @@ namespace PipeWorld.EditorTools
                 AddBox(b, new Vector3(0f, -0.1f, 0.4f), new Vector3(1.5f, 0.2f, 0.6f), wood);
             });
 
+            // A cargo crate on a plinth with a lid, a loading hatch and an amber stripe.
+            BuildingProp<CargoTerminalBehaviour>(material, PropPrototypeId.CargoTerminal, b =>
+            {
+                AddBox(b, new Vector3(0f, 0.05f, 0f), new Vector3(0.9f, 0.1f, 0.7f), trim);
+                AddBox(b, new Vector3(0f, 0.55f, 0f), new Vector3(0.84f, 0.9f, 0.64f), new Color32(88, 110, 94, 0));
+                AddBox(b, new Vector3(0f, 1.02f, 0f), new Vector3(0.9f, 0.06f, 0.7f), trim);
+                AddBox(b, new Vector3(0f, 0.7f, -0.33f), new Vector3(0.5f, 0.3f, 0.03f), darkWood);
+                AddBox(b, new Vector3(0f, 0.3f, -0.33f), new Vector3(0.7f, 0.06f, 0.03f), new Color32(232, 170, 60, 255));
+            }, (new Vector3(0f, 0.53f, 0f), new Vector3(0.9f, 1.06f, 0.7f)));
+
+            // The ladder is rebuilt to the building's ceiling height when shown (LadderBehaviour), so the prefab is a stub.
+            BuildingProp<LadderBehaviour>(material, PropPrototypeId.Ladder, b =>
+            {
+                AddBox(b, new Vector3(0f, -1f, 0f), new Vector3(0.4f, 2f, 0.06f), wood);
+            });
+
             BuildingProp<ExteriorLightBehaviour>(material, PropPrototypeId.ExteriorLight, b =>
             {
                 AddBox(b, new Vector3(0f, 0f, 0.1f), new Vector3(0.06f, 0.06f, 0.12f), trim);
@@ -509,9 +525,10 @@ namespace PipeWorld.EditorTools
             var buildingPlacer = interaction.AddComponent<BuildingPlacerInteraction>();
             var objectPlacer = interaction.AddComponent<ObjectPlacerInteraction>();
             var propMove = interaction.AddComponent<PropMoveInteraction>();
+            var propDelete = interaction.AddComponent<PropDeleteInteraction>();
             var buildingEdit = interaction.AddComponent<BuildingEditInteraction>();
             superTool.controlledModes = new PipeWorld.Piper.InteractionMode[] { finger };
-            selector.allModes = new System.Collections.Generic.List<PipeWorld.Piper.InteractionMode> { superTool, finger, buildingPlacer, objectPlacer, propMove, buildingEdit };
+            selector.allModes = new System.Collections.Generic.List<PipeWorld.Piper.InteractionMode> { superTool, finger, buildingPlacer, objectPlacer, propMove, propDelete, buildingEdit };
         }
     }
 }

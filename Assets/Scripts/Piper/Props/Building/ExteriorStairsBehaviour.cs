@@ -17,8 +17,38 @@ namespace PipeWorld.Piper
 
         public ExteriorStairsBehaviour() : base(PropPrototypeId.ExteriorStairs) { }
 
-        // The vertical distance from the floor to the ground at the building this prop belongs to.
-        public static float DropFor(World world, uint building, float floorY)
+        // The vertical distance from the floor down to the real ground in front of the wall. The ground is measured where the flight
+        // will end (a second pass uses the length found by the first), ignoring buildings and props, so stairs on a slope reach the
+        // terrain. `fallback` is used where nothing is hit, such as before the terrain's colliders exist.
+        public static float DropToGround(Vector3 wallPoint, Vector3 outward, float floorY, float fallback)
+        {
+            outward.y = 0f;
+            outward.Normalize();
+            float drop = Mathf.Max(MinDrop, GroundDrop(wallPoint + outward * 0.4f, floorY, fallback));
+            for (int pass = 0; pass < 2; pass++)
+                drop = Mathf.Max(MinDrop, GroundDrop(wallPoint + outward * (0.08f + RunFor(drop)), floorY, fallback));
+            return drop;
+        }
+
+        private static float GroundDrop(Vector3 point, float floorY, float fallback)
+        {
+            float best = float.MaxValue;
+            float ground = float.NaN;
+            foreach (RaycastHit hit in Physics.RaycastAll(new Vector3(point.x, floorY + 1f, point.z), Vector3.down, 200f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.collider.GetComponentInParent<BuildingView>() != null || hit.collider.GetComponentInParent<PropBehaviour>() != null)
+                    continue;
+                if (hit.distance < best)
+                {
+                    best = hit.distance;
+                    ground = hit.point.y;
+                }
+            }
+            return float.IsNaN(ground) ? fallback : floorY - ground;
+        }
+
+        // The building's recorded ground level, for when the real ground cannot be measured.
+        public static float FallbackDrop(World world, uint building, float floorY)
         {
             for (int i = 0; i < world.buildings.slabs.size; i++)
             {
@@ -40,7 +70,9 @@ namespace PipeWorld.Piper
             Prop* p = prop;
             if (p == null)
                 return;
-            Rebuild(DropFor(PiperMain.p.game.world, p->building, p->position.y));
+            Vector3 wallPoint = p->position;
+            float floorY = wallPoint.y;
+            Rebuild(DropToGround(wallPoint, transform.forward, floorY, FallbackDrop(PiperMain.p.game.world, p->building, floorY)));
         }
 
         private void Rebuild(float drop)

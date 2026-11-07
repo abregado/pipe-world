@@ -133,7 +133,6 @@ namespace PipeWorld.Piper
         public bool dirty;
         public ulong currentTick;
         public PlayerDataList players;
-        public Inventory inventory;
     }
 
     [StructLayout(LayoutKind.Sequential)]

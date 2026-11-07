@@ -12,6 +12,10 @@ namespace PipeWorld.Piper
         public (double x, double z) pointA, pointB;
         public uint edgeA, edgeB;
         public uint vertexA;
+        // The whole cut: where it crosses each wall (the first is on the outer wall it starts from), the walls crossed and the rooms between.
+        public List<(double x, double z)> points = new List<(double x, double z)>();
+        public List<uint> crossEdges = new List<uint>();
+        public List<BArea> rooms = new List<BArea>();
     }
 
     // The edit operations of builder-proto's modes. Each changes this model and returns null on success or the reason it is not allowed.
@@ -39,6 +43,8 @@ namespace PipeWorld.Piper
             m.objects.Add(new BObject { id = propId(), proto = PropPrototypeId.ExteriorDoor, face = m.outerSide(south), faceRef = south.id, u = 0.5f, v = 0f });
             var (tu, tv) = m.areaUv(room, 0, h - 0.7f);
             m.objects.Add(new BObject { id = propId(), proto = PropPrototypeId.Terminal, face = BuildingFace.Floor, faceRef = room.id, u = tu, v = tv });
+            var (cu, cv) = m.areaUv(room, -h + 0.5f, h - 0.7f);
+            m.objects.Add(new BObject { id = propId(), proto = PropPrototypeId.CargoTerminal, face = BuildingFace.Floor, faceRef = room.id, u = cu, v = cv });
             return m;
         }
 
@@ -161,7 +167,13 @@ namespace PipeWorld.Piper
                 BuildingGeometry.closestPointOnSeg(wx, wz, oa.x, oa.z, ob.x, ob.z, out double cx, out double cz, out double t);
                 if (t < 0.05 || t > 0.95) return null;
 
-                return new SliceInfo { area = area, isTriangle = true, pointA = (far.x, far.z), pointB = (cx, cz), edgeA = 0, edgeB = opposite.id, vertexA = far.id };
+                var triangleCut = new SliceInfo { area = area, isTriangle = true, pointA = (far.x, far.z), pointB = (cx, cz), edgeA = 0, edgeB = opposite.id, vertexA = far.id };
+                triangleCut.points.Add((far.x, far.z));
+                triangleCut.points.Add((cx, cz));
+                triangleCut.crossEdges.Add(0);
+                triangleCut.crossEdges.Add(opposite.id);
+                triangleCut.rooms.Add(area);
+                return triangleCut;
             }
 
             uint closest = 0;
@@ -188,25 +200,67 @@ namespace PipeWorld.Piper
             var n = edgeNormal(src, area);
             double inx = -n.x, inz = -n.z;
 
-            double bestT = double.MaxValue;
-            uint hitEdge = 0;
-            (double x, double z) hit = (0, 0);
-            foreach (uint eid in area.edges)
-            {
-                if (eid == closest || areasForEdge(eid).Count > 1) continue;
-                BEdge e = edge(eid);
-                BVertex ea = vertex(e.a), eb = vertex(e.b);
-                double? t = BuildingGeometry.raySegIntersect(px, pz, inx, inz, ea.x, ea.z, eb.x, eb.z);
-                if (t.HasValue && t.Value < bestT)
-                {
-                    bestT = t.Value;
-                    hitEdge = eid;
-                    hit = (px + inx * t.Value, pz + inz * t.Value);
-                }
-            }
-            if (hitEdge == 0) return null;
+            // The cut runs straight in from the outer wall, through as many rooms as it crosses, until it reaches an outer wall again.
+            // Every room it passes must be a four-sided room that it crosses from one wall to the opposite one, so no triangle or
+            // five-sided room is created, and it must not meet a corner or a triangular room.
+            var cut = new SliceInfo { area = area, isTriangle = false, pointA = (px, pz), edgeA = closest };
+            cut.points.Add((px, pz));
+            cut.crossEdges.Add(closest);
 
-            return new SliceInfo { area = area, isTriangle = false, pointA = (px, pz), pointB = hit, edgeA = closest, edgeB = hitEdge };
+            BArea room = area;
+            uint entry = closest;
+            double lastT = 0;
+            for (int guard = 0; guard < 24; guard++)
+            {
+                if (room.edges.Count != 4)
+                    return null;
+
+                double bestT = double.MaxValue;
+                uint hitEdge = 0;
+                foreach (uint eid in room.edges)
+                {
+                    if (eid == entry) continue;
+                    BEdge e = edge(eid);
+                    BVertex ea = vertex(e.a), eb = vertex(e.b);
+                    double? hitT = BuildingGeometry.raySegIntersect(px, pz, inx, inz, ea.x, ea.z, eb.x, eb.z);
+                    if (hitT.HasValue && hitT.Value > lastT + 1e-6 && hitT.Value < bestT)
+                    {
+                        bestT = hitT.Value;
+                        hitEdge = eid;
+                    }
+                }
+                if (hitEdge == 0)
+                    return null;
+
+                BEdge exit = edge(hitEdge), through = edge(entry);
+                if (exit.a == through.a || exit.a == through.b || exit.b == through.a || exit.b == through.b)
+                    return null;
+
+                BVertex xa = vertex(exit.a), xb = vertex(exit.b);
+                (double x, double z) point = (px + inx * bestT, pz + inz * bestT);
+                BuildingGeometry.closestPointOnSeg(point.x, point.z, xa.x, xa.z, xb.x, xb.z, out _, out _, out double exitT);
+                if (exitT < 0.05 || exitT > 0.95)
+                    return null;
+
+                cut.rooms.Add(room);
+                cut.points.Add(point);
+                cut.crossEdges.Add(hitEdge);
+
+                List<BArea> sharing = areasForEdge(hitEdge);
+                if (sharing.Count <= 1)
+                    break;
+
+                room = sharing.First(a => a.id != room.id);
+                entry = hitEdge;
+                lastT = bestT;
+            }
+
+            if (cut.rooms.Count == 0 || cut.crossEdges.Count != cut.rooms.Count + 1)
+                return null;
+
+            cut.edgeB = cut.crossEdges[cut.crossEdges.Count - 1];
+            cut.pointB = cut.points[cut.points.Count - 1];
+            return cut;
         }
 
         // Splits an edge at a point; wall objects on it move to whichever half now holds them.
@@ -275,13 +329,35 @@ namespace PipeWorld.Piper
             SliceInfo info = computeSlice(target, wx, wz);
             if (info == null) return "There is nowhere to slice here.";
 
-            var splitB = splitEdge(info.edgeB, info.pointB);
-            uint vertA = info.isTriangle ? info.vertexA : splitEdge(info.edgeA, info.pointA).vertex.id;
+            // Every wall the cut crosses is split at the crossing; the cut is then a new wall through each room it passes.
+            var roomIds = info.rooms.Select(r => r.id).ToList();
+            var cutVertices = new List<uint>();
+            for (int k = 0; k < info.crossEdges.Count; k++)
+            {
+                if (info.isTriangle && k == 0)
+                {
+                    cutVertices.Add(info.vertexA);
+                    continue;
+                }
+                cutVertices.Add(splitEdge(info.crossEdges[k], info.points[k]).vertex.id);
+            }
 
-            // Splitting replaced edges inside the target area's list, so it is walked as it now stands.
-            BEdge sliceEdge = addEdge(vertA, splitB.vertex.id, 0);
+            for (int k = 0; k < roomIds.Count; k++)
+            {
+                string failed = cutRoom(roomIds[k], cutVertices[k], cutVertices[k + 1]);
+                if (failed != null)
+                    return failed;
+            }
+            return finish();
+        }
+
+        // Divides one room in two with a new wall between two of its corners.
+        private string cutRoom(uint roomId, uint vertA, uint vertB)
+        {
+            BArea target = area(roomId);
+            BEdge sliceEdge = addEdge(vertA, vertB, 0);
             List<uint> poly = walkPolygon(target);
-            int ia = poly.IndexOf(vertA), ib = poly.IndexOf(splitB.vertex.id);
+            int ia = poly.IndexOf(vertA), ib = poly.IndexOf(vertB);
             if (ia == -1 || ib == -1) return "The slice failed.";
 
             List<uint> half1 = loop(poly, ia, ib), half2 = loop(poly, ib, ia);
@@ -302,7 +378,7 @@ namespace PipeWorld.Piper
                 entry.prop.faceRef = now.id;
                 (entry.prop.u, entry.prop.v) = areaUv(now, entry.point.x, entry.point.z);
             }
-            return finish();
+            return null;
         }
 
         private static List<uint> loop(List<uint> poly, int from, int to)

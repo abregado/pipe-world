@@ -225,7 +225,9 @@ namespace PipeWorld.Piper
                 // The stairs reach the ground, so the hologram is the whole flight: from the floor level down to the ground, out from the wall.
                 if (def.id == PropPrototypeId.ExteriorStairs)
                 {
-                    float drop = Mathf.Max(0.1f, model.position.y - model.groundY);
+                    Vector3 wallWorld = toWorld.MultiplyPoint3x4(position);
+                    Vector3 outwardWorld = toWorld.MultiplyVector(model.sideNormal(e, o.face));
+                    float drop = ExteriorStairsBehaviour.DropToGround(wallWorld, outwardWorld, wallWorld.y, Mathf.Max(0.1f, model.position.y - model.groundY));
                     float run = ExteriorStairsBehaviour.RunFor(drop);
                     Vector3 stairCentre = position + model.sideNormal(e, o.face) * (BuildingConstants.WallThickness * 0.5f + run * 0.5f) + Vector3.down * (drop * 0.5f);
                     gizmos.Box(toWorld.MultiplyPoint3x4(stairCentre), toWorld.MultiplyVector(dir), new Vector3(def.width, drop, run), color);

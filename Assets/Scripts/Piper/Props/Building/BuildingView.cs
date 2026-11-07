@@ -57,11 +57,10 @@ namespace PipeWorld.Piper
             foreach (BArea area in m.areas)
             {
                 var ring = m.areaVertices(area).Select(v => new Vector3(v.x, 0f, v.z)).ToList();
-                AddFloorSlab(shellBuilder, ring);
+                AddSlab(shellBuilder, ring, -BuildingConstants.FloorThickness, 0f, BuildingMeshes.FloorColor);
 
-                var top = ring.Select(p => new Vector3(p.x, h, p.z)).ToList();
-                BuildingMeshes.AddPolygon(ceilingBuilder, top, false, BuildingMeshes.CeilingColor);
-                BuildingMeshes.AddPolygon(ceilingBuilder, top, true, BuildingMeshes.CeilingColor);
+                // The roof is a slab too: its underside is the ceiling, and the player can stand on its top.
+                AddSlab(ceilingBuilder, ring, h, h + BuildingConstants.RoofThickness, BuildingMeshes.CeilingColor);
 
                 AddScaffold(scaffoldBuilder, ring, scaffoldDepth);
                 AddBlocker(blockerBuilder, ring, scaffoldDepth);
@@ -106,13 +105,12 @@ namespace PipeWorld.Piper
             return go;
         }
 
-        // A floor is a slab FloorThickness deep: its top at the floor level and its underside below, closed round the edge, so it reads as
-        // a floor from every side and the scaffold holds it up from underneath.
-        private static void AddFloorSlab(MeshBuilder b, List<Vector3> ring)
+        // A floor or a roof is a slab: a top, an underside and sides closed round the edge, so it reads as solid from every side.
+        // The ring gives the outline; `bottom` and `top` are the heights of the two faces.
+        private static void AddSlab(MeshBuilder b, List<Vector3> outline, float bottomY, float topY, Color32 color)
         {
-            float t = BuildingConstants.FloorThickness;
-            Color32 color = BuildingMeshes.FloorColor;
-            var bottom = ring.Select(p => new Vector3(p.x, -t, p.z)).ToList();
+            var ring = outline.Select(p => new Vector3(p.x, topY, p.z)).ToList();
+            var bottom = outline.Select(p => new Vector3(p.x, bottomY, p.z)).ToList();
             BuildingMeshes.AddPolygon(b, ring, true, color);
             BuildingMeshes.AddPolygon(b, bottom, false, color);
 
