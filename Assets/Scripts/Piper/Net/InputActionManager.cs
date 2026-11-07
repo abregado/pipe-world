@@ -114,6 +114,8 @@ namespace PipeWorld.Piper
                     case InputActionType.PlaceBuildingProp:
                     case InputActionType.DeleteBuildingObject:
                     case InputActionType.SetBuildingHeights:
+                    case InputActionType.MoveBuildingProp:
+                    case InputActionType.SetBuildingWallStyle:
                         BuildingActions.apply(world, allocator, inputAction.v);
                         break;
 

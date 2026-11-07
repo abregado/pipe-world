@@ -10,7 +10,7 @@ namespace PipeWorld.Piper
 
         private const float Reach = 30f;
         private const float RotateStep = 15f;
-        private const float DegreesPerNotch = 30f;
+        private const float DegreesPerNotch = 5f;
         private readonly ScrollStepper rotateStepper = new ScrollStepper();
         private const float SnapHeight = 1f;
         private const float HeightStep = 0.25f;

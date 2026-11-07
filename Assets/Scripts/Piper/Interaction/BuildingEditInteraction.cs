@@ -9,11 +9,11 @@ namespace PipeWorld.Piper
     // Targets are always on the building's floor plane, found from the crosshair ray.
     public class BuildingEditInteraction : InteractionMode
     {
-        public enum Tool { Manipulate, Extrude, CreateTri, Slice, Delete, Heights }
+        public enum Tool { Manipulate, Extrude, CreateTri, Slice, Delete, Heights, WallStyle }
 
-        private static readonly string[] ToolNames = { "Manipulate", "Extrude", "Create Triangle", "Slice", "Delete Room", "Floor and Ceiling Height" };
-        private static readonly string[] ToolIcons = { "move", "expand", "triangle-target", "sword-slice", "trash-can", "elevator" };
-        private static readonly KeyCode[] ToolKeys = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5, KeyCode.Alpha6 };
+        private static readonly string[] ToolNames = { "Manipulate", "Extrude", "Create Triangle", "Slice", "Delete Room", "Floor and Ceiling Height", "Wall Style" };
+        private static readonly string[] ToolIcons = { "move", "expand", "triangle-target", "sword-slice", "trash-can", "elevator", "brick-wall" };
+        private static readonly KeyCode[] ToolKeys = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5, KeyCode.Alpha6, KeyCode.Alpha7 };
 
         public static string[] toolNames => ToolNames;
         public static string[] toolIcons => ToolIcons;
@@ -30,6 +30,21 @@ namespace PipeWorld.Piper
         private uint buildingId;
         private Vector3 returnPosition;
         private float returnYaw;
+        private float returnPitch;
+
+        // Entering pulls the camera back from the player, who is left standing as a stand-in avatar; leaving closes the eyes, puts the
+        // player back and opens them again.
+        private enum Phase { Entering, Active, Exiting }
+        private const float EnterDuration = 1.4f;
+        private const float EyeDuration = 0.6f;
+        private const float PullBack = 7f;
+        private const float PullUp = 3.5f;
+
+        private Phase phase = Phase.Active;
+        private float phaseTime;
+        private Vector3 startEye, endEye;
+        private Quaternion startRotation;
+        private OtherPlayerBehaviour avatar;
         private Tool tool;
 
         private BuildingModel model;
@@ -79,9 +94,62 @@ namespace PipeWorld.Piper
             dragging = false;
 
             PiperGame game = PiperMain.p.game;
-            game.playerObject.SetFlying(true);
-            game.playerObject.transform.position += Vector3.up * 2.5f;
+            var player = game.playerObject;
+            returnPitch = player.Pitch;
+            player.SetFlying(true);
             game.buildingSyncer.editingBuilding = buildingId;
+
+            // A stand-in where the player stood, and a camera that backs away from it keeping the feet centred.
+            avatar = Instantiate(Resources.Load<OtherPlayerBehaviour>("OtherPlayer"), game.liveListObject.transform);
+            avatar.name = "Player (editing)";
+            avatar.SetTarget(returnPosition, new Vector3(returnPitch, returnYaw, 0f), false, "You");
+            avatar.transform.rotation = Quaternion.Euler(0f, returnYaw, 0f);
+
+            Vector3 flat = Quaternion.Euler(0f, returnYaw, 0f) * Vector3.forward;
+            startEye = player.EyePosition;
+            startRotation = player.EyeRotation;
+            endEye = returnPosition - flat * PullBack + Vector3.up * PullUp;
+            phase = Phase.Entering;
+            phaseTime = 0f;
+            player.frameDriver = DriveEntering;
+        }
+
+        private void DriveEntering(float dt)
+        {
+            phaseTime += dt;
+            float t = Mathf.Clamp01(phaseTime / EnterDuration);
+            float s = t * t * (3f - 2f * t);
+            Vector3 eye = Vector3.Lerp(startEye, endEye, s);
+            Quaternion toFeet = Quaternion.LookRotation(returnPosition - eye);
+            PiperMain.p.game.playerObject.SetEyePose(eye, Quaternion.Slerp(startRotation, toFeet, s));
+
+            if (t >= 1f)
+            {
+                PiperMain.p.game.playerObject.frameDriver = null;
+                phase = Phase.Active;
+            }
+        }
+
+        // Closes the eyes, leaves the mode while they are shut, and opens them on the player's own view.
+        private void RequestExit()
+        {
+            if (phase == Phase.Exiting)
+                return;
+
+            PiperGame game = PiperMain.p.game;
+            phase = Phase.Exiting;
+            dragging = false;
+            gizmos?.Clear();
+            game.playerObject.frameDriver = _ => { };
+            gameHud.ChangeLeftClickPrompt("");
+            gameHud.ChangeRightClickPrompt("");
+
+            EyeCloseElement eyes = gameHud.eyes;
+            eyes.Tween(1f, EyeDuration, EyeCloseElement.EaseInQuad, () =>
+            {
+                game.interactionModeSelector.SkipToMode(0);
+                eyes.Tween(0f, EyeDuration, EyeCloseElement.EaseOutQuad);
+            });
         }
 
         public override void DeactivateMode()
@@ -89,10 +157,18 @@ namespace PipeWorld.Piper
             PiperGame game = PiperMain.p.game;
             gizmos?.Clear();
             dragging = false;
+            if (avatar != null)
+            {
+                avatar.gameObject.SetActive(false);
+                Destroy(avatar.gameObject);
+                avatar = null;
+            }
+            phase = Phase.Active;
             if (game != null && game.playerObject != null)
             {
+                game.playerObject.frameDriver = null;
                 game.playerObject.SetFlying(false);
-                game.playerObject.Teleport(returnPosition, returnYaw, 0f);
+                game.playerObject.Teleport(returnPosition, returnYaw, returnPitch);
                 game.buildingSyncer.editingBuilding = 0;
             }
             gameHud.ChangeScrollWheelPrompt("");
@@ -117,9 +193,27 @@ namespace PipeWorld.Piper
         {
             PiperGame game = PiperMain.p.game;
             model = BuildingStore.load(game.world, buildingId, BuildingModel.trialIds());
-            if (model == null || InputFixed.GetKeyDown(KeyCode.Tab))
+            if (model == null)
             {
                 game.interactionModeSelector.SkipToMode(0);
+                return false;
+            }
+
+            // The camera is moving: only the footprint is drawn, and no input is taken until the player has the view back.
+            if (phase != Phase.Active)
+            {
+                toWorld = BuildingTargeting.ToWorld(model);
+                gizmos.Begin();
+                DrawFootprint();
+                gizmos.End();
+                gameHud.ChangeLeftClickPrompt("");
+                gameHud.ChangeRightClickPrompt("");
+                return false;
+            }
+
+            if (InputFixed.GetKeyDown(KeyCode.Tab))
+            {
+                RequestExit();
                 return false;
             }
 
@@ -137,7 +231,7 @@ namespace PipeWorld.Piper
             bool wasDragging = dragging;
             if (!wasDragging && InputFixed.GetMouseButtonDown(1))
             {
-                game.interactionModeSelector.SkipToMode(0);
+                RequestExit();
                 return false;
             }
 
@@ -165,6 +259,9 @@ namespace PipeWorld.Piper
                     break;
                 case Tool.Heights:
                     hint = UpdateHeights(game, ray);
+                    break;
+                case Tool.WallStyle:
+                    hint = UpdateWallStyle(game, ray);
                     break;
             }
             gizmos.End();
@@ -481,6 +578,45 @@ namespace PipeWorld.Piper
             }
 
             return error ?? (dragKind == MarkerKind.Floor ? "Floor " : "Ceiling ") + "release to apply  (floor +" + (dragFloorY - model.groundY).ToString("0.00") + " m, ceiling " + dragHeight.ToString("0.00") + " m)";
+        }
+
+        // ---- Wall style ----
+
+        // A marker on every wall between two rooms, coloured by its style. Open walls have no geometry, so the marker is what is aimed at.
+        private string UpdateWallStyle(PiperGame game, Ray ray)
+        {
+            BEdge hover = null;
+            float best = float.MaxValue;
+            foreach (BEdge e in model.edges)
+            {
+                if (!model.isEdgeInside(e.id))
+                    continue;
+
+                var m = model.edgeMidpoint(e);
+                Vector3 p = World(m.x, m.z, 0.9f);
+                Color color = e.type == WallStyle.Open ? new Color(0.65f, 0.65f, 0.7f) : e.type == WallStyle.Glass ? new Color(0.5f, 0.85f, 1f) : Marker;
+                gizmos.Marker(p, color, 0.34f);
+
+                float d = BuildingTargeting.DistanceToRay(ray, p, out float along);
+                if (along > 0f && d < HitRadius(ray, p) && d < best)
+                {
+                    best = d;
+                    hover = e;
+                }
+            }
+
+            if (hover == null)
+                return "Aim at a marker on a wall between two rooms";
+
+            var mid = model.edgeMidpoint(hover);
+            gizmos.Marker(World(mid.x, mid.z, 0.9f), Hover, 0.5f);
+            BVertex a = model.vertex(hover.a), b = model.vertex(hover.b);
+            gizmos.Line(World(a.x, a.z, 0.12f), World(b.x, b.z, 0.12f), Hover, 0.12f);
+
+            byte next = WallStyle.next(hover.type);
+            if (InputFixed.GetMouseButtonDown(0))
+                game.inputActionManager.add(new SetBuildingWallStyleData { building = buildingId, edge = hover.id, style = next });
+            return WallStyle.name(hover.type) + " wall: click for " + WallStyle.name(next).ToLower();
         }
 
         // ---- Slice ----

@@ -117,70 +117,70 @@ InventoryItemElement.up .gradient-step { transition-duration: 0.15s; }
 
 InventoryItemElement.up .gradient-step-1  { background-color: var(--color-positive-a70); transition-delay: 0.00s; }
 
-InventoryItemElement.up .gradient-step-2  { background-color: rgba(126,200,160,0.66); transition-delay: 0.05s; }
+InventoryItemElement.up .gradient-step-2  { background-color: rgba(141, 179, 96,0.66); transition-delay: 0.05s; }
 
-InventoryItemElement.up .gradient-step-3  { background-color: rgba(126,200,160,0.61); transition-delay: 0.10s; }
+InventoryItemElement.up .gradient-step-3  { background-color: rgba(141, 179, 96,0.61); transition-delay: 0.10s; }
 
-InventoryItemElement.up .gradient-step-4  { background-color: rgba(126,200,160,0.57); transition-delay: 0.15s; }
+InventoryItemElement.up .gradient-step-4  { background-color: rgba(141, 179, 96,0.57); transition-delay: 0.15s; }
 
-InventoryItemElement.up .gradient-step-5  { background-color: rgba(126,200,160,0.53); transition-delay: 0.20s; }
+InventoryItemElement.up .gradient-step-5  { background-color: rgba(141, 179, 96,0.53); transition-delay: 0.20s; }
 
-InventoryItemElement.up .gradient-step-6  { background-color: rgba(126,200,160,0.48); transition-delay: 0.25s; }
+InventoryItemElement.up .gradient-step-6  { background-color: rgba(141, 179, 96,0.48); transition-delay: 0.25s; }
 
-InventoryItemElement.up .gradient-step-7  { background-color: rgba(126,200,160,0.44); transition-delay: 0.30s; }
+InventoryItemElement.up .gradient-step-7  { background-color: rgba(141, 179, 96,0.44); transition-delay: 0.30s; }
 
-InventoryItemElement.up .gradient-step-8  { background-color: rgba(126,200,160,0.39); transition-delay: 0.35s; }
+InventoryItemElement.up .gradient-step-8  { background-color: rgba(141, 179, 96,0.39); transition-delay: 0.35s; }
 
 InventoryItemElement.up .gradient-step-9  { background-color: var(--color-positive-a35); transition-delay: 0.40s; }
 
-InventoryItemElement.up .gradient-step-10 { background-color: rgba(126,200,160,0.31); transition-delay: 0.45s; }
+InventoryItemElement.up .gradient-step-10 { background-color: rgba(141, 179, 96,0.31); transition-delay: 0.45s; }
 
-InventoryItemElement.up .gradient-step-11 { background-color: rgba(126,200,160,0.26); transition-delay: 0.50s; }
+InventoryItemElement.up .gradient-step-11 { background-color: rgba(141, 179, 96,0.26); transition-delay: 0.50s; }
 
-InventoryItemElement.up .gradient-step-12 { background-color: rgba(126,200,160,0.22); transition-delay: 0.55s; }
+InventoryItemElement.up .gradient-step-12 { background-color: rgba(141, 179, 96,0.22); transition-delay: 0.55s; }
 
-InventoryItemElement.up .gradient-step-13 { background-color: rgba(126,200,160,0.18); transition-delay: 0.60s; }
+InventoryItemElement.up .gradient-step-13 { background-color: rgba(141, 179, 96,0.18); transition-delay: 0.60s; }
 
-InventoryItemElement.up .gradient-step-14 { background-color: rgba(126,200,160,0.13); transition-delay: 0.65s; }
+InventoryItemElement.up .gradient-step-14 { background-color: rgba(141, 179, 96,0.13); transition-delay: 0.65s; }
 
-InventoryItemElement.up .gradient-step-15 { background-color: rgba(126,200,160,0.09); transition-delay: 0.70s; }
+InventoryItemElement.up .gradient-step-15 { background-color: rgba(141, 179, 96,0.09); transition-delay: 0.70s; }
 
-InventoryItemElement.up .gradient-step-16 { background-color: rgba(126,200,160,0.04); transition-delay: 0.75s; }
+InventoryItemElement.up .gradient-step-16 { background-color: rgba(141, 179, 96,0.04); transition-delay: 0.75s; }
 
 /* Down flash: fast sweep in left-to-right, decreasing alpha */
 InventoryItemElement.down .gradient-step { transition-duration: 0.15s; }
 
-InventoryItemElement.down .gradient-step-1  { background-color: rgba(200,100,60,0.70); transition-delay: 0.00s; }
+InventoryItemElement.down .gradient-step-1  { background-color: rgba(200, 100, 60,0.70); transition-delay: 0.00s; }
 
-InventoryItemElement.down .gradient-step-2  { background-color: rgba(200,100,60,0.66); transition-delay: 0.05s; }
+InventoryItemElement.down .gradient-step-2  { background-color: rgba(200, 100, 60,0.66); transition-delay: 0.05s; }
 
-InventoryItemElement.down .gradient-step-3  { background-color: rgba(200,100,60,0.61); transition-delay: 0.10s; }
+InventoryItemElement.down .gradient-step-3  { background-color: rgba(200, 100, 60,0.61); transition-delay: 0.10s; }
 
-InventoryItemElement.down .gradient-step-4  { background-color: rgba(200,100,60,0.57); transition-delay: 0.15s; }
+InventoryItemElement.down .gradient-step-4  { background-color: rgba(200, 100, 60,0.57); transition-delay: 0.15s; }
 
-InventoryItemElement.down .gradient-step-5  { background-color: rgba(200,100,60,0.53); transition-delay: 0.20s; }
+InventoryItemElement.down .gradient-step-5  { background-color: rgba(200, 100, 60,0.53); transition-delay: 0.20s; }
 
-InventoryItemElement.down .gradient-step-6  { background-color: rgba(200,100,60,0.48); transition-delay: 0.25s; }
+InventoryItemElement.down .gradient-step-6  { background-color: rgba(200, 100, 60,0.48); transition-delay: 0.25s; }
 
-InventoryItemElement.down .gradient-step-7  { background-color: rgba(200,100,60,0.44); transition-delay: 0.30s; }
+InventoryItemElement.down .gradient-step-7  { background-color: rgba(200, 100, 60,0.44); transition-delay: 0.30s; }
 
-InventoryItemElement.down .gradient-step-8  { background-color: rgba(200,100,60,0.39); transition-delay: 0.35s; }
+InventoryItemElement.down .gradient-step-8  { background-color: rgba(200, 100, 60,0.39); transition-delay: 0.35s; }
 
-InventoryItemElement.down .gradient-step-9  { background-color: rgba(200,100,60,0.35); transition-delay: 0.40s; }
+InventoryItemElement.down .gradient-step-9  { background-color: rgba(200, 100, 60,0.35); transition-delay: 0.40s; }
 
-InventoryItemElement.down .gradient-step-10 { background-color: rgba(200,100,60,0.31); transition-delay: 0.45s; }
+InventoryItemElement.down .gradient-step-10 { background-color: rgba(200, 100, 60,0.31); transition-delay: 0.45s; }
 
-InventoryItemElement.down .gradient-step-11 { background-color: rgba(200,100,60,0.26); transition-delay: 0.50s; }
+InventoryItemElement.down .gradient-step-11 { background-color: rgba(200, 100, 60,0.26); transition-delay: 0.50s; }
 
-InventoryItemElement.down .gradient-step-12 { background-color: rgba(200,100,60,0.22); transition-delay: 0.55s; }
+InventoryItemElement.down .gradient-step-12 { background-color: rgba(200, 100, 60,0.22); transition-delay: 0.55s; }
 
-InventoryItemElement.down .gradient-step-13 { background-color: rgba(200,100,60,0.18); transition-delay: 0.60s; }
+InventoryItemElement.down .gradient-step-13 { background-color: rgba(200, 100, 60,0.18); transition-delay: 0.60s; }
 
-InventoryItemElement.down .gradient-step-14 { background-color: rgba(200,100,60,0.13); transition-delay: 0.65s; }
+InventoryItemElement.down .gradient-step-14 { background-color: rgba(200, 100, 60,0.13); transition-delay: 0.65s; }
 
-InventoryItemElement.down .gradient-step-15 { background-color: rgba(200,100,60,0.09); transition-delay: 0.70s; }
+InventoryItemElement.down .gradient-step-15 { background-color: rgba(200, 100, 60,0.09); transition-delay: 0.70s; }
 
-InventoryItemElement.down .gradient-step-16 { background-color: rgba(200,100,60,0.04); transition-delay: 0.75s; }
+InventoryItemElement.down .gradient-step-16 { background-color: rgba(200, 100, 60,0.04); transition-delay: 0.75s; }
 
 .prompt {
     height: 34px;
@@ -429,7 +429,7 @@ QuestItemElement Label.quest-item-description {
     flex-direction: column;
     align-self: flex-end;
     align-items: flex-end;
-    background-color: rgba(10, 28, 38, 0.75);
+    background-color: rgba(54, 38, 23, 0.75);
     border-width: 0;
     margin-top: 2px;
 }
@@ -526,7 +526,7 @@ QuestItemElement Label.quest-item-description {
 
 .icon-status-row.flash .status-value {
     transition-duration: 0.1s;
-    background-color: rgba(126, 200, 160, 0.85);
+    background-color: rgba(141, 179, 96, 0.85);
     color: var(--color-08161e);
 }
 
@@ -590,7 +590,7 @@ QuestItemElement Label.quest-item-description {
 .sector-hex-monogram {
     -unity-font-definition: var(--font-bold);
     font-size: var(--fs-body);
-    color: rgba(8, 8, 10, 0.75);
+    color: rgba(34, 24, 16, 0.75);
     margin: 0;
     padding: 0;
     -unity-text-align: middle-center;

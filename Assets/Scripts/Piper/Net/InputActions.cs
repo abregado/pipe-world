@@ -23,6 +23,8 @@ namespace PipeWorld.Piper
         PlaceBuildingProp,
         DeleteBuildingObject,
         SetBuildingHeights,
+        MoveBuildingProp,
+        SetBuildingWallStyle,
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -57,6 +59,8 @@ namespace PipeWorld.Piper
         [FieldOffset(0)] public PlaceBuildingPropData placeBuildingProp;
         [FieldOffset(0)] public DeleteBuildingObjectData deleteBuildingObject;
         [FieldOffset(0)] public SetBuildingHeightsData setBuildingHeights;
+        [FieldOffset(0)] public MoveBuildingPropData moveBuildingProp;
+        [FieldOffset(0)] public SetBuildingWallStyleData setBuildingWallStyle;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -374,6 +378,43 @@ namespace PipeWorld.Piper
             {
                 type = InputActionType.PlaceBuildingProp,
                 data = new InputActionData() { placeBuildingProp = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MoveBuildingPropData
+    {
+        public uint building;
+        public uint obj;
+        public BuildingFace face;
+        public uint faceRef;
+        public float u;
+        public float v;
+
+        public static implicit operator InputAction(MoveBuildingPropData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.MoveBuildingProp,
+                data = new InputActionData() { moveBuildingProp = data }
+            };
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SetBuildingWallStyleData
+    {
+        public uint building;
+        public uint edge;
+        public byte style;
+
+        public static implicit operator InputAction(SetBuildingWallStyleData data)
+        {
+            return new InputAction()
+            {
+                type = InputActionType.SetBuildingWallStyle,
+                data = new InputActionData() { setBuildingWallStyle = data }
             };
         }
     }

@@ -19,6 +19,22 @@ namespace PipeWorld.Piper
             return m != null && IsInside(m, game.playerObject.transform.position);
         }
 
+        // Whether the local player stands inside the footprint of any building (used to decide which props they can place).
+        public static unsafe bool IsLocalPlayerInsideAny(PiperGame game)
+        {
+            Vector3 p = game.playerObject.transform.position;
+            for (int i = 0; i < game.world.buildings.slabs.size; i++)
+            {
+                Building* b = game.world.buildings.slabs.get(i);
+                if (!b->slabHeader.allocated || Vector3.Distance(b->position, p) > 60f)
+                    continue;
+                BuildingModel m = BuildingStore.load(game.world, b->slabHeader._playerIndexAndGeneration);
+                if (m != null && IsInside(m, p))
+                    return true;
+            }
+            return false;
+        }
+
         public static void UseDoor(PiperGame game, uint buildingId, uint objectId)
         {
             BuildingModel m = BuildingStore.load(game.world, buildingId);

@@ -33,6 +33,7 @@ namespace PipeWorld.Piper
         private TooltipManagerElement tooltipManager;
         private Label networkStatus;
         private ModeToolbarElement modeToolbar;
+        private EyeCloseElement eyeClose;
 
         private bool gameplayHudVisible = true;
         private UiPanel panel;
@@ -83,6 +84,10 @@ namespace PipeWorld.Piper
             BuildModeLabel();
             modeToolbar = new ModeToolbarElement();
             bottomCenter.Add(modeToolbar);
+
+            // Over everything else, so the lids cover the HUD too.
+            eyeClose = new EyeCloseElement();
+            root.Add(eyeClose);
 
             UiSettings.Changed += ApplyUiSettings;
             ApplyUiSettings();
@@ -161,6 +166,8 @@ namespace PipeWorld.Piper
             inventoryList.ResetElement();
             inventoryItemElements.Clear();
         }
+
+        public EyeCloseElement eyes => eyeClose;
 
         public void SetToolbar(IReadOnlyList<(string name, string icon)> items, int selected) => modeToolbar.Set(items, selected);
 

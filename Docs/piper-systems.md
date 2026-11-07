@@ -84,6 +84,7 @@ There is one scene. Menu choices do not reload it; `PiperGame` replaces the worl
 | `-piperEscape` | Skips the menu and opens the escape menu |
 | `-piperEdit` | Skips the menu and enters the [building editor](interaction-modes.md#editing-buildings) on the first building |
 | `-piperEditTool <0-4>` | With `-piperEdit`, the tool to start with |
+| `-piperEyes <0-1>` | Sets the eye-close overlay to a fixed intensity at start, for screenshots |
 | `-piperDecorate` | Once the world is available, raises the first building's floor and ceiling and places a table, chair, ceiling lamp and painting in it |
 | `-piperExtrude` | Once the world is available, sends an `ExtrudeBuildingEdge` action on the first building's entrance wall |
 | `-piperSelfTest` | Runs [PiperSelfTest.cs](../Assets/Scripts/Piper/Core/PiperSelfTest.cs): every `InputAction` and a save, reset and load round trip, logged as `[Piper] selftest ...`, then quits |

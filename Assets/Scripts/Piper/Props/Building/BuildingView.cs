@@ -15,7 +15,9 @@ namespace PipeWorld.Piper
         private GameObject shell;
         private GameObject ceiling;
         private GameObject scaffold;
+        private GameObject glass;
         private Material material;
+        private static Material glassMaterial;
 
         public static BuildingView Create(uint id, Transform parent, Material material)
         {
@@ -42,6 +44,7 @@ namespace PipeWorld.Piper
             if (shell != null) Destroy(shell);
             if (ceiling != null) Destroy(ceiling);
             if (scaffold != null) Destroy(scaffold);
+            if (glass != null) Destroy(glass);
 
             float h = m.height;
             float scaffoldDepth = Mathf.Max(0f, m.position.y - m.groundY) + BuildingConstants.FoundationDepth;
@@ -49,11 +52,12 @@ namespace PipeWorld.Piper
             var ceilingBuilder = new MeshBuilder();
             var scaffoldBuilder = new MeshBuilder();
             var blockerBuilder = new MeshBuilder();
+            var glassBuilder = new MeshBuilder();
 
             foreach (BArea area in m.areas)
             {
                 var ring = m.areaVertices(area).Select(v => new Vector3(v.x, 0f, v.z)).ToList();
-                BuildingMeshes.AddPolygon(shellBuilder, ring, true, BuildingMeshes.FloorColor);
+                AddFloorSlab(shellBuilder, ring);
 
                 var top = ring.Select(p => new Vector3(p.x, h, p.z)).ToList();
                 BuildingMeshes.AddPolygon(ceilingBuilder, top, false, BuildingMeshes.CeilingColor);
@@ -64,11 +68,26 @@ namespace PipeWorld.Piper
             }
 
             foreach (BEdge e in m.edges)
-                AddWall(shellBuilder, m, e);
+            {
+                if (e.type == WallStyle.Open)
+                    continue;
+                if (e.type == WallStyle.Glass)
+                    AddWall(glassBuilder, m, e, BuildingConstants.GlassThickness, 0f, Color.white);
+                else
+                    AddWall(shellBuilder, m, e, BuildingConstants.WallThickness, -BuildingConstants.FoundationDepth, e.type == WallStyle.Solid ? BuildingMeshes.PartitionColor : BuildingMeshes.WallColor);
+            }
 
             shell = MakeChild("Shell", shellBuilder.ToMesh("Building shell"), true);
             ceiling = MakeChild("Ceiling", ceilingBuilder.ToMesh("Building ceiling"), true);
             ceiling.SetActive(ceilingVisible);
+
+            glassMaterial ??= Resources.Load<Material>("Materials/Glass");
+            glass = new GameObject("Glass walls");
+            glass.transform.SetParent(transform, false);
+            Mesh glassMesh = glassBuilder.ToMesh("Building glass");
+            glass.AddComponent<MeshFilter>().sharedMesh = glassMesh;
+            glass.AddComponent<MeshRenderer>().sharedMaterial = glassMaterial;
+            glass.AddComponent<MeshCollider>().sharedMesh = glassMesh;
 
             scaffold = MakeChild("Scaffold", scaffoldBuilder.ToMesh("Building scaffold"), false);
             var blocker = new GameObject("Scaffold blocker");
@@ -87,12 +106,35 @@ namespace PipeWorld.Piper
             return go;
         }
 
+        // A floor is a slab FloorThickness deep: its top at the floor level and its underside below, closed round the edge, so it reads as
+        // a floor from every side and the scaffold holds it up from underneath.
+        private static void AddFloorSlab(MeshBuilder b, List<Vector3> ring)
+        {
+            float t = BuildingConstants.FloorThickness;
+            Color32 color = BuildingMeshes.FloorColor;
+            var bottom = ring.Select(p => new Vector3(p.x, -t, p.z)).ToList();
+            BuildingMeshes.AddPolygon(b, ring, true, color);
+            BuildingMeshes.AddPolygon(b, bottom, false, color);
+
+            for (int i = 0; i < ring.Count; i++)
+            {
+                int j = (i + 1) % ring.Count;
+                Vector3 a0 = bottom[i], a1 = bottom[j], b0 = ring[i], b1 = ring[j];
+                Vector3 outward = Vector3.Cross(b1 - b0, Vector3.up).normalized;
+                // Both windings, so the edge shows whichever way the room happens to be wound.
+                b.AddTriangle(a0, a1, b1, 0, color, outward);
+                b.AddTriangle(a0, b1, b0, 0, color, outward);
+                b.AddTriangle(a0, b1, a1, 0, color, outward);
+                b.AddTriangle(a0, b0, b1, 0, color, outward);
+            }
+        }
+
         // Posts at the corners and rails around the edge, from the ground up to just under the floor.
         private static void AddScaffold(MeshBuilder b, List<Vector3> ring, float depth)
         {
             const float Post = 0.12f;
             Color32 color = BuildingMeshes.ScaffoldColor;
-            float railTop = -0.1f, railBottom = -depth + 0.1f;
+            float railTop = -BuildingConstants.FloorThickness - 0.05f, railBottom = -depth + 0.1f;
 
             for (int i = 0; i < ring.Count; i++)
             {
@@ -135,42 +177,45 @@ namespace PipeWorld.Piper
         }
 
         // A wall is boxes either side of any openings (doors and archways), with a lintel above each opening.
-        private static void AddWall(MeshBuilder b, BuildingModel m, BEdge e)
+        // `thickness` and `bottom` differ between solid walls (which reach down into the ground) and glass (which starts at the floor).
+        private static void AddWall(MeshBuilder b, BuildingModel m, BEdge e, float thickness, float bottom, Color32 color)
         {
             float H = m.height;
-            const float Depth = BuildingConstants.FoundationDepth;
+            float Depth = -bottom;
 
             BVertex va = m.vertex(e.a), vb = m.vertex(e.b);
             Vector3 a = new Vector3(va.x, 0f, va.z), bpos = new Vector3(vb.x, 0f, vb.z);
             float len = Vector3.Distance(a, bpos);
             Vector3 dir = (bpos - a) / len;
-            Color32 color = e.type == 0 ? BuildingMeshes.PartitionColor : BuildingMeshes.WallColor;
 
+            // Each opening is a hole from its bottom to its top: a doorway starts at the floor, a window at its sill.
             var openings = m.objects.Where(o => o.faceRef == e.id && o.def.surface == PropSurface.Wall && o.def.opening)
-                .Select(o => (centre: o.u * len, half: o.def.width * 0.5f, height: o.def.height))
+                .Select(o => { var r = m.wallRect(o); return (centre: o.u * len, half: o.def.width * 0.5f, bottom: Mathf.Max(0f, (float)r.y0), top: Mathf.Min(H, (float)r.y1)); })
                 .OrderBy(o => o.centre).ToList();
 
             float cursor = 0f;
             foreach (var o in openings)
             {
-                Segment(b, a, dir, cursor, o.centre - o.half, len, color, -Depth, H);
-                Segment(b, a, dir, o.centre - o.half, o.centre + o.half, len, color, o.height, H);
+                Segment(b, a, dir, cursor, o.centre - o.half, len, color, -Depth, H, thickness);
+                if (o.bottom > 0.001f)
+                    Segment(b, a, dir, o.centre - o.half, o.centre + o.half, len, color, -Depth, o.bottom, thickness);
+                Segment(b, a, dir, o.centre - o.half, o.centre + o.half, len, color, o.top, H, thickness);
                 cursor = o.centre + o.half;
             }
-            Segment(b, a, dir, cursor, len, len, color, -Depth, H);
+            Segment(b, a, dir, cursor, len, len, color, -Depth, H, thickness);
         }
 
-        private static void Segment(MeshBuilder b, Vector3 origin, Vector3 dir, float s0, float s1, float len, Color32 color, float y0, float y1)
+        private static void Segment(MeshBuilder b, Vector3 origin, Vector3 dir, float s0, float s1, float len, Color32 color, float y0, float y1, float thickness)
         {
             if (s1 - s0 < 0.001f)
                 return;
 
             // The ends that meet a corner are lengthened by half a wall thickness so neighbouring walls close the corner.
-            float e0 = s0 <= 0.0001f ? BuildingConstants.WallThickness * 0.5f : 0f;
-            float e1 = s1 >= len - 0.0001f ? BuildingConstants.WallThickness * 0.5f : 0f;
+            float e0 = s0 <= 0.0001f ? thickness * 0.5f : 0f;
+            float e1 = s1 >= len - 0.0001f ? thickness * 0.5f : 0f;
             float length = s1 - s0 + e0 + e1;
             Vector3 center = origin + dir * ((s0 + s1) * 0.5f + (e1 - e0) * 0.5f) + Vector3.up * ((y0 + y1) * 0.5f);
-            BuildingMeshes.AddBox(b, center, dir, new Vector3(length, y1 - y0, BuildingConstants.WallThickness), color);
+            BuildingMeshes.AddBox(b, center, dir, new Vector3(length, y1 - y0, thickness), color);
         }
     }
 }

@@ -27,23 +27,23 @@
 
     /* Colour tokens. USS cannot derive an alpha from a colour, so each recurring tint has its own token. */
 
-    --color-accent-a4: rgba(117, 184, 203, 0.04);
-    --color-accent-a6: rgba(117, 184, 203, 0.06);
-    --color-accent-a8: rgba(117, 184, 203, 0.08);
-    --color-accent-a12: rgba(117, 184, 203, 0.12);
-    --color-accent-a15: rgba(117, 184, 203, 0.15);
-    --color-accent-a18: rgba(117, 184, 203, 0.18);
-    --color-accent-a20: rgba(117, 184, 203, 0.2);
-    --color-accent-a30: rgba(117, 184, 203, 0.3);
-    --color-accent-a35: rgba(117, 184, 203, 0.35);
-    --color-accent-a40: rgba(117, 184, 203, 0.4);
-    --color-accent-a45: rgba(117, 184, 203, 0.45);
-    --color-accent-a55: rgba(117, 184, 203, 0.55);
-    --color-accent-a60: rgba(117, 184, 203, 0.6);
-    --color-accent-a65: rgba(117, 184, 203, 0.65);
-    --color-accent-a70: rgba(117, 184, 203, 0.7);
-    --color-accent-a80: rgba(117, 184, 203, 0.8);
-    --color-accent: #75B8CB;
+    --color-accent-a4: rgba(226, 181, 96, 0.04);
+    --color-accent-a6: rgba(226, 181, 96, 0.06);
+    --color-accent-a8: rgba(226, 181, 96, 0.08);
+    --color-accent-a12: rgba(226, 181, 96, 0.12);
+    --color-accent-a15: rgba(226, 181, 96, 0.15);
+    --color-accent-a18: rgba(226, 181, 96, 0.18);
+    --color-accent-a20: rgba(226, 181, 96, 0.2);
+    --color-accent-a30: rgba(226, 181, 96, 0.3);
+    --color-accent-a35: rgba(226, 181, 96, 0.35);
+    --color-accent-a40: rgba(226, 181, 96, 0.4);
+    --color-accent-a45: rgba(226, 181, 96, 0.45);
+    --color-accent-a55: rgba(226, 181, 96, 0.55);
+    --color-accent-a60: rgba(226, 181, 96, 0.6);
+    --color-accent-a65: rgba(226, 181, 96, 0.65);
+    --color-accent-a70: rgba(226, 181, 96, 0.7);
+    --color-accent-a80: rgba(226, 181, 96, 0.8);
+    --color-accent: #E2B560;
 
     --color-amber-a20: rgba(212, 168, 67, 0.2);
     --color-amber-a30: rgba(212, 168, 67, 0.3);
@@ -54,16 +54,16 @@
     --color-black-a40: rgba(0, 0, 0, 0.4);
     --color-black-a60: rgba(0, 0, 0, 0.6);
 
-    --color-cream: #F2EEE8;
+    --color-cream: #F5EBD5;
 
     --color-negative: #C85040;
 
-    --color-positive-a35: rgba(126, 200, 160, 0.35);
-    --color-positive-a60: rgba(126, 200, 160, 0.6);
-    --color-positive-a70: rgba(126, 200, 160, 0.7);
-    --color-positive: #7EC8A0;
+    --color-positive-a35: rgba(141, 179, 96, 0.35);
+    --color-positive-a60: rgba(141, 179, 96, 0.6);
+    --color-positive-a70: rgba(141, 179, 96, 0.7);
+    --color-positive: #8DB360;
 
-    --color-panel-a92: rgba(10, 28, 38, 0.92);
+    --color-panel-a92: rgba(54, 38, 23, 0.92);
 
     --color-panel-amber-a97: rgba(55, 40, 8, 0.97);
 
@@ -85,7 +85,7 @@
     --color-white-a70: rgba(255, 255, 255, 0.7);
     --color-white-a75: rgba(255, 255, 255, 0.75);
 
-    --color-08161e: #08161E;
+    --color-08161e: #2E2014;
 
     --color-120c02-a97: rgba(18, 12, 2, 0.97);
 
@@ -95,44 +95,44 @@
 
     --color-370f0c-a97: rgba(55, 15, 12, 0.97);
 
-    --color-371250-a95: rgba(55, 18, 80, 0.95);
+    --color-371250-a95: rgba(84, 38, 20, 0.95);
 
-    --color-438cd4-a30: rgba(67, 140, 212, 0.3);
+    --color-438cd4-a30: rgba(170, 118, 52, 0.3);
 
-    --color-4a9ab5: #4A9AB5;
+    --color-4a9ab5: #C9953F;
 
-    --color-5a1e7d-a97: rgba(90, 30, 125, 0.97);
+    --color-5a1e7d-a97: rgba(122, 60, 30, 0.97);
 
     --color-8c8c8c-a12: rgba(140, 140, 140, 0.12);
     --color-8c8c8c-a20: rgba(140, 140, 140, 0.2);
 
     --color-b4372d-a50: rgba(180, 55, 45, 0.5);
 
-    --color-b94be6-a15: rgba(185, 75, 230, 0.15);
-    --color-b94be6-a55: rgba(185, 75, 230, 0.55);
+    --color-b94be6-a15: rgba(190, 92, 60, 0.15);
+    --color-b94be6-a55: rgba(190, 92, 60, 0.55);
 
     --color-c83830: #C83830;
 
     --color-c83c2d-a80: rgba(200, 60, 45, 0.8);
 
-    --color-c8eefa: #C8EEFA;
+    --color-c8eefa: #F6E6BE;
 
-    --color-dc64ff-a15: rgba(220, 100, 255, 0.15);
-    --color-dc64ff-a30: rgba(220, 100, 255, 0.3);
-    --color-dc64ff-a35: rgba(220, 100, 255, 0.35);
-    --color-dc64ff-a50: rgba(220, 100, 255, 0.5);
-    --color-dc64ff-a55: rgba(220, 100, 255, 0.55);
-    --color-dc64ff-a85: rgba(220, 100, 255, 0.85);
+    --color-dc64ff-a15: rgba(214, 110, 70, 0.15);
+    --color-dc64ff-a30: rgba(214, 110, 70, 0.3);
+    --color-dc64ff-a35: rgba(214, 110, 70, 0.35);
+    --color-dc64ff-a50: rgba(214, 110, 70, 0.5);
+    --color-dc64ff-a55: rgba(214, 110, 70, 0.55);
+    --color-dc64ff-a85: rgba(214, 110, 70, 0.85);
 
-    --color-ebaaff: #EBAAFF;
+    --color-ebaaff: #F0C090;
 
     --color-ebb9ff-a95: rgba(235, 185, 255, 0.95);
 
-    --color-ebc8ff: #EBC8FF;
+    --color-ebc8ff: #F2D2B0;
 
     --color-f0a03c: #F0A03C;
 
-    --color-fcdcff: #FCDCFF;
+    --color-fcdcff: #FFE6CC;
 
     --color-fd8c35: #FD8C35;
 
@@ -176,4 +176,33 @@
 
 Label {
     font-size: var(--fs-body);
+}
+
+/* ── Farm styling ─────────────────────────────────────────────────────────
+   Warm wood, wheat and leaf colours come from the tokens above. These rules soften the hard angular
+   panels: rounded corners, a wooden-sign logo and a plain, friendly letter spacing. */
+.menu Button,
+.menu-view-panel,
+.menu-discord-cta,
+.menu-status,
+.menu-status #status-value {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.menu-logo {
+    color: #F2C468;
+    letter-spacing: 3px;
+    -unity-font-style: bold;
+}
+
+.menu-divider,
+.menu-divider-tight {
+    height: 2px;
+    border-top-left-radius: 1px;
+    border-top-right-radius: 1px;
+    border-bottom-left-radius: 1px;
+    border-bottom-right-radius: 1px;
 }

@@ -301,11 +301,11 @@ WorkshopTooltip.workshop-affordable .workshop-error-box {
 }
 
 WorkshopTooltip.workshop-affordable .tooltip-rule {
-    background-color: rgba(126, 200, 160, 0.2);
+    background-color: rgba(141, 179, 96, 0.2);
 }
 
 WorkshopTooltip.workshop-affordable .tooltip-section-header {
-    color: rgba(126, 200, 160, 0.75);
+    color: rgba(141, 179, 96, 0.75);
 }
 
 /* State: unaffordable (researched, not enough Obtainium) */
@@ -329,7 +329,7 @@ WorkshopTooltip.workshop-unaffordable .tooltip-section-header {
 
 /* State: already built (researched, node already placed) */
 WorkshopTooltip.workshop-already-built {
-    background-color: rgba(6, 12, 18, 0.97);
+    background-color: rgba(42, 30, 19, 0.97);
     border-color: rgba(100, 150, 190, 0.6);
 }
 
@@ -363,7 +363,7 @@ WorkshopTooltip.workshop-already-built .tooltip-section-header {
 .workshop-error-box {
     margin: 0;
     padding: 5px 10px;
-    /*background-color: rgba(8, 2, 2, 0.96);*/
+    /*background-color: rgba(44, 20, 12, 0.96);*/
     border-top-width: 1px;
     border-top-color: var(--color-b4372d-a50);
     border-bottom-width: 1px;
@@ -407,7 +407,7 @@ ResearchTooltip.research-node-info.research-node-locked {
 }
 
 ResearchTooltip.research-node-info.research-node-locked .research-heading-row {
-    background-color: rgba(35, 10, 55, 0.97);
+    background-color: rgba(62, 31, 16, 0.97);
     border-bottom-color: rgba(160, 50, 200, 0.35);
 }
 
@@ -428,7 +428,7 @@ ResearchTooltip.research-node-info.research-node-locked .tooltip-rule {
 }
 
 ResearchTooltip.research-node-info.research-node-locked ConnectionPointStatusElement {
-    background-color: rgba(70, 15, 100, 0.3);
+    background-color: rgba(100, 50, 25, 0.3);
 }
 
 ResearchTooltip.research-node-info.research-node-locked .research-right {
@@ -471,7 +471,7 @@ ResearchTooltip.research-node-info.research-node-unlocked .research-sub-name {
 }
 
 ResearchTooltip.research-node-info.research-node-unlocked .tooltip-section-header {
-    color: rgba(220, 100, 255, 0.8);
+    color: rgba(214, 110, 70, 0.8);
 }
 
 ResearchTooltip.research-node-info.research-node-unlocked .research-needs-section {
@@ -573,8 +573,8 @@ ResearchTooltip.research-node-info.research-node-unlocked .research-unlock-empty
     border-top-right-radius: 14px;
     border-bottom-left-radius: 14px;
     border-bottom-right-radius: 14px;
-    border-color: rgba(220, 100, 255, 0.7);
-    background-color: rgba(220, 100, 255, 0.18);
+    border-color: rgba(214, 110, 70, 0.7);
+    background-color: rgba(214, 110, 70, 0.18);
     color: rgba(245, 200, 255, 1.0);
     margin: 10px 8px 6px 8px;
     padding: 8px 12px;
@@ -682,13 +682,13 @@ TechInfoTooltip.research-node-info .research-unlock-pill--access {
 
 TechInfoTooltip.research-node-info.tech-info-researched .research-status-pill {
     border-color: var(--color-positive-a60);
-    background-color: rgba(126, 200, 160, 0.15);
+    background-color: rgba(141, 179, 96, 0.15);
     color: var(--color-positive);
 }
 
 TechInfoTooltip.research-node-info.tech-info-not-researched .research-status-pill {
-    border-color: rgba(220, 100, 255, 0.4);
-    background-color: rgba(220, 100, 255, 0.08);
+    border-color: rgba(214, 110, 70, 0.4);
+    background-color: rgba(214, 110, 70, 0.08);
     color: rgba(235, 200, 255, 0.8);
 }
 
@@ -739,8 +739,8 @@ UpgradeTooltip.upgrade-info.upgrade-locked .upgrade-unlocked-display {
 
 /* Upgraded state */
 UpgradeTooltip.upgrade-info.upgrade-unlocked {
-    background-color: rgba(5, 28, 30, 0.97);
-    border-color: rgba(117, 184, 203, 0.75);
+    background-color: rgba(46, 52, 29, 0.97);
+    border-color: rgba(226, 181, 96, 0.75);
 }
 
 UpgradeTooltip.upgrade-info.upgrade-unlocked .upgrade-heading-row {
@@ -770,7 +770,7 @@ UpgradeTooltip.upgrade-info.upgrade-unlocked .tooltip-rule {
 
 UpgradeTooltip.upgrade-info.upgrade-unlocked StatusElement,
 UpgradeTooltip.upgrade-info.upgrade-unlocked ItemNeedElement {
-    background-color: rgba(30, 90, 110, 0.35);
+    background-color: rgba(120, 78, 34, 0.35);
 }
 
 /* Heading block: stacks upgrade name over machine subtitle */
@@ -875,7 +875,7 @@ UpgradeTooltip.upgrade-info.upgrade-unlocked ItemNeedElement {
    Slot Crafter recipe detail panel — standalone tooltip, teal accent
    ============================================================ */
 RecipeInfoTooltip.crafter-recipe-panel {
-    background-color: rgba(3, 15, 28, 0.97);
+    background-color: rgba(50, 35, 22, 0.97);
     border-width: 1px;
     border-color: var(--color-accent-a20);
     border-left-color: var(--color-accent);
@@ -889,7 +889,7 @@ RecipeInfoTooltip.crafter-recipe-panel {
 
 .crafter-recipe-heading-row {
     flex-direction: column;
-    background-color: rgba(8, 38, 55, 0.97);
+    background-color: rgba(60, 42, 25, 0.97);
     border-bottom-width: 1px;
     border-bottom-color: var(--color-accent-a30);
     padding: 5px 8px;
@@ -1062,11 +1062,11 @@ FluidInfoTooltip {
     border-left-width: 1px;
     padding-bottom: 8px;
     background-color: rgba(2, 10, 20, 0.97);
-    border-color: rgba(67, 140, 212, 0.55);
+    border-color: rgba(170, 118, 52, 0.55);
 }
 
 FluidInfoTooltip .tooltip-heading-row {
-    background-color: rgba(8, 30, 58, 0.97);
+    background-color: rgba(52, 37, 23, 0.97);
     border-bottom-color: var(--color-438cd4-a30);
 }
 
@@ -1090,13 +1090,13 @@ InfoTooltip {
     border-bottom-right-radius: 6px;
     border-left-width: 1px;
     padding-bottom: 8px;
-    background-color: rgba(6, 10, 24, 0.97);
-    border-color: rgba(74, 108, 224, 0.6);
+    background-color: rgba(44, 31, 20, 0.97);
+    border-color: rgba(160, 106, 48, 0.6);
 }
 
 InfoTooltip .tooltip-heading-row {
     background-color: rgba(16, 26, 64, 0.97);
-    border-bottom-color: rgba(74, 108, 224, 0.35);
+    border-bottom-color: rgba(160, 106, 48, 0.35);
 }
 
 InfoTooltip Label#heading {
@@ -1115,7 +1115,7 @@ DoorTooltip.door-info {
 
 DoorTooltip.door-info.door-granted {
     background-color: rgba(6, 40, 14, 0.97);
-    border-color: rgba(60, 200, 80, 0.8);
+    border-color: rgba(112, 178, 70, 0.8);
     border-left-color: #38C850;
 }
 
@@ -1216,12 +1216,12 @@ ConnectionPointStatusElement.tooltip-pipe-contents-item Label#status {
 
 ConnectionPointStatusElement.fluid-highlighted {
     border-width: 1px;
-    border-color: rgba(126, 200, 160, 0.65);
+    border-color: rgba(141, 179, 96, 0.65);
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
-    background-color: rgba(126, 200, 160, 0.12);
+    background-color: rgba(141, 179, 96, 0.12);
     padding: 5px 7px;
     margin: 2px 0;
 }
@@ -1294,7 +1294,7 @@ UpgradeStatusElement.upgrade-inactive Label#upgrade-desc {
 }
 
 UpgradeStatusElement.upgrade-active {
-    background-color: rgba(126, 200, 160, 0.1);
+    background-color: rgba(141, 179, 96, 0.1);
 }
 
 UpgradeStatusElement.upgrade-active Label#upgrade-name {
@@ -1306,5 +1306,5 @@ UpgradeStatusElement.upgrade-active Label#upgrade-item {
 }
 
 UpgradeStatusElement.upgrade-active Label#upgrade-desc {
-    color: rgba(126, 200, 160, 0.45);
+    color: rgba(141, 179, 96, 0.45);
 }

@@ -72,6 +72,8 @@ namespace PipeWorld.Piper
         public const float MaxRaise = 8f;
         public const float PropMargin = 0.1f;
         public const float WallThickness = 0.16f;
+        public const float GlassThickness = 0.06f;
+        public const float FloorThickness = 0.2f;
         public const float FoundationDepth = 0.6f;
         public const float StartHalfSize = 1.5f;
         public const float MinEdgeLength = 0.5f;
@@ -106,5 +108,20 @@ namespace PipeWorld.Piper
         {
             NativeFuncs.memset((IntPtr)item, 0, (UIntPtr)sizeof(T));
         }
+    }
+
+    // The values of BEdge.type. Solid and Outer are ordinary walls (outer is a wall with a room on one side only); Open and Glass
+    // only apply to a wall between two rooms.
+    public static class WallStyle
+    {
+        public const byte Solid = 0;
+        public const byte Outer = 1;
+        public const byte Open = 2;
+        public const byte Glass = 3;
+
+        public static string name(byte style) => style == Open ? "Open" : style == Glass ? "Glass" : "Solid";
+
+        // The style a click on a wall between two rooms changes it to.
+        public static byte next(byte style) => style == Solid || style == Outer ? Glass : style == Glass ? Open : Solid;
     }
 }

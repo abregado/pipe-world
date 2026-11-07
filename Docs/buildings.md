@@ -12,7 +12,7 @@ A building is four kinds of unmanaged slab entities in the `World` ([BuildingTyp
 |---|---|
 | `Building` | position (the footprint centre, on the floor plane), yaw, ceiling `height`, `groundY` |
 | `BuildingVertexData` | owner, `x`, `z` in building space |
-| `BuildingEdgeData` | owner, two vertex ids, wall type (0 partition, 1 outer) |
+| `BuildingEdgeData` | owner, two vertex ids, wall type (`WallStyle`: 0 solid, 1 outer, 2 open, 3 glass) |
 | `BuildingAreaData` | owner, three or four edge ids, type |
 
 Building space has X and Z on the floor plane and the origin at the building's position; the building's yaw is the only rotation. **A floor is at the building's Y and every room shares it.** The ceiling is `height` above the floor, between `BuildingConstants.MinHeight` and `MaxHeight`. `groundY` is the terrain level the building was placed on; the floor may be raised up to `MaxRaise` above it, and a [scaffold](#scaffold) fills the gap. Walls are `WallThickness` thick and extend `FoundationDepth` below the floor so they meet uneven ground.
@@ -37,6 +37,7 @@ Building space has X and Z on the floor plane and the origin at the building's p
 | `createTri(edge, x, z)` | Only a wall with one room; adds a triangle |
 | `slice(area, x, z)` | Splits a room between two of its unshared walls, from the wall nearest the point along its inward normal; a triangle slices from its farthest corner |
 | `deleteArea` | Only a room attached by exactly one wall, never the last room |
+| `setWallStyle(edge, style)` | A wall between two rooms becomes solid, glass or open (see [Wall styles](#wall-styles)); refused on an outer wall |
 | `setHeights(floorY, height)` | Moves the floor (up to `MaxRaise` above `groundY`, never below) and sets the ceiling height |
 | `placeProp`, `deleteObject` | See [Props](#props) |
 
@@ -66,6 +67,9 @@ The two wall faces are the sides of the wall: positive is the side the edge norm
 | Door | A wall between two rooms | Cuts a walkable opening, 0.9 m wide |
 | Archway | A wall between two rooms | Cuts a walkable opening, 1.3 m wide |
 | Exterior Door | An outer wall | Does not cut the wall; always faces outwards. 0.4 m thick against a 0.16 m wall, so it stands proud on both sides. Using it moves the player ([Doors](#doors)) |
+| Exterior Window | An outer wall, from either side | Cuts a 1.2 m wide, 1.1 m high hole in the wall, filled by a glass pane (the glass material) with a collider, so it can be seen through but not walked through, and nothing else can be placed over it; the wall stays above and below it |
+| Exterior Stairs | The outside of an outer wall | 1.5 m wide. Steps from the floor level down to the ground at a gentle slope, rebuilt to fit the drop of the building they belong to (`ExteriorStairsBehaviour`); every step has a collider. They may share wall space with other props, so they go under an exterior door; only other stairs block them |
+| Exterior Light | The outside of an outer wall | A small glowing lamp; one-sided |
 | Terminal | A floor | Not placeable by the player; starts inside every new building |
 
 Wall props stay `PropMargin` clear of the ends of their wall and may not share a rectangle with another wall prop on the same wall (a prop that reaches both sides blocks both). A prop that no longer fits after an edit is dropped; an exterior door that no longer has an outer wall is moved to another outer wall. A new building is a 3x3 room with an exterior door on the south wall and a terminal inside, and an edit that would leave the building without either is refused.
@@ -78,7 +82,22 @@ Prop prefabs are built by `PiperSetup.BuildBuildingProps` ([PiperSetup.cs](../As
 
 [BuildingSyncer.cs](../Assets/Scripts/Piper/Core/BuildingSyncer.cs) keeps a `BuildingView` for every building. Each tick it sums a hash of every entity and building prop per building and rebuilds a view when its hash changes, so an edit arriving as an action, a snapshot or a loaded save is handled alike. The hash is a sum, so slab order does not matter.
 
-[BuildingView.cs](../Assets/Scripts/Piper/Props/Building/BuildingView.cs) builds a shell mesh with a `MeshCollider` (floors, and wall boxes either side of each doorway with a lintel above), a ceiling mesh with collision, and the [scaffold](#scaffold). Geometry uses the landscape's `MeshBuilder` with `Resources/Materials/Building.mat` (the `PipeWorld/Scatter` shader, so the day/night lighting applies). The syncer hides the ceiling of the building being edited.
+[BuildingView.cs](../Assets/Scripts/Piper/Props/Building/BuildingView.cs) builds a shell mesh with a `MeshCollider` (two-sided floors, so the underside of a raised floor shows from outside, and wall boxes either side of each doorway with a lintel above), a ceiling mesh with collision, and the [scaffold](#scaffold). Geometry uses the landscape's `MeshBuilder` with `Resources/Materials/Building.mat` (the `PipeWorld/Scatter` shader, so the day/night lighting applies). The syncer hides the ceiling of the building being edited.
+
+### Floors and wall styles
+
+A floor is a slab `FloorThickness` (0.2 m) deep: its top at the floor level, its underside below, and sides closed round the edge, so it shows from every angle. The scaffold's top rail sits under the slab.
+
+<a id="wall-styles"></a>
+A wall between two rooms has a style, chosen with the Wall Style edit tool ([interaction-modes.md](interaction-modes.md#editing-buildings)):
+
+| Style | Looks | Movement | Props |
+|---|---|---|---|
+| Solid | The wall | Blocked | Allowed |
+| Glass | A thin pane drawn with `PipeWorld/Glass` (alpha blended, more opaque at grazing angles) | Blocked (it has a collider) | Allowed |
+| Open | Nothing | Free (no geometry and no collider) | Refused; props already there are dropped |
+
+Outer walls are always solid; a wall that becomes an outer wall, or stops being one, is set back by `fixObjects`. An open wall has no collider, so the prop placer's ray passes through it to whatever is behind.
 
 ### Scaffold
 

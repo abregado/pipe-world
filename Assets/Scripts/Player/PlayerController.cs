@@ -34,6 +34,12 @@ namespace PipeWorld.Player
         public bool MenuOpen => menuLevel > 0;
         public bool Flying { get; private set; }
         public float flySpeed = 9f;
+
+        // While set, this runs every frame instead of the normal look and movement: scripted camera moves use it to own the view.
+        public System.Action<float> frameDriver;
+        public Vector3 EyePosition => cameraPivot != null ? cameraPivot.position : transform.position;
+        public Quaternion EyeRotation => cameraPivot != null ? cameraPivot.rotation : transform.rotation;
+        public float Pitch => pitch;
         public bool IsWalking => planarVelocity.sqrMagnitude > 0.25f;
 
         int menuLevel;
@@ -102,6 +108,12 @@ namespace PipeWorld.Player
 
         void Update()
         {
+            if (frameDriver != null)
+            {
+                frameDriver(Time.deltaTime);
+                return;
+            }
+
             if (menuLevel == 0 && Cursor.lockState == CursorLockMode.Locked)
                 UpdateLook();
             if (Flying)
@@ -137,6 +149,17 @@ namespace PipeWorld.Player
             var vertical = (jump.IsPressed() ? 1f : 0f) - (crouch.IsPressed() ? 1f : 0f);
             var speed = sprint.IsPressed() ? flySpeed * 2f : flySpeed;
             transform.position += (view.forward * input.y + view.right * input.x + Vector3.up * vertical) * (speed * Time.deltaTime);
+        }
+
+        // Puts the eyes at a world pose by moving the whole (flying) player, so look and flight carry on from there.
+        public void SetEyePose(Vector3 eye, Quaternion rotation)
+        {
+            Vector3 euler = rotation.eulerAngles;
+            yaw = euler.y;
+            pitch = Mathf.Clamp(euler.x > 180f ? euler.x - 360f : euler.x, -maxPitch, maxPitch);
+            ApplyLook();
+            float eyeHeight = cameraPivot != null ? cameraPivot.localPosition.y : 0f;
+            transform.position = eye - Vector3.up * eyeHeight;
         }
 
         public void Teleport(Vector3 position, float newYaw, float newPitch)

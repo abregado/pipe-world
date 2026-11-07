@@ -1,3 +1,4 @@
+using System.Linq;
 using System.IO;
 using PipeWorld.Landscape;
 using PipeWorld.Piper;
@@ -83,6 +84,16 @@ namespace PipeWorld.EditorTools
             building.SetFloat("_EmissionStrength", 1.2f);
             EditorUtility.SetDirty(building);
 
+            var glass = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/Materials/Glass.mat");
+            if (glass == null)
+            {
+                glass = new Material(Shader.Find("PipeWorld/Glass"));
+                AssetDatabase.CreateAsset(glass, "Assets/Resources/Materials/Glass.mat");
+            }
+            glass.shader = Shader.Find("PipeWorld/Glass");
+            glass.renderQueue = 3000;
+            EditorUtility.SetDirty(glass);
+
             var gizmo = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/Materials/Gizmo.mat");
             if (gizmo == null)
             {
@@ -106,14 +117,14 @@ namespace PipeWorld.EditorTools
             BuildOtherPlayer(material);
         }
 
-        static void AddBox(MeshBuilder b, Vector3 center, Vector3 size, Color32 color)
+        static void AddBox(MeshBuilder b, Vector3 center, Vector3 size, Color32 color, int submesh = 0)
         {
             var h = size * 0.5f;
             Vector3 P(float x, float y, float z) => center + new Vector3(x * h.x, y * h.y, z * h.z);
             void Face(Vector3 a, Vector3 bb, Vector3 c, Vector3 d, Vector3 normal)
             {
-                b.AddTriangle(a, bb, c, 0, color, normal);
-                b.AddTriangle(a, c, d, 0, color, normal);
+                b.AddTriangle(a, bb, c, submesh, color, normal);
+                b.AddTriangle(a, c, d, submesh, color, normal);
             }
             Face(P(-1, -1, 1), P(1, -1, 1), P(1, 1, 1), P(-1, 1, 1), Vector3.forward);
             Face(P(-1, -1, -1), P(-1, 1, -1), P(1, 1, -1), P(1, -1, -1), Vector3.back);
@@ -277,13 +288,19 @@ namespace PipeWorld.EditorTools
 
         static void BuildingProp<T>(Material material, PropPrototypeId id, System.Action<MeshBuilder> shape, params (Vector3 center, Vector3 size)[] colliders) where T : PropBehaviour
         {
-            var b = new MeshBuilder();
+            BuildingPropWithGlass<T>(material, null, id, shape, colliders);
+        }
+
+        // Like BuildingProp, but triangles added to submesh 1 are drawn with the glass material.
+        static void BuildingPropWithGlass<T>(Material material, Material glass, PropPrototypeId id, System.Action<MeshBuilder> shape, params (Vector3 center, Vector3 size)[] colliders) where T : PropBehaviour
+        {
+            var b = new MeshBuilder(glass != null ? 2 : 1);
             shape(b);
             var mesh = SaveMesh(b, "Building" + id);
 
             var root = new GameObject(id.ToString());
             root.AddComponent<MeshFilter>().sharedMesh = mesh;
-            root.AddComponent<MeshRenderer>().sharedMaterial = material;
+            root.AddComponent<MeshRenderer>().sharedMaterials = glass != null ? new[] { material, glass } : new[] { material };
             foreach (var (center, size) in colliders)
             {
                 var box = root.AddComponent<BoxCollider>();
@@ -356,6 +373,33 @@ namespace PipeWorld.EditorTools
                 AddBox(b, new Vector3(0.3f, 1.0f, 0.18f), new Vector3(0.08f, 0.08f, 0.06f), Hazard);
                 AddBox(b, new Vector3(0.3f, 1.0f, -0.18f), new Vector3(0.08f, 0.08f, 0.06f), Hazard);
             }, (new Vector3(0f, 1.05f, 0f), new Vector3(1.1f, 2.1f, 0.4f)));
+
+            // A window in an outer wall: a frame through the wall thickness, with a pane in the middle.
+            var glassMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/Materials/Glass.mat");
+            BuildingPropWithGlass<ExteriorWindowBehaviour>(material, glassMaterial, PropPrototypeId.ExteriorWindow, b =>
+            {
+                AddBox(b, new Vector3(-0.57f, 0f, 0f), new Vector3(0.06f, 1.1f, 0.24f), trim);
+                AddBox(b, new Vector3(0.57f, 0f, 0f), new Vector3(0.06f, 1.1f, 0.24f), trim);
+                AddBox(b, new Vector3(0f, 0.52f, 0f), new Vector3(1.2f, 0.06f, 0.24f), trim);
+                AddBox(b, new Vector3(0f, -0.52f, 0f), new Vector3(1.2f, 0.06f, 0.28f), wood);
+                AddBox(b, new Vector3(0f, 0f, 0f), new Vector3(1.08f, 0.98f, 0.03f), new Color32(255, 255, 255, 0), 1);
+                AddBox(b, new Vector3(0f, 0f, 0f), new Vector3(0.04f, 0.98f, 0.06f), trim);
+                AddBox(b, new Vector3(0f, 0f, 0f), new Vector3(1.08f, 0.04f, 0.06f), trim);
+            }, (new Vector3(0f, 0f, 0f), new Vector3(1.2f, 1.1f, 0.06f)));
+
+            // The stairs are rebuilt to fit the drop to the ground when they are shown (ExteriorStairsBehaviour), so the prefab is a stub.
+            BuildingProp<ExteriorStairsBehaviour>(material, PropPrototypeId.ExteriorStairs, b =>
+            {
+                AddBox(b, new Vector3(0f, -0.1f, 0.4f), new Vector3(1.5f, 0.2f, 0.6f), wood);
+            });
+
+            BuildingProp<ExteriorLightBehaviour>(material, PropPrototypeId.ExteriorLight, b =>
+            {
+                AddBox(b, new Vector3(0f, 0f, 0.1f), new Vector3(0.06f, 0.06f, 0.12f), trim);
+                AddBox(b, new Vector3(0f, 0.12f, 0.2f), new Vector3(0.22f, 0.04f, 0.22f), trim);
+                AddBox(b, new Vector3(0f, 0f, 0.2f), new Vector3(0.16f, 0.22f, 0.16f), glow);
+                AddBox(b, new Vector3(0f, -0.13f, 0.2f), new Vector3(0.2f, 0.04f, 0.2f), trim);
+            }, (new Vector3(0f, 0f, 0.18f), new Vector3(0.22f, 0.4f, 0.22f)));
 
             BuildingProp<TerminalBehaviour>(material, PropPrototypeId.Terminal, b =>
             {
@@ -464,9 +508,10 @@ namespace PipeWorld.EditorTools
             var finger = interaction.AddComponent<FingerInteraction>();
             var buildingPlacer = interaction.AddComponent<BuildingPlacerInteraction>();
             var objectPlacer = interaction.AddComponent<ObjectPlacerInteraction>();
+            var propMove = interaction.AddComponent<PropMoveInteraction>();
             var buildingEdit = interaction.AddComponent<BuildingEditInteraction>();
             superTool.controlledModes = new PipeWorld.Piper.InteractionMode[] { finger };
-            selector.allModes = new System.Collections.Generic.List<PipeWorld.Piper.InteractionMode> { superTool, finger, buildingPlacer, objectPlacer, buildingEdit };
+            selector.allModes = new System.Collections.Generic.List<PipeWorld.Piper.InteractionMode> { superTool, finger, buildingPlacer, objectPlacer, propMove, buildingEdit };
         }
     }
 }

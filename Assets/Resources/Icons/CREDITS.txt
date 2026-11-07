@@ -10,3 +10,4 @@ expand.png          Delapouite
 triangle-target.png Delapouite
 trash-can.png       Delapouite
 elevator.png        Delapouite
+brick-wall.png      drawn for this project (not from game-icons.net)

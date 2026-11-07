@@ -30,7 +30,7 @@ A `UiSkin` ([UiSkin.cs](../Assets/Scripts/Piper/UI/UiSkin.cs)) is a `ScriptableO
 | `MainMenu` | theme, menu-components, menu-main, menu-pipeworld |
 | `EscapeMenu` | theme, menu-components, menu-escape |
 
-The sheets are in `Assets/UI/default/`. `menu-pipeworld.uss` darkens the main menu over the live world and lightens its logo. Fonts, crosshair sprites and key glyphs the sheets name with `resource(...)` are under `Assets/Resources/`. **Class selectors beat type selectors regardless of file order,** so an override of a rule written against a class must use a class too.
+The sheets are in `Assets/UI/default/`. `menu-pipeworld.uss` darkens the main menu over the live world and lightens its logo. Fonts, crosshair sprites and key glyphs the sheets name with `resource(...)` are under `Assets/Resources/`. The look is a warm farm palette (wood browns, wheat and leaf green) set almost entirely by the colour tokens at the top of `theme.uss`; the rounded-corner rules at its end soften the menu buttons and panels. **Class selectors beat type selectors regardless of file order,** so an override of a rule written against a class must use a class too.
 
 `UiSettings.NotifyChanged` raises `Changed`; `GameHud` listens and toggles the `hud-font-normal` class from `Settings.hudFontSize`, which switches the font-size tokens.
 

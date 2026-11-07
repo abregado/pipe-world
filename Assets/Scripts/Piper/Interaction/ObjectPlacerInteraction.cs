@@ -15,8 +15,12 @@ namespace PipeWorld.Piper
         private BuildingGizmos gizmos;
         private int selected;
         private readonly ScrollStepper wheelStepper = new ScrollStepper();
+        private BuildingPropDef[] choices = BuildingProps.placeable;
+        private bool inside;
+        private int nextInsideCheck;
 
-        public BuildingPropDef selectedDef => BuildingProps.placeable[selected];
+        public BuildingPropDef selectedDef => choices[Mathf.Clamp(selected, 0, choices.Length - 1)];
+        public bool playerInside => inside;
 
         public override string GetUIID() => "object-placer";
 
@@ -27,6 +31,26 @@ namespace PipeWorld.Piper
             base.ActivateMode();
             gizmos ??= new BuildingGizmos("Prop placer");
             gameHud.SetTooltipValues(false, 0f);
+            RefreshChoices(true);
+        }
+
+        // From outdoors only the props that go on an outer wall are offered; from inside, all but the outdoor-only ones. The choice
+        // stays on the same prop when the list changes under it.
+        private void RefreshChoices(bool force)
+        {
+            if (!force && Time.frameCount < nextInsideCheck)
+                return;
+            nextInsideCheck = Time.frameCount + 15;
+
+            bool nowInside = BuildingTravel.IsLocalPlayerInsideAny(PiperMain.p.game);
+            if (!force && nowInside == inside)
+                return;
+
+            PropPrototypeId keep = choices.Length > 0 ? selectedDef.id : PropPrototypeId.None;
+            inside = nowInside;
+            choices = BuildingProps.placeableFor(inside);
+            int index = System.Array.FindIndex(choices, d => d.id == keep);
+            selected = index < 0 ? 0 : index;
         }
 
         public override void DeactivateMode()
@@ -52,7 +76,8 @@ namespace PipeWorld.Piper
                 return false;
             }
 
-            int count = BuildingProps.placeable.Length;
+            RefreshChoices(false);
+            int count = choices.Length;
             int steps = wheelStepper.Step(InputFixed.mouseScrollDelta.y);
             if (steps != 0)
                 selected = ((selected - steps) % count + count) % count;
@@ -121,7 +146,7 @@ namespace PipeWorld.Piper
 
             gameHud.ChangeLeftClickPrompt("Place " + def.name, problem == null, problem ?? "");
             gameHud.ChangeRightClickPrompt("Leave");
-            gameHud.ChangeScrollWheelPrompt("Prop: " + def.name + (removeLabel == "" ? "" : "  X: " + removeLabel));
+            gameHud.ChangeScrollWheelPrompt((inside ? "Inside: " : "Outside: ") + def.name + (removeLabel == "" ? "" : "  X: " + removeLabel));
 
             if (hasPlacement && problem == null && InputFixed.GetMouseButtonDown(0))
                 game.inputActionManager.add(placement);
@@ -132,7 +157,7 @@ namespace PipeWorld.Piper
         }
 
         // Finds the face and the 0-1 coordinates under the crosshair. A null result means the placement can be tried; otherwise it is the reason it cannot.
-        private static string Target(BuildingModel model, BuildingPropDef def, RaycastHit hit, out PlaceBuildingPropData placement)
+        internal static string Target(BuildingModel model, BuildingPropDef def, RaycastHit hit, out PlaceBuildingPropData placement)
         {
             placement = default;
             Vector3 local = Quaternion.Inverse(Quaternion.Euler(0f, model.yaw, 0f)) * (hit.point - model.position);
@@ -183,9 +208,12 @@ namespace PipeWorld.Piper
             return null;
         }
 
-        private void DrawHologram(BuildingModel model, BuildingPropDef def, PlaceBuildingPropData placement, Color color)
+        private void DrawHologram(BuildingModel model, BuildingPropDef def, PlaceBuildingPropData placement, Color color) =>
+            DrawHologram(gizmos, model, def, placement.face, placement.faceRef, placement.u, placement.v, color);
+
+        internal static void DrawHologram(BuildingGizmos gizmos, BuildingModel model, BuildingPropDef def, BuildingFace face, uint faceRef, float u, float v, Color color)
         {
-            BObject o = model.makeProp(def, placement.face, placement.faceRef, placement.u, placement.v, 0);
+            BObject o = model.makeProp(def, face, faceRef, u, v, 0);
             Matrix4x4 toWorld = BuildingTargeting.ToWorld(model);
             Vector3 position = model.objectLocalPosition(o);
 
@@ -194,6 +222,16 @@ namespace PipeWorld.Piper
                 BEdge e = model.edge(o.faceRef);
                 BVertex a = model.vertex(e.a), b = model.vertex(e.b);
                 Vector3 dir = new Vector3(b.x - a.x, 0f, b.z - a.z).normalized;
+                // The stairs reach the ground, so the hologram is the whole flight: from the floor level down to the ground, out from the wall.
+                if (def.id == PropPrototypeId.ExteriorStairs)
+                {
+                    float drop = Mathf.Max(0.1f, model.position.y - model.groundY);
+                    float run = ExteriorStairsBehaviour.RunFor(drop);
+                    Vector3 stairCentre = position + model.sideNormal(e, o.face) * (BuildingConstants.WallThickness * 0.5f + run * 0.5f) + Vector3.down * (drop * 0.5f);
+                    gizmos.Box(toWorld.MultiplyPoint3x4(stairCentre), toWorld.MultiplyVector(dir), new Vector3(def.width, drop, run), color);
+                    return;
+                }
+
                 float thickness = def.teleports ? 0.44f : def.opening ? 0.24f : 0.2f;
                 Vector3 centre = position + Vector3.up * (def.anchorBottom ? def.height * 0.5f : 0f);
                 if (!def.opening && !def.teleports)

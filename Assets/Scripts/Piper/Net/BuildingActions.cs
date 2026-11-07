@@ -63,6 +63,18 @@ namespace PipeWorld.Piper
                     edit(world, d.building, newId, newPropId, m => m.placeProp(d.proto, d.face, d.faceRef, d.u, d.v));
                     break;
                 }
+                case InputActionType.MoveBuildingProp:
+                {
+                    MoveBuildingPropData d = action.data.moveBuildingProp;
+                    edit(world, d.building, newId, newPropId, m => m.moveProp(d.obj, d.face, d.faceRef, d.u, d.v));
+                    break;
+                }
+                case InputActionType.SetBuildingWallStyle:
+                {
+                    SetBuildingWallStyleData d = action.data.setBuildingWallStyle;
+                    edit(world, d.building, newId, newPropId, m => m.setWallStyle(d.edge, d.style));
+                    break;
+                }
                 case InputActionType.SetBuildingHeights:
                 {
                     SetBuildingHeightsData d = action.data.setBuildingHeights;

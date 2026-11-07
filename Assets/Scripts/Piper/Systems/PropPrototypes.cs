@@ -18,7 +18,10 @@ namespace PipeWorld.Piper
         Archway = 152,
         ExteriorDoor = 153,
         Terminal = 154,
-        MAX_VALUE = 155,
+        ExteriorWindow = 155,
+        ExteriorStairs = 156,
+        ExteriorLight = 157,
+        MAX_VALUE = 158,
     }
 
     public class PropPrototype
@@ -57,6 +60,9 @@ namespace PipeWorld.Piper
             PropPrototypeId.Archway,
             PropPrototypeId.ExteriorDoor,
             PropPrototypeId.Terminal,
+            PropPrototypeId.ExteriorWindow,
+            PropPrototypeId.ExteriorStairs,
+            PropPrototypeId.ExteriorLight,
         };
 
         private class Builder
@@ -159,6 +165,21 @@ namespace PipeWorld.Piper
                     .name("Exterior Door")
                     .descriptiveType("Building")
                     .description("A thick door in an outer wall. Click it to step through to the other side.")
+                    .build(),
+                new Builder(PropPrototypeId.ExteriorWindow)
+                    .name("Exterior Window")
+                    .descriptiveType("Building")
+                    .description("A window in an outer wall. Cuts a hole you can see through but not walk through.")
+                    .build(),
+                new Builder(PropPrototypeId.ExteriorStairs)
+                    .name("Exterior Stairs")
+                    .descriptiveType("Building")
+                    .description("Steps down from the outside of an outer wall.")
+                    .build(),
+                new Builder(PropPrototypeId.ExteriorLight)
+                    .name("Exterior Light")
+                    .descriptiveType("Building")
+                    .description("A lamp on the outside of an outer wall.")
                     .build(),
                 new Builder(PropPrototypeId.Terminal)
                     .name("Terminal")

@@ -1,5 +1,5 @@
 .main-menu {
-    background-color: rgba(8, 12, 20, 0.62);
+    background-color: rgba(42, 29, 18, 0.62);
 }
 
 .main-menu .menu-logo {

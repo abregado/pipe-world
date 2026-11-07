@@ -21,6 +21,12 @@ namespace PipeWorld.Piper
         public float width, height;
         public bool anchorBottom;
         public bool partitionOnly, outerOnly;
+        // Goes on an outer wall, from either side (a window).
+        public bool needsOuterWall;
+        // Only ever on the outside of an outer wall, so it is not offered to a player standing inside.
+        public bool outsideOnly;
+        // May share wall space with other props (stairs go under a door); only another prop like it blocks it.
+        public bool overlapsOthers;
         // Cuts a walkable opening through the wall.
         public bool opening;
         // Moves the player to the other side of the wall when used.
@@ -43,10 +49,18 @@ namespace PipeWorld.Piper
             new BuildingPropDef { id = PropPrototypeId.BuildingDoor, name = "Door", surface = PropSurface.Wall, width = 0.9f, height = 2.1f, anchorBottom = true, partitionOnly = true, opening = true, bothSides = true, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.Archway, name = "Archway", surface = PropSurface.Wall, width = 1.3f, height = 2.3f, anchorBottom = true, partitionOnly = true, opening = true, bothSides = true, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.ExteriorDoor, name = "Exterior door", surface = PropSurface.Wall, width = 1.1f, height = 2.1f, anchorBottom = true, outerOnly = true, teleports = true, bothSides = true, essential = true, placeable = true },
+            new BuildingPropDef { id = PropPrototypeId.ExteriorWindow, name = "Exterior window", surface = PropSurface.Wall, width = 1.2f, height = 1.1f, needsOuterWall = true, opening = true, bothSides = true, placeable = true },
+            new BuildingPropDef { id = PropPrototypeId.ExteriorStairs, name = "Exterior stairs", surface = PropSurface.Wall, width = 1.5f, height = 1f, anchorBottom = true, outerOnly = true, outsideOnly = true, overlapsOthers = true, placeable = true },
+            new BuildingPropDef { id = PropPrototypeId.ExteriorLight, name = "Exterior light", surface = PropSurface.Wall, width = 0.3f, height = 0.4f, outerOnly = true, outsideOnly = true, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.Terminal, name = "Terminal", surface = PropSurface.Floor, radius = 0.4f, previewHeight = 1.2f, essential = true },
         };
 
         public static readonly BuildingPropDef[] placeable = all.Where(d => d.placeable).ToArray();
+
+        // What a player can place from where they stand: from outdoors only what goes on an outer wall, from inside everything but the
+        // props that only make sense outside.
+        public static BuildingPropDef[] placeableFor(bool inside) =>
+            placeable.Where(d => inside ? !d.outsideOnly : d.outerOnly || d.needsOuterWall).ToArray();
 
         public static BuildingPropDef get(PropPrototypeId id)
         {
@@ -186,6 +200,8 @@ namespace PipeWorld.Piper
             BuildingPropDef def = o.def, od = other.def;
             if (def.surface != od.surface)
                 return false;
+            if (def.overlapsOthers != od.overlapsOthers)
+                return false;
 
             if (def.surface == PropSurface.Wall)
             {
@@ -222,12 +238,18 @@ namespace PipeWorld.Piper
                     return "There is no wall here.";
 
                 bool partition = isEdgeInside(e.id), outer = isEdgeOutside(e.id);
+                if (e.type == WallStyle.Open)
+                    return "Nothing can be placed on an open wall.";
                 if (def.partitionOnly && !partition)
                     return def.name + " needs a wall between two rooms.";
                 if (def.outerOnly)
                 {
                     if (!outer) return def.name + " needs an outer wall.";
                     if (roomOnSide(e, o.face) != null) return def.name + " opens onto the outside.";
+                }
+                else if (def.needsOuterWall)
+                {
+                    if (!outer) return def.name + " needs an outer wall.";
                 }
                 else if (roomOnSide(e, o.face) == null)
                     return def.name + " goes on a wall that faces a room.";
@@ -300,11 +322,38 @@ namespace PipeWorld.Piper
             return finish();
         }
 
+        // Moves a prop to another place on a face (or another face), keeping its id.
+        public string moveProp(uint objectId, BuildingFace face, uint faceRef, float u, float v)
+        {
+            BObject old = objects.Find(ob => ob.id == objectId);
+            if (old == null) return "That prop no longer exists.";
+
+            BObject o = makeProp(old.def, face, faceRef, u, v, objectId);
+            string problem = propProblem(o, objects);
+            if (problem != null)
+                return problem;
+
+            objects[objects.IndexOf(old)] = o;
+            return finish();
+        }
+
         public string deleteObject(uint objectId)
         {
             BObject o = objects.Find(ob => ob.id == objectId);
             if (o == null) return "That prop no longer exists.";
             objects.Remove(o);
+            return finish();
+        }
+
+        // Changes how a wall between two rooms looks and acts: solid, glass (see-through, blocks movement) or open (no wall at all, so
+        // nothing can be placed on it). Props already on a wall that becomes open are dropped by fixObjects.
+        public string setWallStyle(uint edgeId, byte style)
+        {
+            BEdge e = edge(edgeId);
+            if (e == null) return "That wall no longer exists.";
+            if (!isEdgeInside(e.id)) return "Only a wall between two rooms can change style.";
+            if (style != WallStyle.Solid && style != WallStyle.Glass && style != WallStyle.Open) return "Unknown wall style.";
+            e.type = style;
             return finish();
         }
 
@@ -319,6 +368,15 @@ namespace PipeWorld.Piper
         // or which no longer fit, are moved if they must exist (the exterior door) and dropped otherwise.
         public void fixObjects()
         {
+            // Open and glass only make sense between two rooms; a wall that has become an outer wall is solid again.
+            foreach (BEdge wall in edges)
+            {
+                if (isEdgeOutside(wall.id))
+                    wall.type = WallStyle.Outer;
+                else if (wall.type == WallStyle.Outer)
+                    wall.type = WallStyle.Solid;
+            }
+
             var kept = new List<BObject>();
 
             foreach (BObject o in objects.ToList())
