@@ -36,7 +36,7 @@ namespace PipeWorld.Piper
             c.vertices = vertices.Select(v => new BVertex { id = v.id, x = v.x, z = v.z }).ToList();
             c.edges = edges.Select(e => new BEdge { id = e.id, a = e.a, b = e.b, type = e.type }).ToList();
             c.areas = areas.Select(a => new BArea { id = a.id, edges = new List<uint>(a.edges), type = a.type }).ToList();
-            c.objects = objects.Select(o => new BObject { id = o.id, proto = o.proto, face = o.face, faceRef = o.faceRef, u = o.u, v = o.v }).ToList();
+            c.objects = objects.Select(o => new BObject { id = o.id, proto = o.proto, face = o.face, faceRef = o.faceRef, u = o.u, v = o.v, yaw = o.yaw }).ToList();
             return c;
         }
 

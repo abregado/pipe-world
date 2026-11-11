@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace PipeWorld.Piper
 {
-    // Deletes props. Aim at a prop and click: a building prop goes through DeleteBuildingObject (refused when the building needs it, like its
+    // Deletes furniture. Aim at a prop and click: a building prop goes through DeleteBuildingObject (refused when the building needs it, like its
     // terminal or last exterior door), an outdoor prop through DeleteProp. Right click leaves the mode.
     public unsafe class PropDeleteInteraction : InteractionMode
     {
@@ -14,7 +14,7 @@ namespace PipeWorld.Piper
 
         public override string GetUIID() => "prop-delete";
 
-        public override string GetEnglishName() => "Delete props";
+        public override string GetEnglishName() => "Delete furniture";
 
         public override void ActivateMode()
         {
@@ -66,8 +66,8 @@ namespace PipeWorld.Piper
                 problem = model == null ? "That building no longer exists." : model.Clone().deleteObject(id);
             }
 
-            Bounds bounds = BoundsOf(hover);
-            gizmos.Box(bounds.center, Vector3.right, bounds.size, problem == null ? Removable : Kept);
+            PropBoundsHelper.World(hover, out Vector3 centre, out Vector3 along, out Vector3 size);
+            gizmos.Box(centre, along, size, problem == null ? Removable : Kept);
             gameHud.ChangeLeftClickPrompt("Delete " + PropPrototypes.instance[prop->prototypeId].name, problem == null, problem ?? "");
 
             if (problem == null && InputFixed.GetMouseButtonDown(0))
@@ -80,17 +80,6 @@ namespace PipeWorld.Piper
 
             gizmos.End();
             return false;
-        }
-
-        private static Bounds BoundsOf(PropBehaviour prop)
-        {
-            Renderer[] renderers = prop.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
-                return new Bounds(prop.transform.position, Vector3.one * 0.5f);
-            Bounds b = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-                b.Encapsulate(renderers[i].bounds);
-            return b;
         }
     }
 }

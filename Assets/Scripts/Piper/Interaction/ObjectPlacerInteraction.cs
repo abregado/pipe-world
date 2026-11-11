@@ -3,54 +3,39 @@ using UnityEngine;
 
 namespace PipeWorld.Piper
 {
-    // Places props on the faces of buildings. The mouse wheel chooses the prop; right click removes the building prop under the crosshair.
-    // Each prop knows which surfaces it goes on (tables and chairs on floors, lamps on ceilings, paintings on walls, doors and archways
-    // on inner walls, exterior doors on outer walls) and the placement is checked on a copy of the building before it is sent.
+    // Places one chosen prop on the faces of buildings. The prop is chosen before the mode starts (from the terminal's furniture list);
+    // the mouse wheel turns floor and ceiling props, and right click leaves. Each prop knows which surfaces it goes on (tables and chairs
+    // on floors, lamps on ceilings, paintings on walls, doors and archways on inner walls, exterior doors on outer walls) and the
+    // placement is checked on a copy of the building before it is sent.
     public unsafe class ObjectPlacerInteraction : InteractionMode
     {
         private const float Reach = 8f;
+        public const float RotateStep = 15f;
         private static readonly Color Good = new Color(0.5f, 0.9f, 1f);
         private static readonly Color Bad = new Color(1f, 0.4f, 0.35f);
 
         private BuildingGizmos gizmos;
-        private int selected;
-        private readonly ScrollStepper wheelStepper = new ScrollStepper();
-        private BuildingPropDef[] choices = BuildingProps.placeable;
-        private bool inside;
-        private int nextInsideCheck;
-
-        public BuildingPropDef selectedDef => choices[Mathf.Clamp(selected, 0, choices.Length - 1)];
-        public bool playerInside => inside;
+        private BuildingPropDef selectedDef;
+        private float yaw;
+        private readonly ScrollStepper rotateStepper = new ScrollStepper();
 
         public override string GetUIID() => "object-placer";
 
-        public override string GetEnglishName() => "Place props";
+        public override string GetEnglishName() => selectedDef == null ? "Place furniture" : "Place " + selectedDef.name;
+
+        // Chooses the prop to place; the next ActivateMode starts placing it.
+        public void Begin(BuildingPropDef def)
+        {
+            selectedDef = def;
+            yaw = 0f;
+            rotateStepper.Reset();
+        }
 
         public override void ActivateMode()
         {
             base.ActivateMode();
             gizmos ??= new BuildingGizmos("Prop placer");
             gameHud.SetTooltipValues(false, 0f);
-            RefreshChoices(true);
-        }
-
-        // From outdoors only the props that go on an outer wall are offered; from inside, all but the outdoor-only ones. The choice
-        // stays on the same prop when the list changes under it.
-        private void RefreshChoices(bool force)
-        {
-            if (!force && Time.frameCount < nextInsideCheck)
-                return;
-            nextInsideCheck = Time.frameCount + 15;
-
-            bool nowInside = BuildingTravel.IsLocalPlayerInsideAny(PiperMain.p.game);
-            if (!force && nowInside == inside)
-                return;
-
-            PropPrototypeId keep = choices.Length > 0 ? selectedDef.id : PropPrototypeId.None;
-            inside = nowInside;
-            choices = BuildingProps.placeableFor(inside);
-            int index = System.Array.FindIndex(choices, d => d.id == keep);
-            selected = index < 0 ? 0 : index;
         }
 
         public override void DeactivateMode()
@@ -64,30 +49,20 @@ namespace PipeWorld.Piper
         {
             PiperGame game = PiperMain.p.game;
 
-            if (InputFixed.GetKeyDown(KeyCode.O))
+            if (selectedDef == null || InputFixed.GetMouseButtonDown(1))
             {
                 game.interactionModeSelector.SkipToMode(0);
                 return false;
             }
-
-            if (InputFixed.GetMouseButtonDown(1))
-            {
-                game.interactionModeSelector.SkipToMode(0);
-                return false;
-            }
-
-            RefreshChoices(false);
-            int count = choices.Length;
-            int steps = wheelStepper.Step(InputFixed.mouseScrollDelta.y);
-            if (steps != 0)
-                selected = ((selected - steps) % count + count) % count;
 
             BuildingPropDef def = selectedDef;
+            bool rotatable = def.surface != PropSurface.Wall;
+            int steps = rotateStepper.Step(InputFixed.mouseScrollDelta.y);
+            if (rotatable && steps != 0)
+                yaw = Mathf.Repeat(yaw + steps * RotateStep, 360f);
             gizmos.Begin();
 
             string problem = "Aim at a building.";
-            string removeLabel = "";
-            Prop* removeTarget = null;
             PlaceBuildingPropData placement = default;
             bool hasPlacement = false;
 
@@ -99,21 +74,9 @@ namespace PipeWorld.Piper
                 if (hit.distance > Reach)
                     break;
 
-                // Props are not surfaces: the placement looks through them to the building behind. The first prop under the crosshair is the removal target.
-                PropBehaviour prop = hit.collider.GetComponentInParent<PropBehaviour>();
-                if (prop != null)
-                {
-                    if (i == 0)
-                    {
-                        Prop* p = game.world.tryGet(prop.propHandle);
-                        if (p != null && p->building != 0)
-                        {
-                            removeTarget = p;
-                            removeLabel = "Remove " + PropPrototypes.instance[p->prototypeId].name;
-                        }
-                    }
+                // Props are not surfaces: the placement looks through them to the building behind.
+                if (hit.collider.GetComponentInParent<PropBehaviour>() != null)
                     continue;
-                }
                 surface = hit;
                 break;
             }
@@ -131,11 +94,12 @@ namespace PipeWorld.Piper
                         model.newId = ids;
                         model.newPropId = ids;
                         problem = Target(model, def, hit, out placement);
+                        placement.yaw = yaw;
                         hasPlacement = placement.building != 0;
                         if (hasPlacement)
                         {
                             BuildingModel trial = model.Clone();
-                            string result = trial.placeProp(def.id, placement.face, placement.faceRef, placement.u, placement.v);
+                            string result = trial.placeProp(def.id, placement.face, placement.faceRef, placement.u, placement.v, yaw);
                             problem = problem ?? result;
                             DrawHologram(model, def, placement, problem == null ? Good : Bad);
                         }
@@ -146,12 +110,10 @@ namespace PipeWorld.Piper
 
             gameHud.ChangeLeftClickPrompt("Place " + def.name, problem == null, problem ?? "");
             gameHud.ChangeRightClickPrompt("Leave");
-            gameHud.ChangeScrollWheelPrompt((inside ? "Inside: " : "Outside: ") + def.name + (removeLabel == "" ? "" : "  X: " + removeLabel));
+            gameHud.ChangeScrollWheelPrompt(rotatable ? "Rotate" : "");
 
             if (hasPlacement && problem == null && InputFixed.GetMouseButtonDown(0))
                 game.inputActionManager.add(placement);
-            else if (removeTarget != null && InputFixed.GetKeyDown(KeyCode.X))
-                game.inputActionManager.add(new DeleteBuildingObjectData { building = removeTarget->building, obj = removeTarget->slabHeader._playerIndexAndGeneration });
 
             return false;
         }
@@ -209,11 +171,11 @@ namespace PipeWorld.Piper
         }
 
         private void DrawHologram(BuildingModel model, BuildingPropDef def, PlaceBuildingPropData placement, Color color) =>
-            DrawHologram(gizmos, model, def, placement.face, placement.faceRef, placement.u, placement.v, color);
+            DrawHologram(gizmos, model, def, placement.face, placement.faceRef, placement.u, placement.v, color, placement.yaw);
 
-        internal static void DrawHologram(BuildingGizmos gizmos, BuildingModel model, BuildingPropDef def, BuildingFace face, uint faceRef, float u, float v, Color color)
+        internal static void DrawHologram(BuildingGizmos gizmos, BuildingModel model, BuildingPropDef def, BuildingFace face, uint faceRef, float u, float v, Color color, float yaw = 0f)
         {
-            BObject o = model.makeProp(def, face, faceRef, u, v, 0);
+            BObject o = model.makeProp(def, face, faceRef, u, v, 0, yaw);
             Matrix4x4 toWorld = BuildingTargeting.ToWorld(model);
             Vector3 position = model.objectLocalPosition(o);
 
@@ -222,21 +184,9 @@ namespace PipeWorld.Piper
                 BEdge e = model.edge(o.faceRef);
                 BVertex a = model.vertex(e.a), b = model.vertex(e.b);
                 Vector3 dir = new Vector3(b.x - a.x, 0f, b.z - a.z).normalized;
-                // The stairs reach the ground, so the hologram is the whole flight: from the floor level down to the ground, out from the wall.
-                if (def.id == PropPrototypeId.ExteriorStairs)
-                {
-                    Vector3 wallWorld = toWorld.MultiplyPoint3x4(position);
-                    Vector3 outwardWorld = toWorld.MultiplyVector(model.sideNormal(e, o.face));
-                    float drop = ExteriorStairsBehaviour.DropToGround(wallWorld, outwardWorld, wallWorld.y, Mathf.Max(0.1f, model.position.y - model.groundY));
-                    float run = ExteriorStairsBehaviour.RunFor(drop);
-                    Vector3 stairCentre = position + model.sideNormal(e, o.face) * (BuildingConstants.WallThickness * 0.5f + run * 0.5f) + Vector3.down * (drop * 0.5f);
-                    gizmos.Box(toWorld.MultiplyPoint3x4(stairCentre), toWorld.MultiplyVector(dir), new Vector3(def.width, drop, run), color);
-                    return;
-                }
-
-                float thickness = def.teleports ? 0.44f : def.opening ? 0.24f : 0.2f;
+                float thickness = def.depth > 0f ? def.depth : def.opening ? 0.24f : 0.2f;
                 Vector3 centre = position + Vector3.up * (def.anchorBottom ? def.height * 0.5f : 0f);
-                if (!def.opening && !def.teleports)
+                if (!def.opening && def.depth <= 0f)
                     centre += model.sideNormal(e, o.face) * (BuildingConstants.WallThickness * 0.5f + 0.02f);
                 gizmos.Box(toWorld.MultiplyPoint3x4(centre), toWorld.MultiplyVector(dir), new Vector3(def.width, def.height, thickness), color);
                 return;
@@ -244,7 +194,11 @@ namespace PipeWorld.Piper
 
             float sign = def.surface == PropSurface.Ceiling ? -1f : 1f;
             Vector3 c = position + Vector3.up * (sign * def.previewHeight * 0.5f);
-            gizmos.Box(toWorld.MultiplyPoint3x4(c), toWorld.MultiplyVector(Vector3.right), new Vector3(def.radius * 2f, def.previewHeight, def.radius * 2f), color);
+            Quaternion turn = Quaternion.Euler(0f, o.yaw, 0f);
+            gizmos.Box(toWorld.MultiplyPoint3x4(c), toWorld.MultiplyVector(turn * Vector3.right), new Vector3(def.radius * 2f, def.previewHeight, def.radius * 2f), color);
+            // The line from the middle to the front shows which way the prop faces.
+            Vector3 front = turn * Vector3.forward * def.radius;
+            gizmos.Line(toWorld.MultiplyPoint3x4(c), toWorld.MultiplyPoint3x4(c + front), color, 0.05f);
         }
     }
 }

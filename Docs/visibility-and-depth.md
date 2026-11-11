@@ -79,14 +79,9 @@ The global volume's effects are described in [lighting-and-day-night.md](lightin
 
 | Effect | Where | Setting |
 |---|---|---|
-| Ambient occlusion | `PC_Renderer` SSAO feature, configured by [ConfigureSsao](../Assets/Editor/WorldSetup.cs) (line 60) | Depth source, after opaques, intensity 0.9, radius 0.6, direct lighting strength 0.15, interleaved gradient noise, 12 samples, high normal quality, bilateral blur, full resolution |
 | Depth of field | `WorldVolumeProfile`, Gaussian | Blur begins at 400 m, full at 1500 m, max radius 1 |
 | Split toning | `WorldVolumeProfile` | Faint cool shadows, warm highlights |
 
-**SSAO uses interleaved gradient noise, not blue noise.** URP's blue noise mode switches to a different noise texture at a random offset every frame, which is meant to be resolved by temporal anti-aliasing. Without it, the occlusion visibly crawls near objects. Interleaved gradient noise is fixed per pixel, and the higher sample count and bilateral blur hide its pattern. It costs about 2 ms a frame more than the old Medium settings.
+**Ambient occlusion is switched off** ([ConfigureSsao](../Assets/Editor/WorldSetup.cs) deactivates the `ScreenSpaceAmbientOcclusion` feature on `PC_Renderer`): it drew dark halos round objects seen against the sky, and the edge highlight is the only effect that outlines objects.
 
-**SSAO reads the depth buffer, not depth and normals, because the terrain and scatter shaders write depth but no normals.** A `DepthNormals` source would leave those objects out of the normal texture and the effect would misbehave.
-
-**SSAO runs after opaques.** In the default mode each lit shader multiplies its own output by the occlusion texture, and the custom shaders do not; after-opaque mode blends it over the finished image instead.
-
-The camera has `requiresDepthTexture` enabled, which SSAO and depth of field need.
+The camera has `requiresDepthTexture` enabled, which the edge highlight and depth of field need.

@@ -8,21 +8,33 @@ namespace PipeWorld.Piper
     {
         public List<InteractionMode> allModes;
         public bool interactionActive = true;
+        public FurniturePicker furniturePicker { get; private set; }
 
-        // The modes the mouse wheel steps through, in toolbar order. The first slot is the default mode, which uses what is under the crosshair.
-        private static readonly (string name, string icon)[] ToolbarItems =
+        // The hotbar, in order. Outside there are two tools; inside only the first, since a new building cannot be placed from a room.
+        // The first slot is the default mode, which uses what is under the crosshair.
+        private static readonly (string name, string icon)[] OutsideToolbar =
         {
             ("Interact", "pointing"),
-            ("Place building", "house"),
-            ("Place props", "wooden-chair"),
-            ("Move props", "move"),
-            ("Delete props", "trash-can"),
+            ("New building", "house"),
         };
 
+        private static readonly (string name, string icon)[] InsideToolbar =
+        {
+            ("Interact", "pointing"),
+        };
+
+        private const int InsideCheckInterval = 10;
+
         private int currentModeIndex = -1;
+        private bool inside;
+        private int nextInsideCheck;
         private readonly ScrollStepper wheelStepper = new ScrollStepper();
 
         public InteractionMode CurrentMode => currentModeIndex == -1 ? null : allModes[currentModeIndex];
+
+        private (string name, string icon)[] Toolbar => inside ? InsideToolbar : OutsideToolbar;
+
+        public bool PlayerInside => inside;
 
         public void setupUi()
         {
@@ -30,6 +42,9 @@ namespace PipeWorld.Piper
 
             foreach (InteractionMode mode in allModes)
                 mode.SetupMode(hudRoot);
+
+            ScreenUIHolder holder = FindFirstObjectByType<ScreenUIHolder>();
+            furniturePicker = new FurniturePicker(holder.transform, holder.panelSettings, EnterPlaceFurniture);
         }
 
         public void doUpdate()
@@ -44,25 +59,21 @@ namespace PipeWorld.Piper
                 return;
 
             InteractionMode current = allModes[currentModeIndex];
-            if (current is not BuildingEditInteraction)
-            {
-                if (InputFixed.GetKeyDown(KeyCode.B) && current is not BuildingPlacerInteraction)
-                {
-                    SkipToMode(allModes.FindIndex(m => m is BuildingPlacerInteraction));
-                    return;
-                }
-                if (InputFixed.GetKeyDown(KeyCode.O) && current is not ObjectPlacerInteraction)
-                {
-                    SkipToMode(allModes.FindIndex(m => m is ObjectPlacerInteraction));
-                    return;
-                }
-            }
+            if (UpdateInside(current))
+                current = allModes[currentModeIndex];
 
-            // The number keys pick a toolbar slot in every mode but the editor (where they pick its tools).
-            // The wheel steps through the toolbar in the default mode; the placement modes use the wheel themselves.
+            // The number keys pick a hotbar slot in every mode but the editor (where they pick its tools). The wheel steps through
+            // the hotbar in the default mode; the other modes use the wheel themselves.
             if (current is not BuildingEditInteraction)
             {
-                for (int i = 0; i < ToolbarItems.Length; i++)
+                int slots = Toolbar.Length;
+                if (!inside && InputFixed.GetKeyDown(KeyCode.B) && current is not BuildingPlacerInteraction)
+                {
+                    SkipToMode(ModeForSlot(1));
+                    return;
+                }
+
+                for (int i = 0; i < slots; i++)
                 {
                     if (InputFixed.GetKeyDown(KeyCode.Alpha1 + i) && ToolbarSlot(current) != i)
                     {
@@ -72,9 +83,9 @@ namespace PipeWorld.Piper
                 }
 
                 int steps = wheelStepper.Step(InputFixed.mouseScrollDelta.y);
-                if (steps != 0 && ToolbarSlot(current) == 0)
+                if (steps != 0 && slots > 1 && ToolbarSlot(current) == 0)
                 {
-                    int slot = ((ToolbarSlot(current) - steps) % ToolbarItems.Length + ToolbarItems.Length) % ToolbarItems.Length;
+                    int slot = ((ToolbarSlot(current) - steps) % slots + slots) % slots;
                     SkipToMode(ModeForSlot(slot));
                     return;
                 }
@@ -84,15 +95,36 @@ namespace PipeWorld.Piper
             current.ModeUpdate();
         }
 
-        private int ToolbarSlot(InteractionMode mode) => mode is BuildingPlacerInteraction ? 1 : mode is ObjectPlacerInteraction ? 2 : mode is PropMoveInteraction ? 3 : mode is PropDeleteInteraction ? 4 : 0;
+        // Re-checks whether the player is in a room. Going in changes the hotbar and ends the building placer. Returns true if the mode changed.
+        private bool UpdateInside(InteractionMode current)
+        {
+            if (Time.frameCount < nextInsideCheck)
+                return false;
+            nextInsideCheck = Time.frameCount + InsideCheckInterval;
 
-        private int ModeForSlot(int slot) => slot == 1 ? allModes.FindIndex(m => m is BuildingPlacerInteraction)
-            : slot == 2 ? allModes.FindIndex(m => m is ObjectPlacerInteraction)
-            : slot == 3 ? allModes.FindIndex(m => m is PropMoveInteraction)
-            : slot == 4 ? allModes.FindIndex(m => m is PropDeleteInteraction)
+            bool now = BuildingTravel.IsLocalPlayerInsideAny(PiperMain.p.game);
+            if (now == inside)
+                return false;
+
+            inside = now;
+            if (inside && current is BuildingPlacerInteraction)
+            {
+                SkipToMode(0);
+                return true;
+            }
+
+            RefreshToolbar();
+            return false;
+        }
+
+        // The hotbar slot a mode occupies. Furniture modes are entered from a terminal and have no slot.
+        private int ToolbarSlot(InteractionMode mode) => mode is BuildingPlacerInteraction ? 1
+            : mode is ObjectPlacerInteraction || mode is PropMoveInteraction || mode is PropDeleteInteraction ? -1
             : 0;
 
-        // Shows the modes the wheel steps through, or the building tools while editing.
+        private int ModeForSlot(int slot) => slot == 1 ? allModes.FindIndex(m => m is BuildingPlacerInteraction) : 0;
+
+        // Shows the hotbar, or the building tools while editing.
         public void RefreshToolbar()
         {
             GameHud hud = PiperMain.p.game?.hud;
@@ -108,7 +140,7 @@ namespace PipeWorld.Piper
                 hud.SetToolbar(tools, edit.toolIndex);
             }
             else
-                hud.SetToolbar(ToolbarItems, ToolbarSlot(current));
+                hud.SetToolbar(Toolbar, ToolbarSlot(current));
         }
 
         // Releases the active mode's prompts and highlight, e.g. while a menu covers the screen.
@@ -152,11 +184,22 @@ namespace PipeWorld.Piper
             SkipToMode(index);
         }
 
-        // The terminal's second button: furnishing on its own, without the flying editor.
-        public void EnterFurnishing()
+        // The terminal's Place Furniture button: lists what can be placed from where the player stands.
+        public void OpenFurniturePicker()
         {
-            SkipToMode(allModes.FindIndex(m => m is ObjectPlacerInteraction));
+            furniturePicker.Open(BuildingProps.placeableFor(BuildingTravel.IsLocalPlayerInsideAny(PiperMain.p.game)));
         }
+
+        public void EnterPlaceFurniture(BuildingPropDef def)
+        {
+            int index = allModes.FindIndex(m => m is ObjectPlacerInteraction);
+            ((ObjectPlacerInteraction)allModes[index]).Begin(def);
+            SkipToMode(index);
+        }
+
+        public void EnterMoveFurniture() => SkipToMode(allModes.FindIndex(m => m is PropMoveInteraction));
+
+        public void EnterDeleteFurniture() => SkipToMode(allModes.FindIndex(m => m is PropDeleteInteraction));
 
         public void LeaveBuildingEdit()
         {

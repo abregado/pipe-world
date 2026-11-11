@@ -45,7 +45,7 @@ namespace PipeWorld.Piper
             {
                 Prop* p = world.props.slabs.get(i);
                 if (p->slabHeader.allocated && p->building == buildingId)
-                    m.objects.Add(new BObject { id = p->slabHeader._playerIndexAndGeneration, proto = p->prototypeId, face = p->face, faceRef = p->faceRef, u = p->faceU, v = p->faceV });
+                    m.objects.Add(new BObject { id = p->slabHeader._playerIndexAndGeneration, proto = p->prototypeId, face = p->face, faceRef = p->faceRef, u = p->faceU, v = p->faceV, yaw = p->faceYaw });
             }
 
             // Slab order depends on allocation history, so lists are put in id order to make every peer iterate identically.
@@ -152,6 +152,7 @@ namespace PipeWorld.Piper
                 p->faceRef = o.faceRef;
                 p->faceU = o.u;
                 p->faceV = o.v;
+                p->faceYaw = o.yaw;
                 p->position = m.position + rotation * m.objectLocalPosition(o);
                 p->eulerRotation = new Vector3(0f, m.yaw + m.objectLocalYaw(o), 0f);
             }

@@ -58,11 +58,16 @@ namespace PipeWorld.Piper
             return best;
         }
 
-        // The inventory items near a point are taken from and given to, or null when no building can be reached.
+        // The inventory items near a point are taken from and given to: that of the nearest reachable building within Range, or null
+        // when none is in range.
         public static Inventory* at(World world, Vector3 point)
         {
-            Building* b = nearest(world, point);
+            Building* b = nearest(world, point, Range);
             return b == null ? null : &b->inventory;
         }
+
+        public const string OutOfRangeMessage = "No base inventory in range.";
+
+        public static bool inRange(World world, Vector3 point) => nearest(world, point, Range) != null;
     }
 }

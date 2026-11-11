@@ -25,8 +25,8 @@ namespace PipeWorld.Piper
         public bool needsOuterWall;
         // Only ever on the outside of an outer wall, so it is not offered to a player standing inside.
         public bool outsideOnly;
-        // May share wall space with other props (stairs go under a door); only another prop like it blocks it.
-        public bool overlapsOthers;
+        // Wall props: how far the prop reaches through the wall's thickness, used by the placement hologram. 0 uses a default for the kind of prop.
+        public float depth;
         // Cuts a walkable opening through the wall.
         public bool opening;
         // Moves the player to the other side of the wall when used.
@@ -48,13 +48,13 @@ namespace PipeWorld.Piper
             new BuildingPropDef { id = PropPrototypeId.Painting, name = "Painting", surface = PropSurface.Wall, width = 0.9f, height = 0.6f, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.BuildingDoor, name = "Door", surface = PropSurface.Wall, width = 0.9f, height = 2.1f, anchorBottom = true, partitionOnly = true, opening = true, bothSides = true, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.Archway, name = "Archway", surface = PropSurface.Wall, width = 1.3f, height = 2.3f, anchorBottom = true, partitionOnly = true, opening = true, bothSides = true, placeable = true },
-            new BuildingPropDef { id = PropPrototypeId.ExteriorDoor, name = "Exterior door", surface = PropSurface.Wall, width = 1.1f, height = 2.1f, anchorBottom = true, outerOnly = true, teleports = true, bothSides = true, essential = true, placeable = true },
+            new BuildingPropDef { id = PropPrototypeId.ExteriorDoor, name = "Exterior door", surface = PropSurface.Wall, width = 1.5f, height = 2.1f, depth = 0.44f, anchorBottom = true, outerOnly = true, teleports = true, bothSides = true, essential = true, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.CargoTerminal, name = "Cargo terminal", surface = PropSurface.Floor, radius = 0.45f, previewHeight = 1f, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.Ladder, name = "Ladder", surface = PropSurface.Ceiling, radius = 0.45f, previewHeight = 2.4f, teleports = true, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.ExteriorWindow, name = "Exterior window", surface = PropSurface.Wall, width = 1.2f, height = 1.1f, needsOuterWall = true, opening = true, bothSides = true, placeable = true },
-            new BuildingPropDef { id = PropPrototypeId.ExteriorStairs, name = "Exterior stairs", surface = PropSurface.Wall, width = 1.5f, height = 1f, anchorBottom = true, outerOnly = true, outsideOnly = true, overlapsOthers = true, placeable = true },
+            new BuildingPropDef { id = PropPrototypeId.ExteriorLadder, name = "Exterior ladder", surface = PropSurface.Wall, width = 0.6f, height = 2.4f, depth = 0.3f, anchorBottom = true, outerOnly = true, outsideOnly = true, placeable = true },
             new BuildingPropDef { id = PropPrototypeId.ExteriorLight, name = "Exterior light", surface = PropSurface.Wall, width = 0.3f, height = 0.4f, outerOnly = true, outsideOnly = true, placeable = true },
-            new BuildingPropDef { id = PropPrototypeId.Terminal, name = "Terminal", surface = PropSurface.Floor, radius = 0.4f, previewHeight = 1.2f, essential = true },
+            new BuildingPropDef { id = PropPrototypeId.Terminal, name = "Terminal", surface = PropSurface.Wall, width = 1.4f, height = 1.6f, depth = 0.5f, anchorBottom = true, needsOuterWall = true, bothSides = true, essential = true },
         };
 
         public static readonly BuildingPropDef[] placeable = all.Where(d => d.placeable).ToArray();
@@ -92,6 +92,8 @@ namespace PipeWorld.Piper
         public BuildingFace face;
         public uint faceRef;
         public float u, v;
+        // Rotation about Y in degrees; only floor and ceiling props use it.
+        public float yaw;
 
         public BuildingPropDef def => BuildingProps.get(proto);
     }
@@ -172,7 +174,7 @@ namespace PipeWorld.Piper
         public float objectLocalYaw(BObject o)
         {
             if (o.def.surface != PropSurface.Wall)
-                return 0f;
+                return o.yaw;
             Vector3 f = sideNormal(edge(o.faceRef), o.face);
             return Mathf.Atan2(f.x, f.z) * Mathf.Rad2Deg;
         }
@@ -202,9 +204,6 @@ namespace PipeWorld.Piper
             BuildingPropDef def = o.def, od = other.def;
             if (def.surface != od.surface)
                 return false;
-            if (def.overlapsOthers != od.overlapsOthers)
-                return false;
-
             if (def.surface == PropSurface.Wall)
             {
                 if (other.faceRef != o.faceRef)
@@ -295,9 +294,9 @@ namespace PipeWorld.Piper
         // ---- Edits ----
 
         // The prop as it would be stored: bottom-anchored props sit on the floor, outer-wall props face outwards, wall props stay clear of the ends.
-        public BObject makeProp(BuildingPropDef def, BuildingFace face, uint faceRef, float u, float v, uint id)
+        public BObject makeProp(BuildingPropDef def, BuildingFace face, uint faceRef, float u, float v, uint id, float yaw = 0f)
         {
-            var o = new BObject { id = id, proto = def.id, face = face, faceRef = faceRef, u = u, v = def.anchorBottom ? 0f : v };
+            var o = new BObject { id = id, proto = def.id, face = face, faceRef = faceRef, u = u, v = def.anchorBottom ? 0f : v, yaw = def.surface == PropSurface.Wall ? 0f : Mathf.Repeat(yaw, 360f) };
             if (def.surface == PropSurface.Wall)
             {
                 BEdge e = edge(faceRef);
@@ -309,13 +308,13 @@ namespace PipeWorld.Piper
             return o;
         }
 
-        public string placeProp(PropPrototypeId proto, BuildingFace face, uint faceRef, float u, float v)
+        public string placeProp(PropPrototypeId proto, BuildingFace face, uint faceRef, float u, float v, float yaw = 0f)
         {
             BuildingPropDef def = BuildingProps.get(proto);
             if (def == null || !def.placeable)
                 return "Unknown prop.";
 
-            BObject o = makeProp(def, face, faceRef, u, v, (newPropId ?? newId)());
+            BObject o = makeProp(def, face, faceRef, u, v, (newPropId ?? newId)(), yaw);
             string problem = propProblem(o, objects);
             if (problem != null)
                 return problem;
@@ -325,12 +324,12 @@ namespace PipeWorld.Piper
         }
 
         // Moves a prop to another place on a face (or another face), keeping its id.
-        public string moveProp(uint objectId, BuildingFace face, uint faceRef, float u, float v)
+        public string moveProp(uint objectId, BuildingFace face, uint faceRef, float u, float v, float yaw = 0f)
         {
             BObject old = objects.Find(ob => ob.id == objectId);
             if (old == null) return "That prop no longer exists.";
 
-            BObject o = makeProp(old.def, face, faceRef, u, v, objectId);
+            BObject o = makeProp(old.def, face, faceRef, u, v, objectId, yaw);
             string problem = propProblem(o, objects);
             if (problem != null)
                 return problem;
@@ -418,7 +417,7 @@ namespace PipeWorld.Piper
                                 continue;
                             }
                         }
-                        if (!def.teleports || !relocate(o, kept))
+                        if ((!def.teleports && !def.essential) || !relocate(o, kept))
                             continue;
                     }
                 }

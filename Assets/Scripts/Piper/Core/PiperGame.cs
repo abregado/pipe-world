@@ -337,21 +337,18 @@ namespace PipeWorld.Piper
 
                     BuildingModel m = BuildingStore.load(world, b->slabHeader._playerIndexAndGeneration);
                     BArea room = m.areas[0];
-                    BEdge east = m.edges.Find(e => m.vertex(e.a).x == 1.5f && m.vertex(e.b).x == 1.5f);
+                    BEdge east = m.edges.Find(e => m.vertex(e.a).x == 2f && m.vertex(e.b).x == 2f);
                     inputActionManager.add(new SetBuildingHeightsData { building = m.id, floorY = m.position.y + 0.75f, height = 3.25f });
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.Table, face = BuildingFace.Floor, faceRef = room.id, u = 0.3f, v = 0.4f });
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.Chair, face = BuildingFace.Floor, faceRef = room.id, u = 0.3f, v = 0.7f });
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.CeilingLamp, face = BuildingFace.Ceiling, faceRef = room.id, u = 0.5f, v = 0.5f });
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.Painting, face = BuildingFace.WallPositive, faceRef = east.id, u = 0.5f, v = 0.55f });
-                    BEdge north = m.edges.Find(e => m.vertex(e.a).z == 1.5f && m.vertex(e.b).z == 1.5f);
-                    BEdge west = m.edges.Find(e => m.vertex(e.a).x == -1.5f && m.vertex(e.b).x == -1.5f);
-                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorWindow, face = m.outerSide(north), faceRef = north.id, u = 0.5f, v = 0.5f });
-                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorLight, face = m.outerSide(north), faceRef = north.id, u = 0.12f, v = 0.6f });
-                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorStairs, face = m.outerSide(west), faceRef = west.id, u = 0.5f, v = 0f });
+                                        BEdge west = m.edges.Find(e => m.vertex(e.a).x == -2f && m.vertex(e.b).x == -2f);
+                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorWindow, face = m.outerSide(west), faceRef = west.id, u = 0.5f, v = 0.5f });
+                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorLight, face = m.outerSide(west), faceRef = west.id, u = 0.1f, v = 0.6f });
+                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorLadder, face = m.outerSide(west), faceRef = west.id, u = 0.85f, v = 0f });
                     inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.Ladder, face = BuildingFace.Ceiling, faceRef = room.id, u = 0.2f, v = 0.8f });
                     inputActionManager.add(new AdjustInventoryData { item = InventoryItemPrototypeId.Obtainium, amount = 7, building = m.id });
-                    BObject entrance = m.objects.Find(o => o.proto == PropPrototypeId.ExteriorDoor);
-                    inputActionManager.add(new PlaceBuildingPropData { building = m.id, proto = PropPrototypeId.ExteriorStairs, face = entrance.face, faceRef = entrance.faceRef, u = entrance.u, v = 0f });
                     Debug.Log("[Piper] dev decorate queued");
                     break;
                 }
@@ -384,6 +381,8 @@ namespace PipeWorld.Piper
 
             if (mainMenuMode)
                 mainMenu.doUpdate();
+            else if (interactionModeSelector.furniturePicker.IsOpen)
+                interactionModeSelector.furniturePicker.doUpdate();
             else
                 escapeMenu.doUpdate();
 

@@ -32,6 +32,8 @@ namespace PipeWorld.Piper
         public uint faceRef;
         public float faceU;
         public float faceV;
+        // Rotation about Y of a floor or ceiling prop, in degrees.
+        public float faceYaw;
         public BuildingFace face;
 
         public PropHandle getHandleToSelf()

@@ -18,12 +18,15 @@ namespace PipeWorld.Piper
         {
             Prop* p = prop;
             text = p == null ? "" : $"Take {InventoryItemPrototypes.instance[p->data.collectable.givenItem].name}";
-            actionEnabled = true;
-            errorMessage = "";
+            actionEnabled = p != null && BuildingInventory.inRange(PiperMain.p.game.world, p->position);
+            errorMessage = actionEnabled ? "" : BuildingInventory.OutOfRangeMessage;
         }
 
         public void Interact(InteractionMode interactionMode)
         {
+            Prop* p = prop;
+            if (p == null || !BuildingInventory.inRange(PiperMain.p.game.world, p->position))
+                return;
             PiperMain.p.game.inputActionManager.add(new CollectCollectableData() { prop = new PropNetworkIdentifier(this) });
         }
 

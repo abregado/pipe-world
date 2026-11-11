@@ -5,7 +5,7 @@ namespace PipeWorld.Piper
     // Moving the player through an exterior door. Walls stay solid; the door only relocates the player to the other side.
     public static class BuildingTravel
     {
-        private const float StepDistance = 1.5f;
+        private const float ExitDistance = 0.65f;
 
         public static bool IsInside(BuildingModel m, Vector3 worldPosition)
         {
@@ -19,7 +19,6 @@ namespace PipeWorld.Piper
             return m != null && IsInside(m, game.playerObject.transform.position);
         }
 
-        // Whether the local player stands inside the footprint of any building (used to decide which props they can place).
         // Whether a point is on the roof of the building: within its footprint but above the ceiling.
         public static bool IsOnRoof(BuildingModel m, Vector3 worldPosition) =>
             IsInside(m, worldPosition) && worldPosition.y > m.position.y + m.height - 0.5f;
@@ -47,6 +46,7 @@ namespace PipeWorld.Piper
             game.playerObject.Teleport(target + Vector3.up * 0.05f, Mathf.Atan2(facing.x, facing.z) * Mathf.Rad2Deg, 0f);
         }
 
+        // Whether the local player stands in a room of any building (the roof is outside), used to decide which hotbar tools and props they have.
         public static unsafe bool IsLocalPlayerInsideAny(PiperGame game)
         {
             Vector3 p = game.playerObject.transform.position;
@@ -56,7 +56,7 @@ namespace PipeWorld.Piper
                 if (!b->slabHeader.allocated || Vector3.Distance(b->position, p) > 60f)
                     continue;
                 BuildingModel m = BuildingStore.load(game.world, b->slabHeader._playerIndexAndGeneration);
-                if (m != null && IsInside(m, p))
+                if (m != null && IsInside(m, p) && !IsOnRoof(m, p))
                     return true;
             }
             return false;
@@ -79,8 +79,47 @@ namespace PipeWorld.Piper
             Vector3 step = inside ? outward : -outward;
             Vector3 facing = rotation * step;
             Vector3 doorWorld = m.position + rotation * position;
-            Vector3 target = FindClearSpot(doorWorld, facing, inside, m);
+            // Going out lands on the stairs just beyond the door, whose top step is at floor level; going in lands in the room.
+            Vector3 target = inside ? new Vector3(doorWorld.x, m.position.y, doorWorld.z) + facing * ExitDistance : FindClearSpot(doorWorld, facing, false, m);
             game.playerObject.Teleport(target + Vector3.up * 0.05f, Mathf.Atan2(facing.x, facing.z) * Mathf.Rad2Deg, 0f);
+        }
+
+        // The ladder up an outer wall joins the ground to the roof above it. From the ground it puts the player on the roof a little inside
+        // the wall, and from the roof it puts them on the ground in front of the ladder.
+        public static void UseExteriorLadder(PiperGame game, uint buildingId, uint objectId)
+        {
+            BuildingModel m = BuildingStore.load(game.world, buildingId);
+            BObject ladder = m?.objects.Find(o => o.id == objectId);
+            if (ladder == null || ladder.def.surface != PropSurface.Wall)
+                return;
+
+            Vector3 outward = m.sideNormal(m.edge(ladder.faceRef), ladder.face);
+            Vector3 local = m.objectLocalPosition(ladder);
+            local.y = 0f;
+            Quaternion rotation = Quaternion.Euler(0f, m.yaw, 0f);
+            Vector3 ladderWorld = m.position + rotation * local;
+            Vector3 outwardWorld = rotation * outward;
+
+            if (IsOnRoof(m, game.playerObject.transform.position))
+            {
+                Vector3 ground = FindClearSpot(ladderWorld, outwardWorld, true, m);
+                game.playerObject.Teleport(ground + Vector3.up * 0.05f, Mathf.Atan2(outwardWorld.x, outwardWorld.z) * Mathf.Rad2Deg, 0f);
+                return;
+            }
+
+            Vector3 roof = ladderWorld - outwardWorld * RoofLanding;
+            roof.y = m.position.y + m.height + BuildingConstants.RoofThickness;
+            game.playerObject.Teleport(roof + Vector3.up * 0.05f, Mathf.Atan2(-outwardWorld.x, -outwardWorld.z) * Mathf.Rad2Deg, 0f);
+        }
+
+        // How far in from the wall's centre line the roof landing is.
+        private const float RoofLanding = 0.8f;
+
+        // The ceiling height of a building, for props that are rebuilt to reach the roof.
+        public static unsafe float BuildingHeight(World world, uint buildingId)
+        {
+            Building* b = world.buildings.find(buildingId);
+            return b != null ? b->height : BuildingConstants.CeilingHeight;
         }
 
         // Where the player is put through a door: the nearest spot to the door where a box the size of a standing player touches nothing.

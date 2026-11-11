@@ -3,8 +3,9 @@ using UnityEngine;
 
 namespace PipeWorld.Piper
 {
-    // Moves props. The first click selects the prop under the crosshair; nothing moves until a second click chooses where it goes.
-    // Right click with a prop selected goes back to choosing a prop, and right click with none leaves the mode.
+    // Moves furniture. The first click selects the prop under the crosshair; nothing moves until a second click chooses where it goes.
+    // Right click with a prop selected goes back to choosing a prop, and right click with none leaves the mode. While placing, the mouse
+    // wheel turns a floor or ceiling prop.
     // A building prop moves along the faces of its own building and must satisfy the same rules as when it was placed; an outdoor prop
     // moves to the ground or floor under the crosshair.
     public unsafe class PropMoveInteraction : InteractionMode
@@ -19,6 +20,9 @@ namespace PipeWorld.Piper
 
         private BuildingGizmos gizmos;
         private Stage stage;
+        private float yaw;
+        private bool yawReady;
+        private readonly ScrollStepper rotateStepper = new ScrollStepper();
 
         // The selected prop. A building prop is found again by its building and id, an outdoor one by its prototype and position.
         private uint selectedBuilding;
@@ -30,7 +34,7 @@ namespace PipeWorld.Piper
 
         public override string GetUIID() => "prop-move";
 
-        public override string GetEnglishName() => "Move props";
+        public override string GetEnglishName() => "Move furniture";
 
         public override void ActivateMode()
         {
@@ -62,7 +66,6 @@ namespace PipeWorld.Piper
             else
                 UpdatePlace(game);
             gizmos.End();
-            gameHud.ChangeScrollWheelPrompt("");
             return false;
         }
 
@@ -70,6 +73,7 @@ namespace PipeWorld.Piper
 
         private void UpdateSelect(PiperGame game)
         {
+            gameHud.ChangeScrollWheelPrompt("");
             PropBehaviour hover = null;
             PlayerRaycaster raycaster = game.raycaster;
             if (raycaster.raycastHitsCount > 0 && raycaster.raycastHits[0].distance <= Reach)
@@ -83,8 +87,8 @@ namespace PipeWorld.Piper
                 return;
             }
 
-            Bounds bounds = BoundsOf(hover);
-            gizmos.Box(bounds.center, Vector3.right, bounds.size, Hover);
+            PropBoundsHelper.World(hover, out Vector3 centre, out Vector3 along, out Vector3 size);
+            gizmos.Box(centre, along, size, Hover);
             gameHud.ChangeLeftClickPrompt("Move " + PropPrototypes.instance[prop->prototypeId].name);
             gameHud.ChangeRightClickPrompt("Leave");
 
@@ -94,21 +98,11 @@ namespace PipeWorld.Piper
                 selectedBuilding = prop->building;
                 selectedObject = prop->slabHeader._playerIndexAndGeneration;
                 selectedOutdoor = new PropNetworkIdentifier(prop);
-                boundsOffset = bounds.center - (Vector3)prop->position;
-                boundsSize = bounds.size;
+                PropBoundsHelper.Local(hover, out boundsOffset, out boundsSize);
+                yawReady = false;
+                rotateStepper.Reset();
                 stage = Stage.Place;
             }
-        }
-
-        private static Bounds BoundsOf(PropBehaviour prop)
-        {
-            Renderer[] renderers = prop.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
-                return new Bounds(prop.transform.position, Vector3.one * 0.5f);
-            Bounds b = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-                b.Encapsulate(renderers[i].bounds);
-            return b;
         }
 
         // ---- Place ----
@@ -122,6 +116,7 @@ namespace PipeWorld.Piper
             }
 
             gameHud.ChangeRightClickPrompt("Back");
+            gameHud.ChangeScrollWheelPrompt("");
 
             // The first surface under the crosshair that is not a prop.
             PlayerRaycaster raycaster = game.raycaster;
@@ -152,8 +147,20 @@ namespace PipeWorld.Piper
                 return;
             }
 
+            if (!yawReady)
+            {
+                yaw = current.yaw;
+                yawReady = true;
+            }
+
+            bool rotatable = current.def.surface != PropSurface.Wall;
+            int steps = rotateStepper.Step(InputFixed.mouseScrollDelta.y);
+            if (rotatable && steps != 0)
+                yaw = Mathf.Repeat(yaw + steps * ObjectPlacerInteraction.RotateStep, 360f);
+            gameHud.ChangeScrollWheelPrompt(rotatable ? "Rotate" : "");
+
             // The prop being moved stays marked where it is.
-            ObjectPlacerInteraction.DrawHologram(gizmos, model, current.def, current.face, current.faceRef, current.u, current.v, Chosen);
+            ObjectPlacerInteraction.DrawHologram(gizmos, model, current.def, current.face, current.faceRef, current.u, current.v, Chosen, current.yaw);
 
             string problem = "Aim at a surface of this building.";
             if (surface.HasValue)
@@ -170,8 +177,8 @@ namespace PipeWorld.Piper
                     problem = ObjectPlacerInteraction.Target(model, current.def, hit, out PlaceBuildingPropData placement);
                     if (placement.building != 0)
                     {
-                        problem = problem ?? model.Clone().moveProp(selectedObject, placement.face, placement.faceRef, placement.u, placement.v);
-                        ObjectPlacerInteraction.DrawHologram(gizmos, model, current.def, placement.face, placement.faceRef, placement.u, placement.v, problem == null ? Good : Bad);
+                        problem = problem ?? model.Clone().moveProp(selectedObject, placement.face, placement.faceRef, placement.u, placement.v, yaw);
+                        ObjectPlacerInteraction.DrawHologram(gizmos, model, current.def, placement.face, placement.faceRef, placement.u, placement.v, problem == null ? Good : Bad, yaw);
 
                         if (problem == null && InputFixed.GetMouseButtonDown(0))
                         {
@@ -183,6 +190,7 @@ namespace PipeWorld.Piper
                                 faceRef = placement.faceRef,
                                 u = placement.u,
                                 v = placement.v,
+                                yaw = yaw,
                             });
                             stage = Stage.Select;
                         }
@@ -202,7 +210,8 @@ namespace PipeWorld.Piper
                 return;
             }
 
-            gizmos.Box((Vector3)prop->position + boundsOffset, Vector3.right, boundsSize, Chosen);
+            Quaternion turn = Quaternion.Euler((Vector3)prop->eulerRotation);
+            gizmos.Box((Vector3)prop->position + turn * boundsOffset, turn * Vector3.right, boundsSize, Chosen);
 
             string problem = "Aim at the ground.";
             if (surface.HasValue)
@@ -210,7 +219,7 @@ namespace PipeWorld.Piper
                 RaycastHit hit = surface.Value;
                 problem = hit.normal.y < 0.5f ? "Needs level ground." : null;
                 Vector3 position = hit.point;
-                gizmos.Box(position + boundsOffset, Vector3.right, boundsSize, problem == null ? Good : Bad);
+                gizmos.Box(position + turn * boundsOffset, turn * Vector3.right, boundsSize, problem == null ? Good : Bad);
 
                 if (problem == null && InputFixed.GetMouseButtonDown(0))
                 {
@@ -220,7 +229,6 @@ namespace PipeWorld.Piper
             }
 
             gameHud.ChangeLeftClickPrompt("Move here", problem == null, problem ?? "");
-            return;
         }
     }
 }

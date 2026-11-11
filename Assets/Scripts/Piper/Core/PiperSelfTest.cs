@@ -68,14 +68,17 @@ namespace PipeWorld.Piper
                     Check(world.buildings.slabs.size > 0 && CountBuildings(world) == 1, "seeded building exists");
                     buildingId = FirstBuilding(world);
                     BuildingModel m = BuildingStore.load(world, buildingId);
-                    Check(m.vertices.Count == 4 && m.edges.Count == 4 && m.areas.Count == 1 && m.objects.Count == 3 && m.height == 3f && m.groundY <= m.position.y,
-                        "new building is a 3x3 room with an exterior door, a terminal and a cargo terminal");
+                    Check(m.vertices.Count == 4 && m.edges.Count == 4 && m.areas.Count == 1 && m.objects.Count == 3 && m.height == 4f && m.groundY <= m.position.y,
+                        "new building is a 4x4x4 room with an exterior door, a terminal and a cargo terminal");
                     originalArea = m.areas[0].id;
                     Check(FuzzSlices(m), "slicing at a grid of points never throws");
                     float pull = BuildingTargeting.ClosestOnLine(new Ray(new Vector3(3f, 5f, -5f), new Vector3(0f, -1f, 1f).normalized), Vector3.zero, Vector3.right);
                     Check(Mathf.Abs(pull - 3f) < 0.01f, "crosshair pull along a constrained axis");
                     BObject door = m.objects.Find(o => o.proto == PropPrototypeId.ExteriorDoor);
                     Check(m.roomOnSide(m.edge(door.faceRef), door.face) == null, "exterior door faces outwards");
+                    BObject terminal = m.objects.Find(o => o.proto == PropPrototypeId.Terminal);
+                    Check(terminal.face != BuildingFace.Floor && m.isEdgeOutside(terminal.faceRef) && terminal.faceRef != door.faceRef, "the terminal stands in an outer wall, not the door's");
+                    Check(BuildingProps.placeableFor(true).All(d => d.id != PropPrototypeId.Terminal) && m.areaBounds(m.areas[0]).maxX - m.areaBounds(m.areas[0]).minX == 4.0, "the footprint is 4 m wide");
                     actions.add(new ExtrudeBuildingEdgeData { building = buildingId, edge = door.faceRef, offset = 2f });
                     actions.add(new ExtrudeBuildingEdgeData { building = buildingId, edge = door.faceRef, offset = -1f });
                     Next(5);
@@ -101,8 +104,8 @@ namespace PipeWorld.Piper
                     actions.add(new SliceBuildingAreaData { building = buildingId, area = added.id, x = -1.4f, z = (float)c.z });
 
                     // West wall of the original room (the door moved to the east wall): its positive side faces into the room.
-                    BEdge east = m.edges.Find(e => m.vertex(e.a).x == -1.5f && m.vertex(e.b).x == -1.5f && m.vertex(e.a).z != m.vertex(e.b).z);
-                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Table, face = BuildingFace.Floor, faceRef = originalArea, u = 0.3f, v = 0.3f });
+                    BEdge east = m.edges.Find(e => m.vertex(e.a).x == -2f && m.vertex(e.b).x == -2f && m.vertex(e.a).z != m.vertex(e.b).z);
+                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Table, face = BuildingFace.Floor, faceRef = originalArea, u = 0.3f, v = 0.3f, yaw = 90f });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Chair, face = BuildingFace.Floor, faceRef = originalArea, u = 0.3f, v = 0.3f });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.CeilingLamp, face = BuildingFace.Floor, faceRef = originalArea, u = 0.7f, v = 0.3f });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.CeilingLamp, face = BuildingFace.Ceiling, faceRef = originalArea, u = 0.7f, v = 0.3f });
@@ -119,28 +122,27 @@ namespace PipeWorld.Piper
                     BuildingModel m = BuildingStore.load(world, buildingId);
                     Check(m.areas.Count == 3, "slice split a room in two");
                     Check(m.objects.Count(o => o.proto == PropPrototypeId.Table) == 1 && m.objects.Count(o => o.proto == PropPrototypeId.Chair) == 0, "table placed; a chair on top of it refused");
+                    BObject table = m.objects.Find(o => o.proto == PropPrototypeId.Table);
+                    Check(Mathf.Abs(table.yaw - 90f) < 0.01f && PropWorldMatches(world, m, table), "a table placed with a rotation keeps it");
                     Check(m.objects.Count(o => o.proto == PropPrototypeId.CeilingLamp) == 1 && m.objects.Find(o => o.proto == PropPrototypeId.CeilingLamp).face == BuildingFace.Ceiling, "lamp placed on a ceiling, refused on a floor");
                     Check(m.objects.Any(o => o.proto == PropPrototypeId.Painting), "painting hung on an outer wall facing the room");
                     Check(m.objects.Count(o => o.proto == PropPrototypeId.Ladder) == 1 && m.objects.Find(o => o.proto == PropPrototypeId.Ladder).face == BuildingFace.Ceiling, "ladder placed on a ceiling, refused on a floor");
                     Check(!m.objects.Any(o => o.proto == PropPrototypeId.Archway), "archway refused on an outer wall");
                     Check(m.validate() == null, "building valid after slice");
 
-                    BEdge north = m.edges.Find(e => m.vertex(e.a).z == 1.5f && m.vertex(e.b).z == 1.5f);
+                    BEdge north = m.edges.Find(e => m.vertex(e.a).z == 2f && m.vertex(e.b).z == 2f);
                     BEdge south = m.edges.Where(e => m.isEdgeOutside(e.id) && e.id != north.id && !m.objects.Any(o => o.faceRef == e.id)).OrderByDescending(e => m.edgeLength(e)).First();
-                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorWindow, face = m.outerSide(north), faceRef = north.id, u = 0.5f, v = 0.5f });
-                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorLight, face = m.outerSide(north), faceRef = north.id, u = 0.15f, v = 0.6f });
-                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorStairs, face = m.outerSide(south), faceRef = south.id, u = 0.5f, v = 0f });
+                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorWindow, face = m.outerSide(south), faceRef = south.id, u = 0.5f, v = 0.5f });
+                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorLight, face = m.outerSide(south), faceRef = south.id, u = 0.1f, v = 0.6f });
+                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorLadder, face = m.outerSide(south), faceRef = south.id, u = 0.85f, v = 0f });
                     // Wall styles: a wall between two rooms goes glass (and still holds a painting); an outer wall refuses a style.
                     BEdge inner = m.edges.Where(e => m.isEdgeInside(e.id)).OrderByDescending(e => m.edgeLength(e)).First();
                     innerWall = inner.id;
                     actions.add(new SetBuildingWallStyleData { building = buildingId, edge = inner.id, style = WallStyle.Glass });
                     actions.add(new SetBuildingWallStyleData { building = buildingId, edge = north.id, style = WallStyle.Open });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Painting, face = BuildingFace.WallPositive, faceRef = inner.id, u = 0.5f, v = 0.55f });
-                    // Stairs go under the exterior door on its own wall.
-                    BObject exitDoor = m.objects.Find(o => o.proto == PropPrototypeId.ExteriorDoor);
-                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorStairs, face = exitDoor.face, faceRef = exitDoor.faceRef, u = exitDoor.u, v = 0f });
                     // A second window on top of the first is refused: the two share a rectangle of wall.
-                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorWindow, face = m.outerSide(north), faceRef = north.id, u = 0.5f, v = 0.5f });
+                    actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.ExteriorWindow, face = m.outerSide(south), faceRef = south.id, u = 0.5f, v = 0.5f });
                     actions.add(new MoveBuildingEdgeData { building = buildingId, edge = north.id, offset = 0.5f });
                     actions.add(new DeleteBuildingObjectData { building = buildingId, obj = m.objects.Find(o => o.proto == PropPrototypeId.ExteriorDoor).id });
                     actions.add(new SetBuildingHeightsData { building = buildingId, floorY = m.position.y + 1f, height = 1f });
@@ -155,14 +157,13 @@ namespace PipeWorld.Piper
                     Check(m.validate() == null, "building valid after moving a wall");
                     Check(m.edge(innerWall).type == WallStyle.Glass && m.edges.All(e => e.type != WallStyle.Open), "an inner wall went glass; an outer wall refused the open style");
                     Check(m.objects.Any(o => o.proto == PropPrototypeId.Painting && o.faceRef == innerWall), "a painting can be hung on a glass wall");
-                    Check(m.objects.Count(o => o.proto == PropPrototypeId.ExteriorStairs) == 2, "stairs placed under the exterior door");
                     actions.add(new SetBuildingWallStyleData { building = buildingId, edge = innerWall, style = WallStyle.Open });
                     actions.add(new PlaceBuildingPropData { building = buildingId, proto = PropPrototypeId.Painting, face = BuildingFace.WallNegative, faceRef = innerWall, u = 0.3f, v = 0.55f });
                     Check(m.objects.Any(o => o.proto == PropPrototypeId.ExteriorWindow) && m.objects.Count(o => o.proto == PropPrototypeId.ExteriorWindow) == 1, "window placed on an outer wall; a second one on top of it refused");
-                    Check(m.objects.Any(o => o.proto == PropPrototypeId.ExteriorLight) && m.objects.Any(o => o.proto == PropPrototypeId.ExteriorStairs), "light and stairs placed on the outside of outer walls");
+                    Check(m.objects.Any(o => o.proto == PropPrototypeId.ExteriorLight) && m.objects.Any(o => o.proto == PropPrototypeId.ExteriorLadder), "light and ladder placed on the outside of outer walls");
                     Check(BuildingProps.placeableFor(true).All(d => !d.outsideOnly) && BuildingProps.placeableFor(false).All(d => d.outerOnly || d.needsOuterWall) && BuildingProps.placeableFor(false).Any(d => d.id == PropPrototypeId.ExteriorDoor), "inside and outside placement lists");
                     BObject light = m.objects.Find(o => o.proto == PropPrototypeId.ExteriorLight);
-                    actions.add(new MoveBuildingPropData { building = buildingId, obj = light.id, face = light.face, faceRef = light.faceRef, u = 0.85f, v = 0.6f });
+                    actions.add(new MoveBuildingPropData { building = buildingId, obj = light.id, face = light.face, faceRef = light.faceRef, u = 0.3f, v = 0.6f });
                     lightId = light.id;
                     BObject cargo = m.objects.Find(o => o.proto == PropPrototypeId.CargoTerminal);
                     Check(cargo != null, "a new building spawns with a cargo terminal");
@@ -182,7 +183,7 @@ namespace PipeWorld.Piper
 
                 case 7:
                     BuildingModel last = BuildingStore.load(world, buildingId);
-                    Check(Mathf.Abs(last.objectById(lightId).u - 0.85f) < 0.01f, "a building prop moved along its wall");
+                    Check(Mathf.Abs(last.objectById(lightId).u - 0.3f) < 0.01f, "a building prop moved along its wall");
                     Check(BuildingInventory.nearest(world, Vector3.zero) == null, "a building without a cargo terminal is not reachable");
                     Check(Inv(world).getCount(InventoryItemPrototypeId.Obtainium) == 10, "the deleted cargo terminal's building keeps its inventory");
                     Check(last.edge(innerWall).type == WallStyle.Open && !last.objects.Any(o => o.faceRef == innerWall), "an open wall dropped its painting and refuses new props");

@@ -73,7 +73,8 @@ namespace PipeWorld.Piper
                 if (e.type == WallStyle.Glass)
                     AddWall(glassBuilder, m, e, BuildingConstants.GlassThickness, 0f, Color.white);
                 else
-                    AddWall(shellBuilder, m, e, BuildingConstants.WallThickness, -BuildingConstants.FoundationDepth, e.type == WallStyle.Solid ? BuildingMeshes.PartitionColor : BuildingMeshes.WallColor);
+                    AddWall(shellBuilder, m, e, BuildingConstants.WallThickness, -BuildingConstants.FoundationDepth, e.type == WallStyle.Solid ? BuildingMeshes.PartitionColor : BuildingMeshes.WallColor,
+                        e.type == WallStyle.Outer ? m.height + BuildingConstants.RoofThickness : -1f);
             }
 
             shell = MakeChild("Shell", shellBuilder.ToMesh("Building shell"), true);
@@ -176,9 +177,9 @@ namespace PipeWorld.Piper
 
         // A wall is boxes either side of any openings (doors and archways), with a lintel above each opening.
         // `thickness` and `bottom` differ between solid walls (which reach down into the ground) and glass (which starts at the floor).
-        private static void AddWall(MeshBuilder b, BuildingModel m, BEdge e, float thickness, float bottom, Color32 color)
+        private static void AddWall(MeshBuilder b, BuildingModel m, BEdge e, float thickness, float bottom, Color32 color, float top = -1f)
         {
-            float H = m.height;
+            float H = top < 0f ? m.height : top;
             float Depth = -bottom;
 
             BVertex va = m.vertex(e.a), vb = m.vertex(e.b);

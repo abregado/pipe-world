@@ -41,7 +41,7 @@ The `ambientColor` gradient and `maxSunIntensity` are serialized in `World.unity
 | Split Toning | shadows (0.78, 0.78, 0.88), highlights (1.0, 0.95, 0.87) |
 | Depth of Field | Gaussian, start 900 m, end 2600 m, max radius 1, so the lowland stays readable and only its far ridges soften |
 
-Screen-space ambient occlusion comes from the renderer, not the volume; see [visibility-and-depth.md](visibility-and-depth.md#post-processing). Distance fog is applied by the terrain and scatter shaders from values `DayNightCycle` sets; see [visibility-and-depth.md](visibility-and-depth.md#fog).
+Screen-space ambient occlusion is switched off; see [visibility-and-depth.md](visibility-and-depth.md#post-processing). Distance fog is applied by the terrain and scatter shaders from values `DayNightCycle` sets; see [visibility-and-depth.md](visibility-and-depth.md#fog).
 
 The camera has post-processing enabled through `UniversalAdditionalCameraData`.
 

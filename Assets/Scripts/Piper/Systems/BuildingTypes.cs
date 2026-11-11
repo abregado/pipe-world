@@ -68,7 +68,7 @@ namespace PipeWorld.Piper
 
     public static class BuildingConstants
     {
-        public const float CeilingHeight = 3f;
+        public const float CeilingHeight = 4f;
         public const float MinHeight = 2.4f;
         public const float MaxHeight = 6f;
         public const float MaxRaise = 8f;
@@ -78,7 +78,7 @@ namespace PipeWorld.Piper
         public const float FloorThickness = 0.2f;
         public const float RoofThickness = 0.2f;
         public const float FoundationDepth = 0.6f;
-        public const float StartHalfSize = 1.5f;
+        public const float StartHalfSize = 2f;
         public const float MinEdgeLength = 0.5f;
         public const float MaxExtent = 40f;
         public const float MinBuildingSpacing = 8f;

@@ -83,7 +83,7 @@ namespace PipeWorld.Piper
 
         public static void collectCollectable(World world, Prop* prop)
         {
-            // Nothing can be kept without a building to keep it in, so the item stays where it is.
+            // Nothing can be kept without a base inventory in range, so the item stays where it is.
             Inventory* inventory = BuildingInventory.at(world, prop->position);
             if (inventory == null)
                 return;

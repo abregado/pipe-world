@@ -71,8 +71,7 @@ namespace PipeWorld.EditorTools
             EditorUtility.SetDirty(rp);
         }
 
-        // The terrain and scatter shaders write depth but no normals, so SSAO reads depth only.
-        // It runs after opaques because the custom shaders never sample the occlusion texture themselves.
+        // Ambient occlusion is off: its halos around objects against the sky read as fuzziness, and the edge highlight is the only depth effect.
         static void ConfigureSsao()
         {
             const string rendererPath = "Assets/Settings/PC_Renderer.asset";
@@ -81,19 +80,7 @@ namespace PipeWorld.EditorTools
                 if (asset == null || asset.GetType().Name != "ScreenSpaceAmbientOcclusion")
                     continue;
                 var so = new SerializedObject(asset);
-                so.FindProperty("m_Settings.Source").enumValueIndex = 0;
-                so.FindProperty("m_Settings.AfterOpaque").boolValue = true;
-                so.FindProperty("m_Settings.Intensity").floatValue = 0.9f;
-                so.FindProperty("m_Settings.Radius").floatValue = 0.6f;
-                so.FindProperty("m_Settings.DirectLightingStrength").floatValue = 0.15f;
-                // Blue noise switches to a new noise texture at a random offset every frame, which is meant to be resolved
-                // by temporal anti-aliasing. There is none here, so it crawls. Interleaved gradient noise is fixed per pixel;
-                // 12 samples, high-quality reconstructed normals and the bilateral blur keep it smooth.
-                so.FindProperty("m_Settings.AOMethod").enumValueIndex = 1;
-                so.FindProperty("m_Settings.Samples").enumValueIndex = 0;
-                so.FindProperty("m_Settings.NormalSamples").enumValueIndex = 2;
-                so.FindProperty("m_Settings.BlurQuality").enumValueIndex = 0;
-                so.FindProperty("m_Settings.Downsample").boolValue = false;
+                so.FindProperty("m_Active").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(asset);
             }

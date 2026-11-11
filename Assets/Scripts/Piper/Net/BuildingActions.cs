@@ -60,13 +60,13 @@ namespace PipeWorld.Piper
                 case InputActionType.PlaceBuildingProp:
                 {
                     PlaceBuildingPropData d = action.data.placeBuildingProp;
-                    edit(world, d.building, newId, newPropId, m => m.placeProp(d.proto, d.face, d.faceRef, d.u, d.v));
+                    edit(world, d.building, newId, newPropId, m => m.placeProp(d.proto, d.face, d.faceRef, d.u, d.v, d.yaw));
                     break;
                 }
                 case InputActionType.MoveBuildingProp:
                 {
                     MoveBuildingPropData d = action.data.moveBuildingProp;
-                    edit(world, d.building, newId, newPropId, m => m.moveProp(d.obj, d.face, d.faceRef, d.u, d.v));
+                    edit(world, d.building, newId, newPropId, m => m.moveProp(d.obj, d.face, d.faceRef, d.u, d.v, d.yaw));
                     break;
                 }
                 case InputActionType.SetBuildingWallStyle:

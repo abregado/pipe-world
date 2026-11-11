@@ -7,5 +7,6 @@ namespace PipeWorld.Piper
         EscapeMenu,
         DebugMenu,
         PostGame,
+        FurniturePicker,
     }
 }

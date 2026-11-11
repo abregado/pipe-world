@@ -387,10 +387,10 @@ namespace PipeWorld.EditorTools
                 AddBox(b, new Vector3(0f, 0f, 0f), new Vector3(1.08f, 0.04f, 0.06f), trim);
             }, (new Vector3(0f, 0f, 0f), new Vector3(1.2f, 1.1f, 0.06f)));
 
-            // The stairs are rebuilt to fit the drop to the ground when they are shown (ExteriorStairsBehaviour), so the prefab is a stub.
-            BuildingProp<ExteriorStairsBehaviour>(material, PropPrototypeId.ExteriorStairs, b =>
+            // The ladder is rebuilt to fit the drop to the ground and the building's height when it is shown (ExteriorLadderBehaviour), so the prefab is a stub.
+            BuildingProp<ExteriorLadderBehaviour>(material, PropPrototypeId.ExteriorLadder, b =>
             {
-                AddBox(b, new Vector3(0f, -0.1f, 0.4f), new Vector3(1.5f, 0.2f, 0.6f), wood);
+                AddBox(b, new Vector3(0f, 1f, 0.2f), new Vector3(0.5f, 2f, 0.06f), wood);
             });
 
             // A cargo crate on a plinth with a lid, a loading hatch and an amber stripe.
@@ -417,12 +417,51 @@ namespace PipeWorld.EditorTools
                 AddBox(b, new Vector3(0f, -0.13f, 0.2f), new Vector3(0.2f, 0.04f, 0.2f), trim);
             }, (new Vector3(0f, 0f, 0.18f), new Vector3(0.22f, 0.4f, 0.22f)));
 
-            BuildingProp<TerminalBehaviour>(material, PropPrototypeId.Terminal, b =>
+            BuildTerminal(material);
+        }
+
+        // A slab through the wall with the same four buttons on both faces: +Z is the outside face and -Z the inside one. Each button is a
+        // child with its own collider, so aiming at one lights it up and a click presses it.
+        static void BuildTerminal(Material material)
+        {
+            var body = new MeshBuilder();
+            AddBox(body, new Vector3(0f, 0.8f, 0f), new Vector3(1.4f, 1.6f, 0.5f), new Color32(78, 84, 96, 0));
+            AddBox(body, new Vector3(0f, 0.03f, 0f), new Vector3(1.5f, 0.06f, 0.6f), new Color32(52, 56, 64, 0));
+            AddBox(body, new Vector3(0f, 1.52f, 0f), new Vector3(1.46f, 0.08f, 0.56f), new Color32(52, 56, 64, 0));
+            foreach (float side in new[] { 1f, -1f })
+                AddBox(body, new Vector3(0f, 1.42f, side * 0.255f), new Vector3(1.0f, 0.1f, 0.02f), new Color32(110, 230, 150, 255));
+
+            var root = new GameObject(nameof(PropPrototypeId.Terminal));
+            root.AddComponent<MeshFilter>().sharedMesh = SaveMesh(body, "Building" + PropPrototypeId.Terminal);
+            root.AddComponent<MeshRenderer>().sharedMaterial = material;
+            var collider = root.AddComponent<BoxCollider>();
+            collider.center = new Vector3(0f, 0.8f, 0f);
+            collider.size = new Vector3(1.4f, 1.6f, 0.5f);
+            root.AddComponent<TerminalBehaviour>();
+
+            var colours = new[] { new Color32(70, 130, 220, 0), new Color32(70, 190, 100, 0), new Color32(232, 176, 48, 0), new Color32(210, 80, 70, 0) };
+            var meshes = new Mesh[4];
+            for (int i = 0; i < 4; i++)
             {
-                AddBox(b, new Vector3(0f, 0.6f, 0f), new Vector3(0.7f, 1.2f, 0.5f), new Color32(78, 84, 96, 0));
-                AddBox(b, new Vector3(0f, 0.85f, -0.26f), new Vector3(0.5f, 0.4f, 0.02f), new Color32(110, 230, 150, 255));
-                AddBox(b, new Vector3(0f, 0.55f, -0.3f), new Vector3(0.5f, 0.06f, 0.12f), trim);
-            }, (new Vector3(0f, 0.6f, 0f), new Vector3(0.7f, 1.2f, 0.5f)));
+                var button = new MeshBuilder();
+                AddBox(button, Vector3.zero, new Vector3(0.62f, 0.26f, 0.04f), colours[i]);
+                meshes[i] = SaveMesh(button, "TerminalButton" + (TerminalAction)i);
+            }
+
+            foreach (float side in new[] { 1f, -1f })
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    float x = i % 2 == 0 ? -0.34f : 0.34f;
+                    float y = i < 2 ? 1.2f : 0.88f;
+                    var part = MakePart(root.transform, "Button " + (TerminalAction)i + (side > 0f ? " (outside)" : " (inside)"), meshes[i], material, new Vector3(x, y, side * 0.27f));
+                    var box = part.AddComponent<BoxCollider>();
+                    box.size = new Vector3(0.62f, 0.26f, 0.06f);
+                    part.AddComponent<TerminalButton>().action = (TerminalAction)i;
+                }
+            }
+
+            SavePrefab(root, PropPrototypeId.Terminal);
         }
 
         static void BuildOtherPlayer(Material material)
@@ -476,6 +515,7 @@ namespace PipeWorld.EditorTools
             BuildSkin(UiSurface.Hud, "theme", "elements", "hud", "tooltips");
             BuildSkin(UiSurface.MainMenu, "theme", "menu-components", "menu-main", "menu-pipeworld");
             BuildSkin(UiSurface.EscapeMenu, "theme", "menu-components", "menu-escape");
+            BuildSkin(UiSurface.FurniturePicker, "theme", "menu-components");
         }
 
         static void BuildSkin(UiSurface surface, params string[] sheetNames)

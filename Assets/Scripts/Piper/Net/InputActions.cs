@@ -373,6 +373,7 @@ namespace PipeWorld.Piper
         public uint faceRef;
         public float u;
         public float v;
+        public float yaw;
 
         public static implicit operator InputAction(PlaceBuildingPropData data)
         {
@@ -393,6 +394,7 @@ namespace PipeWorld.Piper
         public uint faceRef;
         public float u;
         public float v;
+        public float yaw;
 
         public static implicit operator InputAction(MoveBuildingPropData data)
         {

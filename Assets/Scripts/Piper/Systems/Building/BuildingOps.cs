@@ -41,9 +41,9 @@ namespace PipeWorld.Piper
 
             Func<uint> propId = newPropId ?? newId;
             m.objects.Add(new BObject { id = propId(), proto = PropPrototypeId.ExteriorDoor, face = m.outerSide(south), faceRef = south.id, u = 0.5f, v = 0f });
-            var (tu, tv) = m.areaUv(room, 0, h - 0.7f);
-            m.objects.Add(new BObject { id = propId(), proto = PropPrototypeId.Terminal, face = BuildingFace.Floor, faceRef = room.id, u = tu, v = tv });
-            var (cu, cv) = m.areaUv(room, -h + 0.5f, h - 0.7f);
+            // The terminal stands in the wall opposite the door, reachable from both sides.
+            m.objects.Add(new BObject { id = propId(), proto = PropPrototypeId.Terminal, face = m.outerSide(north), faceRef = north.id, u = 0.5f, v = 0f });
+            var (cu, cv) = m.areaUv(room, -h + 0.8f, h - 0.9f);
             m.objects.Add(new BObject { id = propId(), proto = PropPrototypeId.CargoTerminal, face = BuildingFace.Floor, faceRef = room.id, u = cu, v = cv });
             return m;
         }

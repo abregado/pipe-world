@@ -2,11 +2,11 @@ using UnityEngine;
 
 namespace PipeWorld.Piper
 {
-    // Places new buildings in three clicks: the first sets the origin on the ground, the second the floor height above it, the third the
-    // ceiling height. The mouse wheel turns the hologram throughout; right click goes back a step.
+    // Places new buildings, which are always 4x4x4 m, in two clicks: the first sets the origin on the ground, the second the floor height
+    // above it. The hologram marks the side that will have the door. The mouse wheel turns the hologram throughout; right click goes back a step.
     public unsafe class BuildingPlacerInteraction : InteractionMode
     {
-        private enum Stage { Origin, Floor, Height }
+        private enum Stage { Origin, Floor }
 
         private const float Reach = 30f;
         private const float RotateStep = 15f;
@@ -14,10 +14,13 @@ namespace PipeWorld.Piper
         private readonly ScrollStepper rotateStepper = new ScrollStepper();
         private const float SnapHeight = 1f;
         private const float HeightStep = 0.25f;
+        private const float DoorWidth = 1.5f;
+        private const float DoorHeight = 2.1f;
 
         private static readonly Color Good = new Color(0.4f, 1f, 0.5f);
         private static readonly Color Bad = new Color(1f, 0.4f, 0.35f);
         private static readonly Color Faint = new Color(0.7f, 0.85f, 1f);
+        private static readonly Color DoorColor = new Color(1f, 0.75f, 0.2f);
 
         private BuildingGizmos gizmos;
         private float yaw;
@@ -26,7 +29,6 @@ namespace PipeWorld.Piper
         private Vector3 origin;
         private float groundY;
         private float floorY;
-        private float height = BuildingConstants.CeilingHeight;
 
         public override string GetUIID() => "building-placer";
 
@@ -38,7 +40,6 @@ namespace PipeWorld.Piper
             gizmos ??= new BuildingGizmos("Building placer");
             gameHud.SetTooltipValues(false, 0f);
             stage = Stage.Origin;
-            height = BuildingConstants.CeilingHeight;
         }
 
         public override void DeactivateMode()
@@ -104,7 +105,7 @@ namespace PipeWorld.Piper
                         : TooCloseToAnother(game.world, position) ? "Too close to another building."
                         : null;
 
-                    DrawBuilding(position, position.y, BuildingConstants.CeilingHeight, problem == null ? Good : Bad);
+                    DrawBuilding(position, position.y, problem == null ? Good : Bad);
                     if (problem == null && InputFixed.GetMouseButtonDown(0))
                     {
                         origin = position;
@@ -114,26 +115,15 @@ namespace PipeWorld.Piper
                     }
                 }
             }
-            else if (stage == Stage.Floor)
+            else
             {
-                leftLabel = "Set floor height";
+                leftLabel = "Place building";
                 float raise = BuildingTargeting.ClosestOnLine(ray, new Vector3(origin.x, groundY, origin.z), Vector3.up);
                 // Shift snaps the floor to whole units of world Y rather than of the raise.
                 floorY = snap ? Mathf.Round((groundY + raise) / SnapHeight) * SnapHeight : groundY + Mathf.Round(raise / HeightStep) * HeightStep;
                 floorY = Mathf.Clamp(floorY, groundY, groundY + BuildingConstants.MaxRaise);
-                DrawBuilding(origin, floorY, height, Good);
+                DrawBuilding(origin, floorY, Good);
                 gizmos.Line(new Vector3(origin.x, groundY, origin.z), new Vector3(origin.x, floorY, origin.z), Faint, 0.05f);
-
-                if (InputFixed.GetMouseButtonDown(0))
-                    stage = Stage.Height;
-            }
-            else
-            {
-                leftLabel = "Set ceiling height";
-                float rise = BuildingTargeting.ClosestOnLine(ray, new Vector3(origin.x, floorY, origin.z), Vector3.up);
-                height = Mathf.Clamp(Mathf.Round(rise / HeightStep) * HeightStep, BuildingConstants.MinHeight, BuildingConstants.MaxHeight);
-                DrawBuilding(origin, floorY, height, Good);
-                gizmos.Line(new Vector3(origin.x, groundY, origin.z), new Vector3(origin.x, floorY + height, origin.z), Faint, 0.05f);
 
                 if (InputFixed.GetMouseButtonDown(0))
                 {
@@ -141,7 +131,7 @@ namespace PipeWorld.Piper
                     {
                         position = new Vector3(origin.x, floorY, origin.z),
                         yaw = yaw,
-                        height = height,
+                        height = BuildingConstants.CeilingHeight,
                         groundY = groundY,
                     });
                     game.interactionModeSelector.SkipToMode(0);
@@ -151,24 +141,32 @@ namespace PipeWorld.Piper
             }
             gizmos.End();
 
-            string detail = stage == Stage.Origin ? "" : stage == Stage.Floor ? "  floor +" + (floorY - groundY).ToString("0.00") + " m" : "  ceiling " + height.ToString("0.00") + " m";
+            string detail = stage == Stage.Origin ? "" : "  floor +" + (floorY - groundY).ToString("0.00") + " m";
             gameHud.ChangeLeftClickPrompt(leftLabel + detail, problem == null, problem ?? "");
             gameHud.ChangeRightClickPrompt(stage == Stage.Origin ? "Cancel" : "Back");
             gameHud.ChangeScrollWheelPrompt("Rotate  Shift: snap");
             return false;
         }
 
-        // The building hologram: the 3x3 footprint at the chosen floor height, up to the ceiling, plus the scaffold under a raised floor.
-        private void DrawBuilding(Vector3 position, float floor, float ceilingHeight, Color color)
+        // The building hologram: the 4x4x4 footprint at the chosen floor height, the scaffold under a raised floor, and the door on the
+        // south side (the one that faces local -Z), with an arrow out from it.
+        private void DrawBuilding(Vector3 position, float floor, Color color)
         {
             float edge = BuildingConstants.StartHalfSize * 2f;
-            Vector3 along = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
+            float ceilingHeight = BuildingConstants.CeilingHeight;
+            Quaternion turn = Quaternion.Euler(0f, yaw, 0f);
+            Vector3 along = turn * Vector3.right;
             Vector3 center = new Vector3(position.x, floor + ceilingHeight * 0.5f, position.z);
             gizmos.Box(center, along, new Vector3(edge, ceilingHeight, edge), color);
 
             float raised = floor - groundYFor(position, floor);
             if (raised > 0.05f)
                 gizmos.Box(new Vector3(position.x, floor - raised * 0.5f, position.z), along, new Vector3(edge, raised, edge), Faint);
+
+            Vector3 doorBase = new Vector3(position.x, floor, position.z) + turn * Vector3.back * BuildingConstants.StartHalfSize;
+            Vector3 outward = turn * Vector3.back;
+            gizmos.Box(doorBase + Vector3.up * (DoorHeight * 0.5f), along, new Vector3(DoorWidth, DoorHeight, 0.3f), DoorColor);
+            gizmos.Line(doorBase + Vector3.up * 0.1f, doorBase + Vector3.up * 0.1f + outward * 1.5f, DoorColor, 0.07f);
         }
 
         private float groundYFor(Vector3 position, float floor) => stage == Stage.Origin ? floor : groundY;

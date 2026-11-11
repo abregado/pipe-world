@@ -19,7 +19,7 @@ namespace PipeWorld.Piper
         ExteriorDoor = 153,
         Terminal = 154,
         ExteriorWindow = 155,
-        ExteriorStairs = 156,
+        ExteriorLadder = 156,
         ExteriorLight = 157,
         Ladder = 158,
         CargoTerminal = 159,
@@ -63,7 +63,7 @@ namespace PipeWorld.Piper
             PropPrototypeId.ExteriorDoor,
             PropPrototypeId.Terminal,
             PropPrototypeId.ExteriorWindow,
-            PropPrototypeId.ExteriorStairs,
+            PropPrototypeId.ExteriorLadder,
             PropPrototypeId.ExteriorLight,
             PropPrototypeId.Ladder,
             PropPrototypeId.CargoTerminal,
@@ -168,17 +168,17 @@ namespace PipeWorld.Piper
                 new Builder(PropPrototypeId.ExteriorDoor)
                     .name("Exterior Door")
                     .descriptiveType("Building")
-                    .description("A thick door in an outer wall. Click it to step through to the other side.")
+                    .description("A thick door in an outer wall, with stairs down to the ground. Click it to step through to the other side.")
                     .build(),
                 new Builder(PropPrototypeId.ExteriorWindow)
                     .name("Exterior Window")
                     .descriptiveType("Building")
                     .description("A window in an outer wall. Cuts a hole you can see through but not walk through.")
                     .build(),
-                new Builder(PropPrototypeId.ExteriorStairs)
-                    .name("Exterior Stairs")
+                new Builder(PropPrototypeId.ExteriorLadder)
+                    .name("Exterior Ladder")
                     .descriptiveType("Building")
-                    .description("Steps down from the outside of an outer wall.")
+                    .description("A ladder up the outside of an outer wall. Click it to climb to the roof above it, and again from the roof to climb back down.")
                     .build(),
                 new Builder(PropPrototypeId.ExteriorLight)
                     .name("Exterior Light")
@@ -198,7 +198,7 @@ namespace PipeWorld.Piper
                 new Builder(PropPrototypeId.Terminal)
                     .name("Terminal")
                     .descriptiveType("Building")
-                    .description("Opens the building editor. You fly freely and return here when you are done.")
+                    .description("Four buttons, on both sides of the wall: edit the building, place, move and delete furniture.")
                     .build(),
             };
 
